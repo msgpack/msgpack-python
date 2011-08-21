@@ -168,7 +168,6 @@ def packb(object o, default=None, encoding='utf-8', unicode_errors='strict'):
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     return packer.pack(o)
 
-dumps = packs = packb
 
 cdef extern from "unpack.h":
     ctypedef struct msgpack_user:
@@ -239,7 +238,6 @@ def unpackb(object packed, object object_hook=None, object list_hook=None, bint 
     else:
         return None
 
-loads = unpacks = unpackb
 
 def unpack(object stream, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
     """unpack an object from stream."""
