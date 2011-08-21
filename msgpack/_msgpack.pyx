@@ -159,12 +159,18 @@ cdef class Packer(object):
 
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
-    """pack an object `o` and write it to stream)."""
+    """\
+    pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict')
+
+    pack an object `o` and write it to stream)."""
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     stream.write(packer.pack(o))
 
 def packb(object o, default=None, encoding='utf-8', unicode_errors='strict'):
-    """pack o and return packed bytes."""
+    """\
+    packb(object o, default=None, encoding='utf-8', unicode_errors='strict')
+
+    pack o and return packed bytes."""
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     return packer.pack(o)
 
@@ -191,7 +197,11 @@ cdef extern from "unpack.h":
 
 
 def unpackb(object packed, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
-    """Unpack packed_bytes to object. Returns an unpacked object."""
+    """\
+    unpackb(object packed, object object_hook=None, object list_hook=None,
+            bint use_list=0, encoding=None, unicode_errors="strict")
+
+    Unpack packed_bytes to object. Returns an unpacked object."""
     cdef template_context ctx
     cdef size_t off = 0
     cdef int ret
@@ -240,7 +250,11 @@ def unpackb(object packed, object object_hook=None, object list_hook=None, bint 
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
-    """unpack an object from stream."""
+    """\
+    unpack(object stream, object object_hook=None, object list_hook=None,
+           bint use_list=0, encoding=None, unicode_errors="strict")
+    
+    unpack an object from stream."""
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, list_hook=list_hook, encoding=encoding, unicode_errors=unicode_errors)
 
