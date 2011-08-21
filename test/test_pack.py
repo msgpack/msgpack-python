@@ -5,7 +5,7 @@ from nose import main
 from nose.tools import *
 from nose.plugins.skip import SkipTest
 
-from msgpack import packs, unpacks
+from msgpack import packs, unpacks, Packer, Unpacker
 
 from StringIO import StringIO
 
