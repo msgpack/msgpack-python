@@ -28,7 +28,8 @@ Windows
 MessagePack requires gcc currently. So you need to prepare
 MinGW GCC.
 
-    $ python setup.py install -c mingw32
+    $ python setup.py build -c mingw32
+    $ python setup.py install
 
 TEST
 ----
