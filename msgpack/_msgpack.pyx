@@ -1,4 +1,5 @@
 # coding: utf-8
+#cython: embedsignature=True
 
 from cpython cimport *
 cdef extern from "Python.h":
@@ -159,17 +160,13 @@ cdef class Packer(object):
 
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
-    """\
-    pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict')
-
+    """
     pack an object `o` and write it to stream)."""
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     stream.write(packer.pack(o))
 
 def packb(object o, default=None, encoding='utf-8', unicode_errors='strict'):
-    """\
-    packb(object o, default=None, encoding='utf-8', unicode_errors='strict')
-
+    """
     pack o and return packed bytes."""
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     return packer.pack(o)
@@ -197,10 +194,7 @@ cdef extern from "unpack.h":
 
 
 def unpackb(object packed, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
-    """\
-    unpackb(object packed, object object_hook=None, object list_hook=None,
-            bint use_list=0, encoding=None, unicode_errors="strict")
-
+    """
     Unpack packed_bytes to object. Returns an unpacked object."""
     cdef template_context ctx
     cdef size_t off = 0
@@ -250,21 +244,36 @@ def unpackb(object packed, object object_hook=None, object list_hook=None, bint 
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
-    """\
-    unpack(object stream, object object_hook=None, object list_hook=None,
-           bint use_list=0, encoding=None, unicode_errors="strict")
-    
-    unpack an object from stream."""
+    """
+    unpack an object from stream.
+    """
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, list_hook=list_hook, encoding=encoding, unicode_errors=unicode_errors)
 
 cdef class Unpacker(object):
-    """Unpacker(read_size=1024*1024)
-
+    """
     Streaming unpacker.
     read_size is used like file_like.read(read_size)
 
-    example:
+    `file_like` is a file-like object having `.read(n)` method.
+    When `Unpacker` initialized with `file_like`, unpacker reads serialized data
+    from it and `.feed()` method is not usable.
+
+    `read_size` is used as `file_like.read(read_size)`. (default: 1M)
+
+    If `use_list` is true, msgpack list is deserialized to Python list.
+    Otherwise, it is deserialized to Python tuple. (default: False)
+
+    `object_hook` is same to simplejson. If it is not None, it should be callable
+    and Unpacker calls it when deserializing key-value.
+
+    `encoding` is encoding used for decoding msgpack bytes. If it is None (default),
+    msgpack bytes is deserialized to Python bytes.
+
+    `unicode_errors` is used for decoding bytes.
+
+    example::
+
         unpacker = Unpacker()
         while 1:
             buf = astream.read()
@@ -292,11 +301,9 @@ cdef class Unpacker(object):
         free(self.buf);
         self.buf = NULL;
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=0,
+    def __init__(self, file_like=None, Py_ssize_t read_size=1024*1024, bint use_list=0,
                  object object_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict'):
-        if read_size == 0:
-            read_size = 1024*1024
         self.use_list = use_list
         self.file_like = file_like
         if file_like:
