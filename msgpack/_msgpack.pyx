@@ -298,8 +298,8 @@ cdef class Unpacker(object):
         self.buf = NULL
 
     def __dealloc__(self):
-        free(self.buf);
-        self.buf = NULL;
+        free(self.buf)
+        self.buf = NULL
 
     def __init__(self, file_like=None, Py_ssize_t read_size=1024*1024, bint use_list=0,
                  object object_hook=None, object list_hook=None,
