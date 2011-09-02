@@ -1,3 +1,13 @@
+0.1.11
+=======
+:release date: NOT RELEASED YET
+
+Bugs fixed
+-------------
+
+* Include test code for Python3 to sdist. (Johan Bergström)
+
+
 0.1.10
 ======
 :release date: 2011-08-22
