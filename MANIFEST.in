@@ -1,3 +1,5 @@
 include setup.py
 include COPYING
 recursive-include msgpack *.h *.c *.pyx
+recursive-include test *.py
+recursive-include test3 *.py
