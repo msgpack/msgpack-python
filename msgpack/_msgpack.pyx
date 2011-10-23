@@ -50,6 +50,7 @@ cdef class Packer(object):
     cdef object _berrors
     cdef char *encoding
     cdef char *unicode_errors
+    cdef bool _canonical
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
@@ -59,7 +60,8 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict'):
+    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
+                 canonical=False):
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
@@ -78,6 +80,8 @@ cdef class Packer(object):
             else:
                 self._berrors = unicode_errors
             self.unicode_errors = PyBytes_AsString(self._berrors)
+
+        self._canonical = canonical
 
     def __dealloc__(self):
         free(self.pk.buf);
@@ -131,11 +135,20 @@ cdef class Packer(object):
             d = o
             ret = msgpack_pack_map(&self.pk, len(d))
             if ret == 0:
-                for k,v in d.items():
-                    ret = self._pack(k, nest_limit-1)
-                    if ret != 0: break
-                    ret = self._pack(v, nest_limit-1)
-                    if ret != 0: break
+                if self._canonical:
+                    # Unfortunately can't use d.items() because a closure would
+                    # be required
+                    for k in sorted(d.keys()):
+                        ret = self._pack(k, nest_limit-1)
+                        if ret != 0: break
+                        ret = self._pack(d[k], nest_limit-1)
+                        if ret != 0: break
+                else:
+                    for k,v in d.items():
+                        ret = self._pack(k, nest_limit-1)
+                        if ret != 0: break
+                        ret = self._pack(v, nest_limit-1)
+                        if ret != 0: break
         elif PySequence_Check(o):
             ret = msgpack_pack_array(&self.pk, len(o))
             if ret == 0:
@@ -159,16 +172,16 @@ cdef class Packer(object):
         return buf
 
 
-def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
+def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict', canonical=False):
     """
     pack an object `o` and write it to stream)."""
-    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
+    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors, canonical=canonical)
     stream.write(packer.pack(o))
 
-def packb(object o, default=None, encoding='utf-8', unicode_errors='strict'):
+def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', canonical=False):
     """
     pack o and return packed bytes."""
-    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
+    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors, canonical=canonical)
     return packer.pack(o)
 
 
