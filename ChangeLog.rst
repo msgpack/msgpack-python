@@ -1,11 +1,12 @@
 0.1.11
 =======
-:release date: NOT RELEASED YET
+:release date: 2011-12-26
 
 Bugs fixed
 -------------
 
 * Include test code for Python3 to sdist. (Johan Bergström)
+* Fix compilation error on MSVC. (davidgaleano)
 
 
 0.1.10
