@@ -1,3 +1,13 @@
+0.1.12
+=======
+:release date: 2011-12-27
+
+Bugs fixed
+-------------
+
+* Re-enable packs/unpacks removed at 0.1.11. It will be removed when 0.2 is released.
+
+
 0.1.11
 =======
 :release date: 2011-12-26
