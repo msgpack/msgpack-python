@@ -45,7 +45,9 @@ else:
 
     Sdist = sdist
 
-libraries = ['ws2_32'] if sys.platform == 'win32' else []
+libraries = []
+if sys.platform == 'win32':
+    libraries.append('ws2_32')
 
 msgpack_mod = Extension('msgpack._msgpack',
                         sources=sources,
