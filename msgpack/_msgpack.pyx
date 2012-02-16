@@ -136,7 +136,7 @@ cdef class Packer(object):
                     if ret != 0: break
                     ret = self._pack(v, nest_limit-1)
                     if ret != 0: break
-        elif PySequence_Check(o):
+        elif PyTuple_Check(o) or PyList_Check(o):
             ret = msgpack_pack_array(&self.pk, len(o))
             if ret == 0:
                 for v in o:
