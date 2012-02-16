@@ -193,9 +193,7 @@ cdef extern from "unpack.h":
     object template_data(template_context* ctx)
 
 
-def unpackb(object packed, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
-    """
-    Unpack packed_bytes to object. Returns an unpacked object."""
+def _unpack(object packed, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
     cdef template_context ctx
     cdef size_t off = 0
     cdef int ret
@@ -238,17 +236,36 @@ def unpackb(object packed, object object_hook=None, object list_hook=None, bint 
     finally:
         _gc_enable()
     if ret == 1:
-        return template_data(&ctx)
+        return_obj = template_data(&ctx)
     else:
-        return None
+        return_obj = None
+    return (return_obj, off)
+
+
+def unpackb(object packed, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
+    """
+    Unpack packed_bytes to object. Returns an unpacked object.
+    """
+    cdef object obj
+    cdef size_t off
+    (obj, off) = _unpack(packed, object_hook=object_hook, list_hook=list_hook, use_list=use_list, encoding=encoding, unicode_errors=unicode_errors)
+    # TODO something with "off"
+    return obj
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
     """
     unpack an object from stream.
     """
-    return unpackb(stream.read(), use_list=use_list,
-                   object_hook=object_hook, list_hook=list_hook, encoding=encoding, unicode_errors=unicode_errors)
+    cdef object obj
+    cdef size_t off
+    stream_pos = stream.tell()
+    stream_str = stream.read()
+    (obj, off) = _unpack(stream_str, object_hook=object_hook, list_hook=list_hook, use_list=use_list, encoding=encoding, unicode_errors=unicode_errors)
+    if obj:
+        stream.seek(stream_pos + off)
+    return obj
+
 
 cdef class Unpacker(object):
     """

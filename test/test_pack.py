@@ -5,7 +5,7 @@ from nose import main
 from nose.tools import *
 from nose.plugins.skip import SkipTest
 
-from msgpack import packs, unpacks, Packer, Unpacker
+from msgpack import pack, packs, unpack, unpacks, Packer, Unpacker
 
 from StringIO import StringIO
 
@@ -56,6 +56,22 @@ def testPackBytes():
         ]
     for td in test_data:
         check(td)
+
+def testPackNonSequenceObjects():
+    test_objs = [1, 3.14, "Hello", [0, 1, 2], {'one': 1, 'two': 2}]
+    out = StringIO()
+    for obj in test_objs:
+        pack(obj, out)
+    out.seek(0)
+    out_objs = []
+    while 1:
+        obj = unpack(out, use_list=True)
+        if obj is None:
+            break
+        out_objs.append(obj)
+    assert_equal(len(test_objs), len(out_objs))
+    for a, b in zip(test_objs, out_objs):
+        assert_equal(a, b)
 
 def testIgnoreUnicodeErrors():
     re = unpacks(packs('abc\xeddef'),
