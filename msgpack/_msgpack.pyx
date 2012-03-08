@@ -131,7 +131,7 @@ cdef class Packer(object):
             d = o
             ret = msgpack_pack_map(&self.pk, len(d))
             if ret == 0:
-                for k,v in d.items():
+                for k,v in d.iteritems():
                     ret = self._pack(k, nest_limit-1)
                     if ret != 0: break
                     ret = self._pack(v, nest_limit-1)
@@ -149,7 +149,7 @@ cdef class Packer(object):
             raise TypeError("can't serialize %r" % (o,))
         return ret
 
-    def pack(self, object obj):
+    cpdef pack(self, object obj):
         cdef int ret
         ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
         if ret:
