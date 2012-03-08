@@ -161,8 +161,10 @@ static inline int template_callback_array_end(unpack_user* u, msgpack_unpack_obj
 {
     if (u->list_hook) {
         PyObject *arglist = Py_BuildValue("(O)", *c);
-        *c = PyEval_CallObject(u->list_hook, arglist);
+        PyObject *new_c = PyEval_CallObject(u->list_hook, arglist);
         Py_DECREF(arglist);
+        Py_DECREF(*c);
+        *c = new_c;
     }
     return 0;
 }
@@ -190,8 +192,10 @@ static inline int template_callback_map_end(unpack_user* u, msgpack_unpack_objec
 {
     if (u->object_hook) {
         PyObject *arglist = Py_BuildValue("(O)", *c);
-        *c = PyEval_CallObject(u->object_hook, arglist);
+        PyObject *new_c = PyEval_CallObject(u->object_hook, arglist);
         Py_DECREF(arglist);
+        Py_DECREF(*c);
+        *c = new_c;
     }
     return 0;
 }
