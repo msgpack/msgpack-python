@@ -1,3 +1,24 @@
+0.1.13
+=======
+:release date: 2012-04-21
+
+New
+----
+* Don't accept subtype of list and tuple as msgpack list. (Steeve Morin)
+  It allows customize how it serialized with ``default`` argument.
+
+Bugs fixed
+-----------
+* Fix wrong error message. (David Wolever)
+* Fix memory leak while unpacking when ``object_hook`` or ``list_hook`` is used.
+  (Steeve Morin)
+
+Other changes
+-------------
+* setup.py works on Python 2.5 (Steffen Siering)
+* Optimization for serializing dict.
+
+
 0.1.12
 =======
 :release date: 2011-12-27
