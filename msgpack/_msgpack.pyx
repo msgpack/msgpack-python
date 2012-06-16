@@ -128,7 +128,7 @@ cdef class Packer(object):
             if ret == 0:
                 ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
         elif PyDict_Check(o):
-            d = o
+            d = <dict>o
             ret = msgpack_pack_map(&self.pk, len(d))
             if ret == 0:
                 for k,v in d.iteritems():
