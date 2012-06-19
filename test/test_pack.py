@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import six
 from nose import main
 from nose.tools import *
 from nose.plugins.skip import SkipTest
@@ -29,7 +30,7 @@ def testPack():
 
 def testPackUnicode():
     test_data = [
-        "", "abcd", ("defgh",), "Русский текст",
+        six.u(""), six.u("abcd"), (six.u("defgh"),), six.u("Русский текст"),
         ]
     for td in test_data:
         re = unpacks(packs(td, encoding='utf-8'), encoding='utf-8')
@@ -42,7 +43,10 @@ def testPackUnicode():
 def testPackUTF32():
     try:
         test_data = [
-            "", "abcd", ("defgh",), "Русский текст",
+            six.u(""),
+            six.u("abcd"),
+            (six.u("defgh"),),
+            six.u("Русский текст"),
             ]
         for td in test_data:
             re = unpacks(packs(td, encoding='utf-32'), encoding='utf-32')
@@ -68,15 +72,15 @@ def testStrictUnicodeUnpack():
 
 @raises(UnicodeEncodeError)
 def testStrictUnicodePack():
-    packs("abc\xeddef", encoding='ascii', unicode_errors='strict')
+    packs(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():
-    re = unpacks(packs("abcФФФdef", encoding='ascii', unicode_errors='ignore'), encoding='utf-8')
-    assert_equal(re, "abcdef")
+    re = unpacks(packs(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8')
+    assert_equal(re, six.u("abcdef"))
 
 @raises(TypeError)
 def testNoEncoding():
-    packs("abc", encoding=None)
+    packs(six.u("abc"), encoding=None)
 
 def testDecodeBinary():
     re = unpacks(packs("abc"), encoding=None)

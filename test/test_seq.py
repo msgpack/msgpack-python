@@ -1,21 +1,22 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import six
 from nose import main
 from nose.tools import *
 
-import StringIO
+import io
 import msgpack
 
-binarydata = [chr(i) for i in xrange(256)]
-binarydata = "".join(binarydata)
+binarydata = [chr(i) for i in range(256)]
+binarydata = six.b("".join(binarydata))
 
 def gen_binary_data(idx):
     data = binarydata[:idx % 300]
     return data
 
 def test_exceeding_unpacker_read_size():
-    dumpf = StringIO.StringIO()
+    dumpf = io.BytesIO()
 
     packer = msgpack.Packer()
 
@@ -26,18 +27,18 @@ def test_exceeding_unpacker_read_size():
                                 # 40 ok for read_size=1024, while 50 introduces errors
                                 # 7000 ok for read_size=1024*1024, while 8000 leads to  glibc detected *** python: double free or corruption (!prev):
 
-    for idx in xrange(NUMBER_OF_STRINGS):
+    for idx in range(NUMBER_OF_STRINGS):
         data = gen_binary_data(idx)
         dumpf.write(packer.pack(data))
 
-    f = StringIO.StringIO(dumpf.getvalue())
+    f = io.BytesIO(dumpf.getvalue())
     dumpf.close()
 
     unpacker = msgpack.Unpacker(f, read_size=read_size)
 
     read_count = 0
     for idx, o in enumerate(unpacker):
-        assert_equal(type(o), str)
+        assert_equal(type(o), bytes)
         assert_equal(o, gen_binary_data(idx))
         read_count += 1
 
@@ -45,5 +46,5 @@ def test_exceeding_unpacker_read_size():
 
 
 if __name__ == '__main__':
-    # main()
-    test_exceeding_unpacker_read_size()
+    main()
+    #test_exceeding_unpacker_read_size()

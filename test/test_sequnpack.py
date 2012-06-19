@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
-
 from msgpack import Unpacker
 
 def test_foobar():
@@ -16,18 +14,16 @@ def test_foobar():
     assert unpacker.unpack() == ord(b'r')
     try:
         o = unpacker.unpack()
-        print(("Oops!", o))
-        assert 0
+        assert 0, "should raise exception"
     except StopIteration:
-        assert 1
-    else:
-        assert 0
+        assert 1, "ok"
+
     unpacker.feed(b'foo')
     unpacker.feed(b'bar')
 
     k = 0
-    for o, e in zip(unpacker, b'foobarbaz'):
-        assert o == e
+    for o, e in zip(unpacker, 'foobarbaz'):
+        assert o == ord(e)
         k += 1
     assert k == len(b'foobar')
 
