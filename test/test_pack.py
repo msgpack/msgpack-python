@@ -5,9 +5,9 @@ from nose import main
 from nose.tools import *
 from nose.plugins.skip import SkipTest
 
-from msgpack import packs, unpacks, Packer, Unpacker
+from msgpack import packs, unpacks, Unpacker, Packer
 
-from StringIO import StringIO
+from io import BytesIO
 
 def check(data):
     re = unpacks(packs(data))
@@ -18,7 +18,7 @@ def testPack():
             0, 1, 127, 128, 255, 256, 65535, 65536,
             -1, -32, -33, -128, -129, -32768, -32769,
             1.0,
-        "", "a", "a"*31, "a"*32,
+        b"", b"a", b"a"*31, b"a"*32,
         None, True, False,
         (), ((),), ((), None,),
         {None: 0},
@@ -29,20 +29,20 @@ def testPack():
 
 def testPackUnicode():
     test_data = [
-        u"", u"abcd", (u"defgh",), u"Русский текст",
+        "", "abcd", ("defgh",), "Русский текст",
         ]
     for td in test_data:
         re = unpacks(packs(td, encoding='utf-8'), encoding='utf-8')
         assert_equal(re, td)
         packer = Packer(encoding='utf-8')
         data = packer.pack(td)
-        re = Unpacker(StringIO(data), encoding='utf-8').unpack()
+        re = Unpacker(BytesIO(data), encoding='utf-8').unpack()
         assert_equal(re, td)
 
 def testPackUTF32():
     try:
         test_data = [
-            u"", u"abcd", (u"defgh",), u"Русский текст",
+            "", "abcd", ("defgh",), "Русский текст",
             ]
         for td in test_data:
             re = unpacks(packs(td, encoding='utf-32'), encoding='utf-32')
@@ -52,37 +52,35 @@ def testPackUTF32():
 
 def testPackBytes():
     test_data = [
-        "", "abcd", ("defgh",),
+        b"", b"abcd", (b"defgh",),
         ]
     for td in test_data:
         check(td)
 
 def testIgnoreUnicodeErrors():
-    re = unpacks(packs('abc\xeddef'),
-        encoding='ascii', unicode_errors='ignore')
+    re = unpacks(packs(b'abc\xeddef'),
+        encoding='utf-8', unicode_errors='ignore')
     assert_equal(re, "abcdef")
 
 @raises(UnicodeDecodeError)
 def testStrictUnicodeUnpack():
-    unpacks(packs('abc\xeddef'), encoding='utf-8')
+    unpacks(packs(b'abc\xeddef'), encoding='utf-8')
 
 @raises(UnicodeEncodeError)
 def testStrictUnicodePack():
-    packs(u"abc\xeddef", encoding='ascii', unicode_errors='strict')
+    packs("abc\xeddef", encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():
-    re = unpacks(
-            packs(u"abcФФФdef", encoding='ascii', unicode_errors='ignore'),
-            encoding='utf-8')
-    assert_equal(re, u"abcdef")
+    re = unpacks(packs("abcФФФdef", encoding='ascii', unicode_errors='ignore'), encoding='utf-8')
+    assert_equal(re, "abcdef")
 
 @raises(TypeError)
 def testNoEncoding():
-    packs(u"abc", encoding=None)
+    packs("abc", encoding=None)
 
 def testDecodeBinary():
-    re = unpacks(packs(u"abc"), encoding=None)
-    assert_equal(re, "abc")
+    re = unpacks(packs("abc"), encoding=None)
+    assert_equal(re, b"abc")
 
 if __name__ == '__main__':
     main()
