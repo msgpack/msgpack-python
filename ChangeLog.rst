@@ -1,3 +1,16 @@
+0.1.14
+=======
+:release date: NOT RELEASED YET
+
+Changes
+-------
+* Drop supporting Python 2.5 and unify tests for Py2 and Py3.
+
+Bugs fixed
+----------
+* #8 Packing subclass of dict raises TypeError. (Thanks to Steeve Morin.)
+
+
 0.1.13
 =======
 :release date: 2012-04-21
