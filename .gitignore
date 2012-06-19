@@ -1,6 +1,7 @@
 MANIFEST
 build/*
 dist/*
+.tox
 *.pyc
 *.pyo
 *.so
