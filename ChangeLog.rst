@@ -5,6 +5,7 @@
 Changes
 -------
 * Drop supporting Python 2.5 and unify tests for Py2 and Py3.
+* Use new version of msgpack-c. It packs correctly on big endian platforms.
 
 Bugs fixed
 ----------
