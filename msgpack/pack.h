@@ -77,7 +77,7 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
 
     if (len + l > bs) {
         bs = (len + l) * 2;
-        buf = realloc(buf, bs);
+        buf = (char*)realloc(buf, bs);
         if (!buf) return -1;
     }
     memcpy(buf + len, data, l);

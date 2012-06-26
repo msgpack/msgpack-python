@@ -222,8 +222,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None, bint 
     template_init(&ctx)
     ctx.user.use_list = use_list
     ctx.user.object_hook = ctx.user.list_hook = NULL
-    ctx.user.encoding = enc
-    ctx.user.unicode_errors = err
+    ctx.user.encoding = <const_char_ptr>enc
+    ctx.user.unicode_errors = <const_char_ptr>err
     if object_hook is not None:
         if not PyCallable_Check(object_hook):
             raise TypeError("object_hook must be a callable.")

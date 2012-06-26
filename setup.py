@@ -53,6 +53,7 @@ msgpack_mod = Extension('msgpack._msgpack',
                         sources=sources,
                         libraries=libraries,
                         include_dirs=['.'],
+                        language='c++',
                         )
 del sources, libraries
 
