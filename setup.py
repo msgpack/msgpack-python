@@ -37,7 +37,7 @@ if have_cython:
                                         cython_compiler.default_options)
             sdist.__init__(self, *args, **kwargs)
 else:
-    sources = ['msgpack/_msgpack.c']
+    sources = ['msgpack/_msgpack.cpp']
 
     for f in sources:
         if not os.path.exists(f):
