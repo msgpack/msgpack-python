@@ -1,7 +1,7 @@
 /*
  * MessagePack unpacking routine template
  *
- * Copyright (C) 2008-2009 FURUHASHI Sadayuki
+ * Copyright (C) 2008-2010 FURUHASHI Sadayuki
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@
 #ifndef MSGPACK_UNPACK_DEFINE_H__
 #define MSGPACK_UNPACK_DEFINE_H__
 
-#include "sysdep.h"
+#include "msgpack/sysdep.h"
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
@@ -28,8 +29,8 @@ extern "C" {
 #endif
 
 
-#ifndef MSGPACK_MAX_STACK_SIZE
-#define MSGPACK_MAX_STACK_SIZE 16
+#ifndef MSGPACK_EMBED_STACK_SIZE
+#define MSGPACK_EMBED_STACK_SIZE 32
 #endif
 
 

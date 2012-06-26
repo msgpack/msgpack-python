@@ -1,7 +1,7 @@
 /*
  * MessagePack unpacking routine template
  *
- * Copyright (C) 2008-2009 FURUHASHI Sadayuki
+ * Copyright (C) 2008-2010 FURUHASHI Sadayuki
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -50,11 +50,7 @@ msgpack_unpack_struct_decl(_stack) {
 	msgpack_unpack_object obj;
 	size_t count;
 	unsigned int ct;
-
-    union {
-        size_t curr;
-        msgpack_unpack_object map_key;
-    };
+	msgpack_unpack_object map_key;
 };
 
 msgpack_unpack_struct_decl(_context) {
@@ -62,7 +58,12 @@ msgpack_unpack_struct_decl(_context) {
 	unsigned int cs;
 	unsigned int trail;
 	unsigned int top;
-	msgpack_unpack_struct(_stack) stack[MSGPACK_MAX_STACK_SIZE];
+	/*
+	msgpack_unpack_struct(_stack)* stack;
+	unsigned int stack_size;
+	msgpack_unpack_struct(_stack) embed_stack[MSGPACK_EMBED_STACK_SIZE];
+	*/
+	msgpack_unpack_struct(_stack) stack[MSGPACK_EMBED_STACK_SIZE];
 };
 
 
@@ -71,8 +72,21 @@ msgpack_unpack_func(void, _init)(msgpack_unpack_struct(_context)* ctx)
 	ctx->cs = CS_HEADER;
 	ctx->trail = 0;
 	ctx->top = 0;
+	/*
+	ctx->stack = ctx->embed_stack;
+	ctx->stack_size = MSGPACK_EMBED_STACK_SIZE;
+	*/
 	ctx->stack[0].obj = msgpack_unpack_callback(_root)(&ctx->user);
 }
+
+/*
+msgpack_unpack_func(void, _destroy)(msgpack_unpack_struct(_context)* ctx)
+{
+	if(ctx->stack_size != MSGPACK_EMBED_STACK_SIZE) {
+		free(ctx->stack);
+	}
+}
+*/
 
 msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context)* ctx)
 {
@@ -82,6 +96,8 @@ msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context
 
 msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off)
 {
+	assert(len >= *off);
+
 	const unsigned char* p = (unsigned char*)data + *off;
 	const unsigned char* const pe = (unsigned char*)data + len;
 	const void* n = NULL;
@@ -89,16 +105,16 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	unsigned int trail = ctx->trail;
 	unsigned int cs = ctx->cs;
 	unsigned int top = ctx->top;
-
 	msgpack_unpack_struct(_stack)* stack = ctx->stack;
+	/*
+	unsigned int stack_size = ctx->stack_size;
+	*/
 	msgpack_unpack_user* user = &ctx->user;
 
 	msgpack_unpack_object obj;
 	msgpack_unpack_struct(_stack)* c = NULL;
 
 	int ret;
-
-	assert(len >= *off);
 
 #define push_simple_value(func) \
 	if(msgpack_unpack_callback(func)(user, &obj) < 0) { goto _failed; } \
@@ -122,24 +138,37 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	goto _fixed_trail_again
 
 #define start_container(func, count_, ct_) \
+	if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
 	if(msgpack_unpack_callback(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
 	if((count_) == 0) { obj = stack[top].obj; goto _push; } \
-	if(top >= MSGPACK_MAX_STACK_SIZE) { goto _failed; } \
 	stack[top].ct = ct_; \
-    stack[top].curr = 0; \
 	stack[top].count = count_; \
+	++top; \
 	/*printf("container %d count %d stack %d\n",stack[top].obj,count_,top);*/ \
 	/*printf("stack push %d\n", top);*/ \
-	++top; \
+	/* FIXME \
+	if(top >= stack_size) { \
+		if(stack_size == MSGPACK_EMBED_STACK_SIZE) { \
+			size_t csize = sizeof(msgpack_unpack_struct(_stack)) * MSGPACK_EMBED_STACK_SIZE; \
+			size_t nsize = csize * 2; \
+			msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)malloc(nsize); \
+			if(tmp == NULL) { goto _failed; } \
+			memcpy(tmp, ctx->stack, csize); \
+			ctx->stack = stack = tmp; \
+			ctx->stack_size = stack_size = MSGPACK_EMBED_STACK_SIZE * 2; \
+		} else { \
+			size_t nsize = sizeof(msgpack_unpack_struct(_stack)) * ctx->stack_size * 2; \
+			msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)realloc(ctx->stack, nsize); \
+			if(tmp == NULL) { goto _failed; } \
+			ctx->stack = stack = tmp; \
+			ctx->stack_size = stack_size = stack_size * 2; \
+		} \
+	} \
+	*/ \
 	goto _header_again
 
 #define NEXT_CS(p) \
 	((unsigned int)*p & 0x1f)
-
-#define PTR_CAST_8(ptr)   (*(uint8_t*)ptr)
-#define PTR_CAST_16(ptr)  _msgpack_be16(*(uint16_t*)ptr)
-#define PTR_CAST_32(ptr)  _msgpack_be32(*(uint32_t*)ptr)
-#define PTR_CAST_64(ptr)  _msgpack_be64(*(uint64_t*)ptr)
 
 #ifdef USE_CASE_RANGE
 #define SWITCH_RANGE_BEGIN     switch(*p) {
@@ -228,70 +257,74 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 			//case CS_
 			//case CS_
 			case CS_FLOAT: {
-					union { uint32_t num; char buf[4]; } f;
-					f.num = PTR_CAST_32(n);  // FIXME
-					push_fixed_value(_float, *((float*)f.buf)); }
+					union { uint32_t i; float f; } mem;
+					mem.i = _msgpack_load32(uint32_t,n);
+					push_fixed_value(_float, mem.f); }
 			case CS_DOUBLE: {
-					union { uint64_t num; char buf[8]; } f;
-					f.num = PTR_CAST_64(n);  // FIXME
-					push_fixed_value(_double, *((double*)f.buf)); }
+					union { uint64_t i; double f; } mem;
+					mem.i = _msgpack_load64(uint64_t,n);
+#if defined(__arm__) && !(__ARM_EABI__) // arm-oabi
+                    // https://github.com/msgpack/msgpack-perl/pull/1
+                    mem.i = (mem.i & 0xFFFFFFFFUL) << 32UL | (mem.i >> 32UL);
+#endif
+					push_fixed_value(_double, mem.f); }
 			case CS_UINT_8:
-				push_fixed_value(_uint8, (uint8_t)PTR_CAST_8(n));
+				push_fixed_value(_uint8, *(uint8_t*)n);
 			case CS_UINT_16:
-				push_fixed_value(_uint16, (uint16_t)PTR_CAST_16(n));
+				push_fixed_value(_uint16, _msgpack_load16(uint16_t,n));
 			case CS_UINT_32:
-				push_fixed_value(_uint32, (uint32_t)PTR_CAST_32(n));
+				push_fixed_value(_uint32, _msgpack_load32(uint32_t,n));
 			case CS_UINT_64:
-				push_fixed_value(_uint64, (uint64_t)PTR_CAST_64(n));
+				push_fixed_value(_uint64, _msgpack_load64(uint64_t,n));
 
 			case CS_INT_8:
-				push_fixed_value(_int8, (int8_t)PTR_CAST_8(n));
+				push_fixed_value(_int8, *(int8_t*)n);
 			case CS_INT_16:
-				push_fixed_value(_int16, (int16_t)PTR_CAST_16(n));
+				push_fixed_value(_int16, _msgpack_load16(int16_t,n));
 			case CS_INT_32:
-				push_fixed_value(_int32, (int32_t)PTR_CAST_32(n));
+				push_fixed_value(_int32, _msgpack_load32(int32_t,n));
 			case CS_INT_64:
-				push_fixed_value(_int64, (int64_t)PTR_CAST_64(n));
+				push_fixed_value(_int64, _msgpack_load64(int64_t,n));
 
 			//case CS_
 			//case CS_
 			//case CS_BIG_INT_16:
-			//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, (uint16_t)PTR_CAST_16(n), _big_int_zero);
+			//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load16(uint16_t,n), _big_int_zero);
 			//case CS_BIG_INT_32:
-			//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, (uint32_t)PTR_CAST_32(n), _big_int_zero);
+			//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load32(uint32_t,n), _big_int_zero);
 			//case ACS_BIG_INT_VALUE:
 			//_big_int_zero:
 			//	// FIXME
 			//	push_variable_value(_big_int, data, n, trail);
 
 			//case CS_BIG_FLOAT_16:
-			//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, (uint16_t)PTR_CAST_16(n), _big_float_zero);
+			//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load16(uint16_t,n), _big_float_zero);
 			//case CS_BIG_FLOAT_32:
-			//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, (uint32_t)PTR_CAST_32(n), _big_float_zero);
+			//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load32(uint32_t,n), _big_float_zero);
 			//case ACS_BIG_FLOAT_VALUE:
 			//_big_float_zero:
 			//	// FIXME
 			//	push_variable_value(_big_float, data, n, trail);
 
 			case CS_RAW_16:
-				again_fixed_trail_if_zero(ACS_RAW_VALUE, (uint16_t)PTR_CAST_16(n), _raw_zero);
+				again_fixed_trail_if_zero(ACS_RAW_VALUE, _msgpack_load16(uint16_t,n), _raw_zero);
 			case CS_RAW_32:
-				again_fixed_trail_if_zero(ACS_RAW_VALUE, (uint32_t)PTR_CAST_32(n), _raw_zero);
+				again_fixed_trail_if_zero(ACS_RAW_VALUE, _msgpack_load32(uint32_t,n), _raw_zero);
 			case ACS_RAW_VALUE:
 			_raw_zero:
 				push_variable_value(_raw, data, n, trail);
 
 			case CS_ARRAY_16:
-				start_container(_array, (uint16_t)PTR_CAST_16(n), CT_ARRAY_ITEM);
+				start_container(_array, _msgpack_load16(uint16_t,n), CT_ARRAY_ITEM);
 			case CS_ARRAY_32:
 				/* FIXME security guard */
-				start_container(_array, (uint32_t)PTR_CAST_32(n), CT_ARRAY_ITEM);
+				start_container(_array, _msgpack_load32(uint32_t,n), CT_ARRAY_ITEM);
 
 			case CS_MAP_16:
-				start_container(_map, (uint16_t)PTR_CAST_16(n), CT_MAP_KEY);
+				start_container(_map, _msgpack_load16(uint16_t,n), CT_MAP_KEY);
 			case CS_MAP_32:
 				/* FIXME security guard */
-				start_container(_map, (uint32_t)PTR_CAST_32(n), CT_MAP_KEY);
+				start_container(_map, _msgpack_load32(uint32_t,n), CT_MAP_KEY);
 
 			default:
 				goto _failed;
@@ -303,9 +336,8 @@ _push:
 	c = &stack[top-1];
 	switch(c->ct) {
 	case CT_ARRAY_ITEM:
-		if(msgpack_unpack_callback(_array_item)(user, c->curr, &c->obj, obj) < 0) { goto _failed; }
-		if(++c->curr == c->count) {
-			msgpack_unpack_callback(_array_end)(user, &c->obj);
+		if(msgpack_unpack_callback(_array_item)(user, &c->obj, obj) < 0) { goto _failed; }
+		if(--c->count == 0) {
 			obj = c->obj;
 			--top;
 			/*printf("stack pop %d\n", top);*/
@@ -319,7 +351,6 @@ _push:
 	case CT_MAP_VALUE:
 		if(msgpack_unpack_callback(_map_item)(user, &c->obj, c->map_key, obj) < 0) { goto _failed; }
 		if(--c->count == 0) {
-			msgpack_unpack_callback(_map_end)(user, &c->obj);
 			obj = c->obj;
 			--top;
 			/*printf("stack pop %d\n", top);*/
@@ -379,8 +410,4 @@ _end:
 #undef start_container
 
 #undef NEXT_CS
-#undef PTR_CAST_8
-#undef PTR_CAST_16
-#undef PTR_CAST_32
-#undef PTR_CAST_64
 
