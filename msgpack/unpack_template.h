@@ -48,6 +48,7 @@
 
 msgpack_unpack_struct_decl(_stack) {
 	msgpack_unpack_object obj;
+	size_t size;
 	size_t count;
 	unsigned int ct;
 	msgpack_unpack_object map_key;
@@ -140,9 +141,12 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 #define start_container(func, count_, ct_) \
 	if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
 	if(msgpack_unpack_callback(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
-	if((count_) == 0) { obj = stack[top].obj; goto _push; } \
+	if((count_) == 0) { obj = stack[top].obj; \
+		msgpack_unpack_callback(func##_end)(user, &obj); \
+		goto _push; } \
 	stack[top].ct = ct_; \
-	stack[top].count = count_; \
+	stack[top].size  = count_; \
+	stack[top].count = 0; \
 	++top; \
 	/*printf("container %d count %d stack %d\n",stack[top].obj,count_,top);*/ \
 	/*printf("stack push %d\n", top);*/ \
@@ -336,9 +340,10 @@ _push:
 	c = &stack[top-1];
 	switch(c->ct) {
 	case CT_ARRAY_ITEM:
-		if(msgpack_unpack_callback(_array_item)(user, &c->obj, obj) < 0) { goto _failed; }
-		if(--c->count == 0) {
+		if(msgpack_unpack_callback(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
+		if(++c->count == c->size) {
 			obj = c->obj;
+			msgpack_unpack_callback(_array_end)(user, &obj);
 			--top;
 			/*printf("stack pop %d\n", top);*/
 			goto _push;
@@ -350,8 +355,9 @@ _push:
 		goto _header_again;
 	case CT_MAP_VALUE:
 		if(msgpack_unpack_callback(_map_item)(user, &c->obj, c->map_key, obj) < 0) { goto _failed; }
-		if(--c->count == 0) {
+		if(++c->count == c->size) {
 			obj = c->obj;
+			msgpack_unpack_callback(_map_end)(user, &obj);
 			--top;
 			/*printf("stack pop %d\n", top);*/
 			goto _push;
@@ -411,3 +417,4 @@ _end:
 
 #undef NEXT_CS
 
+/* vim: set ts=4 sw=4 noexpandtab  */

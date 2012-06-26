@@ -52,6 +52,7 @@ if sys.platform == 'win32':
 msgpack_mod = Extension('msgpack._msgpack',
                         sources=sources,
                         libraries=libraries,
+                        include_dirs=['.'],
                         )
 del sources, libraries
 

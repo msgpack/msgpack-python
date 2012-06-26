@@ -16,7 +16,7 @@
  *    limitations under the License.
  */
 
-#define MSGPACK_MAX_STACK_SIZE  (1024)
+#define MSGPACK_EMBED_STACK_SIZE  (1024)
 #include "unpack_define.h"
 
 typedef struct unpack_user {
