@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-version = (0, 1, 14, 'dev')
+version = (0, 2, 0, 'dev')
 
 import os
 import sys
@@ -59,13 +59,10 @@ del sources, libraries
 
 
 desc = 'MessagePack (de)serializer.'
-long_desc = """MessagePack (de)serializer for Python.
-
-What's MessagePack? (from http://msgpack.org/)
-
- MessagePack is a binary-based efficient data interchange format that is
- focused on high performance. It is like JSON, but very fast and small.
-"""
+f = open('README.rst')
+long_desc = f.read()
+f.close()
+del f
 
 setup(name='msgpack-python',
       author='INADA Naoki',
