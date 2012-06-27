@@ -5,8 +5,8 @@ version = (0, 2, 0, 'dev')
 import os
 import sys
 from glob import glob
-from distutils.core import setup, Extension
 from distutils.command.sdist import sdist
+from setuptools import setup, Extension
 
 try:
     from Cython.Distutils import build_ext
