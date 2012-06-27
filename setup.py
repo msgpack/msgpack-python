@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
-version = (0, 2, 0, 'dev')
+version = (0, 2, 0)
 
 import os
 import sys
