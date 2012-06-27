@@ -1,11 +1,12 @@
-0.1.14
+0.2.0
 =======
-:release date: NOT RELEASED YET
+:release date: 2012-06-27
 
 Changes
 -------
 * Drop supporting Python 2.5 and unify tests for Py2 and Py3.
 * Use new version of msgpack-c. It packs correctly on big endian platforms.
+* Remove deprecated packs and unpacks API.
 
 Bugs fixed
 ----------
