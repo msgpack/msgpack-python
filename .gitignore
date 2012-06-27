@@ -5,5 +5,8 @@ dist/*
 *.pyc
 *.pyo
 *.so
+*~
 msgpack/__version__.py
 msgpack/_msgpack.c
+msgpack/_msgpack.cpp
+*.egg-info
