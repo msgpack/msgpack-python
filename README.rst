@@ -72,7 +72,7 @@ You can use ``pip`` or ``easy_install`` to install msgpack::
 
 
 Windows
-''''''''
+^^^^^^^
 msgpack provides some binary distribution for Windows.
 You can install msgpack without compiler with them.
 
