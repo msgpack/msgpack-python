@@ -6,12 +6,12 @@ from nose import main
 from nose.tools import *
 from nose.plugins.skip import SkipTest
 
-from msgpack import packs, unpacks, Unpacker, Packer
+from msgpack import packb, unpackb, Unpacker, Packer
 
 from io import BytesIO
 
 def check(data):
-    re = unpacks(packs(data))
+    re = unpackb(packb(data))
     assert_equal(re, data)
 
 def testPack():
@@ -33,7 +33,7 @@ def testPackUnicode():
         six.u(""), six.u("abcd"), (six.u("defgh"),), six.u("Русский текст"),
         ]
     for td in test_data:
-        re = unpacks(packs(td, encoding='utf-8'), encoding='utf-8')
+        re = unpackb(packb(td, encoding='utf-8'), encoding='utf-8')
         assert_equal(re, td)
         packer = Packer(encoding='utf-8')
         data = packer.pack(td)
@@ -49,7 +49,7 @@ def testPackUTF32():
             six.u("Русский текст"),
             ]
         for td in test_data:
-            re = unpacks(packs(td, encoding='utf-32'), encoding='utf-32')
+            re = unpackb(packb(td, encoding='utf-32'), encoding='utf-32')
             assert_equal(re, td)
     except LookupError:
         raise SkipTest
@@ -62,28 +62,28 @@ def testPackBytes():
         check(td)
 
 def testIgnoreUnicodeErrors():
-    re = unpacks(packs(b'abc\xeddef'),
+    re = unpackb(packb(b'abc\xeddef'),
         encoding='utf-8', unicode_errors='ignore')
     assert_equal(re, "abcdef")
 
 @raises(UnicodeDecodeError)
 def testStrictUnicodeUnpack():
-    unpacks(packs(b'abc\xeddef'), encoding='utf-8')
+    unpackb(packb(b'abc\xeddef'), encoding='utf-8')
 
 @raises(UnicodeEncodeError)
 def testStrictUnicodePack():
-    packs(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
+    packb(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():
-    re = unpacks(packs(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8')
+    re = unpackb(packb(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8')
     assert_equal(re, six.u("abcdef"))
 
 @raises(TypeError)
 def testNoEncoding():
-    packs(six.u("abc"), encoding=None)
+    packb(six.u("abc"), encoding=None)
 
 def testDecodeBinary():
-    re = unpacks(packs("abc"), encoding=None)
+    re = unpackb(packb("abc"), encoding=None)
     assert_equal(re, b"abc")
 
 if __name__ == '__main__':

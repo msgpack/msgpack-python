@@ -3,10 +3,10 @@
 
 from nose import main
 from nose.tools import *
-from msgpack import unpacks
+from msgpack import unpackb
 
 def check(src, should):
-    assert_equal(unpacks(src), should)
+    assert_equal(unpackb(src), should)
 
 def testSimpleValue():
     check(b"\x93\xc0\xc2\xc3", 
