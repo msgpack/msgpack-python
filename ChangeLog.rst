@@ -1,3 +1,19 @@
+0.2.1
+=======
+:release date: NOT RELEASED YET
+
+Changes
+-------
+* Add ``max_buffer_size`` parameter to Unpacker. It limits internal buffer size
+  and allows unpack data from untrusted source safely.
+
+* Unpacker's buffer reallocation algorithm is less greedy now. It cause perforamce
+  derease in rare case but memory efficient and don't allocate than ``max_buffer_size``.
+
+Bugs fixed
+----------
+
+
 0.2.0
 =======
 :release date: 2012-06-27

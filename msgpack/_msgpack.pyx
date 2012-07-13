@@ -10,6 +10,9 @@ cdef extern from "Python.h":
 
 from libc.stdlib cimport *
 from libc.string cimport *
+from libc.limits cimport *
+
+
 import gc
 _gc_disable = gc.disable
 _gc_enable = gc.enable
@@ -34,6 +37,11 @@ cdef extern from "pack.h":
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
+
+
+class BufferFull(Exception):
+    pass
+
 
 cdef class Packer(object):
     """MessagePack Packer
@@ -193,7 +201,9 @@ cdef extern from "unpack.h":
     object template_data(template_context* ctx)
 
 
-def unpackb(object packed, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
+def unpackb(object packed, object object_hook=None, object list_hook=None,
+            bint use_list=0, encoding=None, unicode_errors="strict",
+            ):
     """
     Unpack packed_bytes to object. Returns an unpacked object."""
     cdef template_context ctx
@@ -243,12 +253,16 @@ def unpackb(object packed, object object_hook=None, object list_hook=None, bint 
         return None
 
 
-def unpack(object stream, object object_hook=None, object list_hook=None, bint use_list=0, encoding=None, unicode_errors="strict"):
+def unpack(object stream, object object_hook=None, object list_hook=None,
+           bint use_list=0, encoding=None, unicode_errors="strict",
+           ):
     """
     unpack an object from stream.
     """
     return unpackb(stream.read(), use_list=use_list,
-                   object_hook=object_hook, list_hook=list_hook, encoding=encoding, unicode_errors=unicode_errors)
+                   object_hook=object_hook, list_hook=list_hook,
+                   encoding=encoding, unicode_errors=unicode_errors,
+                   )
 
 cdef class Unpacker(object):
     """
@@ -259,7 +273,7 @@ cdef class Unpacker(object):
     When `Unpacker` initialized with `file_like`, unpacker reads serialized data
     from it and `.feed()` method is not usable.
 
-    `read_size` is used as `file_like.read(read_size)`. (default: 1M)
+    `read_size` is used as `file_like.read(read_size)`. (default: 1024**2)
 
     If `use_list` is true, msgpack list is deserialized to Python list.
     Otherwise, it is deserialized to Python tuple. (default: False)
@@ -272,11 +286,24 @@ cdef class Unpacker(object):
 
     `unicode_errors` is used for decoding bytes.
 
-    example::
+    `max_buffer_size` limits size of data waiting unpacked. 0 means unlimited
+    (default).
+    Raises `BufferFull` exception when it is insufficient.
+    You shoud set this parameter when unpacking data from untrasted source.
+
+    example of streaming deserialize from file-like object::
+
+        unpacker = Unpacker(file_like)
+        for o in unpacker:
+            do_something(o)
+
+    example of streaming deserialize from socket::
 
         unpacker = Unpacker()
         while 1:
-            buf = astream.read()
+            buf = sock.recv(1024**2)
+            if not buf:
+                break
             unpacker.feed(buf)
             for o in unpacker:
                 do_something(o)
@@ -293,6 +320,7 @@ cdef class Unpacker(object):
     cdef object _berrors
     cdef char *encoding
     cdef char *unicode_errors
+    cdef size_t max_buffer_size
 
     def __cinit__(self):
         self.buf = NULL
@@ -303,7 +331,7 @@ cdef class Unpacker(object):
 
     def __init__(self, file_like=None, Py_ssize_t read_size=1024*1024, bint use_list=0,
                  object object_hook=None, object list_hook=None,
-                 encoding=None, unicode_errors='strict'):
+                 encoding=None, unicode_errors='strict', int max_buffer_size=0):
         self.use_list = use_list
         self.file_like = file_like
         if file_like:
@@ -314,6 +342,10 @@ cdef class Unpacker(object):
         self.buf = <char*>malloc(read_size)
         if self.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
+        if max_buffer_size:
+            self.max_buffer_size = max_buffer_size
+        else:
+            self.max_buffer_size = INT_MAX
         self.buf_size = read_size
         self.buf_head = 0
         self.buf_tail = 0
@@ -355,28 +387,36 @@ cdef class Unpacker(object):
     cdef append_buffer(self, void* _buf, Py_ssize_t _buf_len):
         cdef:
             char* buf = self.buf
+            char* new_buf
             size_t head = self.buf_head
             size_t tail = self.buf_tail
             size_t buf_size = self.buf_size
             size_t new_size
 
         if tail + _buf_len > buf_size:
-            if ((tail - head) + _buf_len)*2 < buf_size:
+            if ((tail - head) + _buf_len) <= buf_size:
                 # move to front.
                 memmove(buf, buf + head, tail - head)
                 tail -= head
                 head = 0
             else:
                 # expand buffer.
-                new_size = tail + _buf_len
-                if new_size < buf_size*2:
-                    new_size = buf_size*2
-                buf = <char*>realloc(buf, new_size)
-                if buf == NULL:
+                new_size = (tail-head) + _buf_len
+                if new_size > self.max_buffer_size:
+                    raise BufferFull
+                new_size = min(new_size*2, self.max_buffer_size)
+                new_buf = <char*>malloc(new_size)
+                if new_buf == NULL:
                     # self.buf still holds old buffer and will be freed during
                     # obj destruction
                     raise MemoryError("Unable to enlarge internal buffer.")
+                memcpy(new_buf, buf + head, tail - head)
+                free(buf)
+
+                buf = new_buf
                 buf_size = new_size
+                tail -= head
+                head = 0
 
         memcpy(buf + tail, <char*>(_buf), _buf_len)
         self.buf = buf
@@ -387,7 +427,10 @@ cdef class Unpacker(object):
     # prepare self.buf from file_like
     cdef fill_buffer(self):
         if self.file_like is not None:
-            next_bytes = self.file_like_read(self.read_size)
+            next_bytes = self.file_like_read(
+                    max(self.read_size,
+                        self.max_buffer_size - (self.buf_tail - self.buf_head)
+                        ))
             if next_bytes:
                 self.append_buffer(PyBytes_AsString(next_bytes),
                                    PyBytes_Size(next_bytes))
