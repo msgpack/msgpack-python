@@ -267,13 +267,13 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
 cdef class Unpacker(object):
     """
     Streaming unpacker.
-    read_size is used like file_like.read(read_size)
 
     `file_like` is a file-like object having `.read(n)` method.
     When `Unpacker` initialized with `file_like`, unpacker reads serialized data
     from it and `.feed()` method is not usable.
 
-    `read_size` is used as `file_like.read(read_size)`. (default: 1024**2)
+    `read_size` is used as `file_like.read(read_size)`.
+    (default: min(1024**2, max_buffer_size))
 
     If `use_list` is true, msgpack list is deserialized to Python list.
     Otherwise, it is deserialized to Python tuple. (default: False)
@@ -329,7 +329,7 @@ cdef class Unpacker(object):
         free(self.buf)
         self.buf = NULL
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=1024*1024, bint use_list=0,
+    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=0,
                  object object_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0):
         self.use_list = use_list
@@ -340,6 +340,8 @@ cdef class Unpacker(object):
                 raise ValueError("`file_like.read` must be a callable.")
         if not max_buffer_size:
             max_buffer_size = INT_MAX
+        if not read_size:
+            read_size = min(max_buffer_size, 1024**2)
         self.max_buffer_size = max_buffer_size
         if read_size > max_buffer_size:
             raise ValueError("read_size should be less or equal to max_buffer_size")
