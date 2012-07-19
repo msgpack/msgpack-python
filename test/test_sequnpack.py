@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from msgpack import Unpacker
+from msgpack import Unpacker, BufferFull
+import nose
 
 def test_foobar():
     unpacker = Unpacker(read_size=3)
@@ -27,6 +28,19 @@ def test_foobar():
         k += 1
     assert k == len(b'foobar')
 
-if __name__ == '__main__':
-    test_foobar()
 
+def test_maxbuffersize():
+    nose.tools.assert_raises(ValueError, Unpacker, read_size=5, max_buffer_size=3)
+    unpacker = Unpacker(read_size=3, max_buffer_size=3)
+    unpacker.feed(b'fo')
+    nose.tools.assert_raises(BufferFull, unpacker.feed, b'ob')
+    unpacker.feed(b'o')
+    assert ord('f') == next(unpacker)
+    unpacker.feed(b'b')
+    assert ord('o') == next(unpacker)
+    assert ord('o') == next(unpacker)
+    assert ord('b') == next(unpacker)
+
+
+if __name__ == '__main__':
+    nose.main()
