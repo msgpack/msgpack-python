@@ -338,14 +338,15 @@ cdef class Unpacker(object):
             self.file_like_read = file_like.read
             if not PyCallable_Check(self.file_like_read):
                 raise ValueError("`file_like.read` must be a callable.")
+        if not max_buffer_size:
+            max_buffer_size = INT_MAX
+        self.max_buffer_size = max_buffer_size
+        if read_size > max_buffer_size:
+            raise ValueError("read_size should be less or equal to max_buffer_size")
         self.read_size = read_size
         self.buf = <char*>malloc(read_size)
         if self.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
-        if max_buffer_size:
-            self.max_buffer_size = max_buffer_size
-        else:
-            self.max_buffer_size = INT_MAX
         self.buf_size = read_size
         self.buf_head = 0
         self.buf_tail = 0
