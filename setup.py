@@ -32,9 +32,10 @@ if have_cython:
 
     class Sdist(sdist):
         def __init__(self, *args, **kwargs):
+            cy_opt = cython_compiler.default_options.copy()
+            cy_opt['cplus'] = True
             for src in glob('msgpack/*.pyx'):
-                cython_compiler.compile(glob('msgpack/*.pyx'),
-                                        cython_compiler.default_options)
+                cython_compiler.compile(glob('msgpack/*.pyx'), cy_opt)
             sdist.__init__(self, *args, **kwargs)
 else:
     sources = ['msgpack/_msgpack.cpp']
