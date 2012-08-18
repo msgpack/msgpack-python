@@ -33,12 +33,12 @@ if have_cython:
     class Sdist(sdist):
         def __init__(self, *args, **kwargs):
             cy_opt = cython_compiler.default_options.copy()
-            cy_opt['cplus'] = True
+            #cy_opt['cplus'] = True
             for src in glob('msgpack/*.pyx'):
                 cython_compiler.compile(glob('msgpack/*.pyx'), cy_opt)
             sdist.__init__(self, *args, **kwargs)
 else:
-    sources = ['msgpack/_msgpack.cpp']
+    sources = ['msgpack/_msgpack.c']
 
     for f in sources:
         if not os.path.exists(f):
@@ -47,16 +47,24 @@ else:
     Sdist = sdist
 
 libraries = []
+language = 'c'
 if sys.platform == 'win32':
     libraries.append('ws2_32')
+    language = 'c++'
+
+if sys.byteorder == 'big':
+    macros = [('__BIG_ENDIAN__', '1')]
+else:
+    macros = [('__LITTLE_ENDIAN__', '1')]
 
 msgpack_mod = Extension('msgpack._msgpack',
                         sources=sources,
                         libraries=libraries,
                         include_dirs=['.'],
-                        language='c++',
+                        language=language,
+                        define_macros=macros,
                         )
-del sources, libraries
+del sources, libraries, language, macros
 
 
 desc = 'MessagePack (de)serializer.'
@@ -79,7 +87,6 @@ setup(name='msgpack-python',
       classifiers=[
           'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 3',
-          'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: Apache Software License',
           ]
