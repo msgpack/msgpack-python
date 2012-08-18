@@ -49,7 +49,7 @@ Install Cython >= 0.16 or install msgpack from PyPI.
 
 class BuildExt(build_ext):
     def build_extension(self, ext):
-        ext.sources = map(ensure_source, ext.sources)
+        ext.sources = list(map(ensure_source, ext.sources))
         return build_ext.build_extension(self, ext)
 
 
