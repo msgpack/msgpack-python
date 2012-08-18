@@ -53,13 +53,7 @@ class BuildExt(build_ext):
         return build_ext.build_extension(self, ext)
 
 
-# make msgpack/__verison__.py
-f = open('msgpack/__version__.py', 'w')
-try:
-    f.write("version = %r\n" % (version,))
-finally:
-    f.close()
-    del f
+exec(open('msgpack/_version.py').read())
 
 version_str = '.'.join(str(x) for x in version[:3])
 if len(version) > 3 and version[3] != 'final':
