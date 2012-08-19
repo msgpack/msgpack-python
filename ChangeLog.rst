@@ -1,6 +1,6 @@
 0.2.1
 =======
-:release date: NOT RELEASED YET
+:release date: 2012-08-20
 
 Changes
 -------
@@ -12,6 +12,9 @@ Changes
 
 Bugs fixed
 ----------
+* Fix msgpack didn't work on SPARC Solaris. It was because choosing wrong byteorder
+  on compilation time. Use ``sys.byteorder`` to get correct byte order.
+  Very thanks to Chris Casey for giving test environment to me.
 
 
 0.2.0
