@@ -31,11 +31,11 @@ def ensure_source(src):
 Cython is required for building extension from checkout.
 Install Cython >= 0.16 or install msgpack from PyPI.
 """)
-        cythonize(src)
+        cythonize(pyx)
     elif (os.path.exists(pyx) and
           os.stat(src).st_mtime < os.stat(pyx).st_mtime and
           have_cython):
-        cythonize(src)
+        cythonize(pyx)
 
     # Use C++ compiler on win32.
     # MSVC9 doesn't provide stdint.h when using C Compiler.
