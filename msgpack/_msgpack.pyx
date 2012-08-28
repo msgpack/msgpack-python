@@ -26,6 +26,7 @@ cdef extern from "pack.h":
     int msgpack_pack_long(msgpack_packer* pk, long d)
     int msgpack_pack_long_long(msgpack_packer* pk, long long d)
     int msgpack_pack_unsigned_long_long(msgpack_packer* pk, unsigned long long d)
+    int msgpack_pack_float(msgpack_packer* pk, float d)
     int msgpack_pack_double(msgpack_packer* pk, double d)
     int msgpack_pack_array(msgpack_packer* pk, size_t l)
     int msgpack_pack_map(msgpack_packer* pk, size_t l)
@@ -54,6 +55,7 @@ cdef class Packer(object):
     cdef object _berrors
     cdef char *encoding
     cdef char *unicode_errors
+    cdef bool use_float
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
@@ -63,7 +65,8 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict'):
+    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_float=False):
+        self.use_float = use_float
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
@@ -90,7 +93,8 @@ cdef class Packer(object):
         cdef long long llval
         cdef unsigned long long ullval
         cdef long longval
-        cdef double fval
+        cdef float fval
+        cdef double dval
         cdef char* rawval
         cdef int ret
         cdef dict d
@@ -116,8 +120,12 @@ cdef class Packer(object):
             longval = o
             ret = msgpack_pack_long(&self.pk, longval)
         elif PyFloat_Check(o):
-            fval = o
-            ret = msgpack_pack_double(&self.pk, fval)
+            if self.use_float:
+               fval = o
+               ret = msgpack_pack_float(&self.pk, fval)
+            else:
+               dval = o
+               ret = msgpack_pack_double(&self.pk, dval)
         elif PyBytes_Check(o):
             rawval = o
             ret = msgpack_pack_raw(&self.pk, len(o))
