@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import six
+import struct
 from nose import main
 from nose.tools import *
 from nose.plugins.skip import SkipTest
@@ -85,6 +86,10 @@ def testNoEncoding():
 def testDecodeBinary():
     re = unpackb(packb("abc"), encoding=None)
     assert_equal(re, b"abc")
+
+def testPackFloat():
+    assert_equal(packb(1.0, use_single_float=True),  b'\xca' + struct.pack('>f', 1.0))
+    assert_equal(packb(1.0, use_single_float=False), b'\xcb' + struct.pack('>d', 1.0))
 
 if __name__ == '__main__':
     main()

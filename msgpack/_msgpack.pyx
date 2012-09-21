@@ -177,10 +177,11 @@ def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     stream.write(packer.pack(o))
 
-def packb(object o, default=None, encoding='utf-8', unicode_errors='strict'):
+def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False):
     """
     pack o and return packed bytes."""
-    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
+    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors,
+                    use_single_float=use_single_float)
     return packer.pack(o)
 
 
