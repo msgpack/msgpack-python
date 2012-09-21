@@ -65,8 +65,8 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_float=False):
-        self.use_float = use_float
+    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False):
+        self.use_float = use_single_float
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
