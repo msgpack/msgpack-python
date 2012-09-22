@@ -257,7 +257,10 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         ctx.user.list_hook = <PyObject*>list_hook
     ret = template_execute(&ctx, buf, buf_len, &off)
     if ret == 1:
-        return template_data(&ctx)
+        obj = template_data(&ctx)
+        if off < buf_len:
+            raise ValueError("Extra data.")
+        return obj
     else:
         return None
 
@@ -461,7 +464,7 @@ cdef class Unpacker(object):
                 if self.file_like is not None:
                     self.read_from_file()
                     continue
-                raise StopIteration("No more unpack data.")
+                raise StopIteration("No more data to unpack.")
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
