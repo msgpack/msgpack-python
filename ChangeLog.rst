@@ -1,12 +1,19 @@
 0.2.2
 =======
-:release date: NOT RELEASED YET
+:release date: 2012-09-21
+
+Changes
+-------
+* Add ``use_single_float`` option to ``Packer``. When it is true, packs float
+  object in single precision format.
 
 Bugs fixed
 -----------
 * ``unpack()`` didn't restores gc state when it called with gc disabled.
   ``unpack()`` doesn't control gc now instead of restoring gc state collectly.
   User can control gc state when gc cause performance issue.
+
+* ``Unpacker``'s ``read_size`` option didn't used.
 
 0.2.1
 =======

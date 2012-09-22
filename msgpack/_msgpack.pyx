@@ -65,8 +65,8 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_float=False):
-        self.use_float = use_float
+    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False):
+        self.use_float = use_single_float
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
@@ -177,10 +177,11 @@ def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     stream.write(packer.pack(o))
 
-def packb(object o, default=None, encoding='utf-8', unicode_errors='strict'):
+def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False):
     """
     pack o and return packed bytes."""
-    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
+    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors,
+                    use_single_float=use_single_float)
     return packer.pack(o)
 
 
@@ -286,8 +287,8 @@ cdef class Unpacker(object):
 
     `unicode_errors` is used for decoding bytes.
 
-    `max_buffer_size` limits size of data waiting unpacked. 0 means unlimited
-    (default).
+    `max_buffer_size` limits size of data waiting unpacked.
+    0 means system's INT_MAX (default).
     Raises `BufferFull` exception when it is insufficient.
     You shoud set this parameter when unpacking data from untrasted source.
 
@@ -340,11 +341,11 @@ cdef class Unpacker(object):
                 raise ValueError("`file_like.read` must be a callable.")
         if not max_buffer_size:
             max_buffer_size = INT_MAX
+        if read_size > max_buffer_size:
+            raise ValueError("read_size should be less or equal to max_buffer_size")
         if not read_size:
             read_size = min(max_buffer_size, 1024**2)
         self.max_buffer_size = max_buffer_size
-        if read_size > max_buffer_size:
-            raise ValueError("read_size should be less or equal to max_buffer_size")
         self.read_size = read_size
         self.buf = <char*>malloc(read_size)
         if self.buf == NULL:
@@ -427,18 +428,15 @@ cdef class Unpacker(object):
         self.buf_size = buf_size
         self.buf_tail = tail + _buf_len
 
-    # prepare self.buf from file_like
-    cdef fill_buffer(self):
-        if self.file_like is not None:
-            next_bytes = self.file_like_read(
-                    max(self.read_size,
-                        self.max_buffer_size - (self.buf_tail - self.buf_head)
-                        ))
-            if next_bytes:
-                self.append_buffer(PyBytes_AsString(next_bytes),
-                                   PyBytes_Size(next_bytes))
-            else:
-                self.file_like = None
+    cdef read_from_file(self):
+        next_bytes = self.file_like_read(
+                min(self.read_size,
+                    self.max_buffer_size - (self.buf_tail - self.buf_head)
+                    ))
+        if next_bytes:
+            self.append_buffer(PyBytes_AsString(next_bytes), PyBytes_Size(next_bytes))
+        else:
+            self.file_like = None
 
     cpdef _unpack(self, bool construct):
         cdef int ret
@@ -448,7 +446,7 @@ cdef class Unpacker(object):
                 return
             elif ret == 0:
                 if self.file_like is not None:
-                    self.fill_buffer()
+                    self.read_from_file()
                     continue
                 raise StopIteration("No more unpack data.")
             else:
