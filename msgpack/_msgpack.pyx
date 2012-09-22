@@ -140,10 +140,9 @@ cdef class Packer(object):
             if ret == 0:
                 ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
         elif PyDict_Check(o):
-            d = <dict>o
-            ret = msgpack_pack_map(&self.pk, len(d))
+            ret = msgpack_pack_map(&self.pk, len(o))
             if ret == 0:
-                for k,v in d.iteritems():
+                for k,v in o.iteritems():
                     ret = self._pack(k, nest_limit-1)
                     if ret != 0: break
                     ret = self._pack(v, nest_limit-1)
