@@ -139,11 +139,19 @@ cdef class Packer(object):
             ret = msgpack_pack_raw(&self.pk, len(o))
             if ret == 0:
                 ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
-        elif PyDict_Check(o):
+        elif PyDict_CheckExact(o):
             d = <dict>o
             ret = msgpack_pack_map(&self.pk, len(d))
             if ret == 0:
-                for k,v in d.iteritems():
+                for k, v in d.iteritems():
+                    ret = self._pack(k, nest_limit-1)
+                    if ret != 0: break
+                    ret = self._pack(v, nest_limit-1)
+                    if ret != 0: break
+        elif PyDict_Check(o):
+            ret = msgpack_pack_map(&self.pk, len(o))
+            if ret == 0:
+                for k, v in o.items():
                     ret = self._pack(k, nest_limit-1)
                     if ret != 0: break
                     ret = self._pack(v, nest_limit-1)
@@ -332,7 +340,9 @@ cdef class Unpacker(object):
 
     def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=0,
                  object object_hook=None, object list_hook=None,
-                 encoding=None, unicode_errors='strict', int max_buffer_size=0):
+                 encoding=None, unicode_errors='strict', int max_buffer_size=0,
+                 object object_pairs_hook=None,
+                 ):
         self.use_list = use_list
         self.file_like = file_like
         if file_like:

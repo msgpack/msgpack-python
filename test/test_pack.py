@@ -91,5 +91,31 @@ def testPackFloat():
     assert_equal(packb(1.0, use_single_float=True),  b'\xca' + struct.pack('>f', 1.0))
     assert_equal(packb(1.0, use_single_float=False), b'\xcb' + struct.pack('>d', 1.0))
 
+
+class odict(dict):
+    '''Reimplement OrderedDict to run test on Python 2.6'''
+    def __init__(self, seq):
+        self._seq = seq
+        dict.__init__(self, seq)
+
+    def items(self):
+        return self._seq[:]
+
+    def iteritems(self):
+        return iter(self._seq)
+
+    def keys(self):
+        return [x[0] for x in self._seq]
+
+def test_odict():
+    seq = [(b'one', 1), (b'two', 2), (b'three', 3), (b'four', 4)]
+    od = odict(seq)
+    assert_equal(unpackb(packb(od)), dict(seq))
+    # After object_pairs_hook is implemented.
+    #def pair_hook(seq):
+    #    return seq
+    #assert_equal(unpackb(packb(od), object_pairs_hook=pair_hook), seq)
+
+
 if __name__ == '__main__':
     main()

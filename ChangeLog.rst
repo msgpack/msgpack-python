@@ -1,3 +1,14 @@
+0.2.3
+=======
+:release date: in development
+
+Changes
+-------
+
+Bugs fixed
+-----------
+* Can't pack subclass of dict.
+
 0.2.2
 =======
 :release date: 2012-09-21
