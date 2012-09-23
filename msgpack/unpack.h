@@ -27,6 +27,12 @@ typedef struct unpack_user {
     const char *unicode_errors;
 } unpack_user;
 
+typedef enum {
+    EXEC_SKIP,
+    EXEC_CONSTRUCT,
+    EXEC_ARRAY_SIZE,
+    EXEC_MAP_SIZE
+} ExecMode;
 
 #define msgpack_unpack_struct(name) \
 	struct template ## name

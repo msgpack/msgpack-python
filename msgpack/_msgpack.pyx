@@ -178,6 +178,19 @@ cdef class Packer(object):
         self.pk.length = 0
         return buf
 
+    cpdef pack_array_header(self, size_t size):
+        """returns the header for an array of the given size n, to be followed by its n packed elements"""
+        msgpack_pack_array(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
+
+    cpdef pack_map_header(self, size_t size):
+        """returns the header for a map of the given size n, to be followed by its n packed key-value pairs"""
+        msgpack_pack_map(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
     """
@@ -192,6 +205,11 @@ def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', use
                     use_single_float=use_single_float)
     return packer.pack(o)
 
+cdef enum ExecMode:
+    EXEC_SKIP,
+    EXEC_CONSTRUCT,
+    EXEC_ARRAY_SIZE,
+    EXEC_MAP_SIZE
 
 cdef extern from "unpack.h":
     ctypedef struct msgpack_user:
@@ -209,7 +227,7 @@ cdef extern from "unpack.h":
         PyObject* key
 
     int template_execute(template_context* ctx, const_char_ptr data,
-                         size_t len, size_t* off, bint construct) except -1
+                         size_t len, size_t* off, ExecMode exec_mode)
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
@@ -257,7 +275,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if not PyCallable_Check(list_hook):
             raise TypeError("list_hook must be a callable.")
         ctx.user.list_hook = <PyObject*>list_hook
-    ret = template_execute(&ctx, buf, buf_len, &off, 1)
+    ret = template_execute(&ctx, buf, buf_len, &off, EXEC_CONSTRUCT)
     if ret == 1:
         obj = template_data(&ctx)
         if off < buf_len:
@@ -279,6 +297,14 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
                    encoding=encoding, unicode_errors=unicode_errors,
                    )
 
+class UnpackException(ValueError):
+    def __init__(self, code, *args, **kwargs):
+        self.code = code
+        super(UnpackException, self).__init__(*args, **kwargs)
+
+class UnexpectedTypeException(UnpackException):
+    def __init__(self, *args, **kwargs):
+        super(UnexpectedTypeException, self).__init__(-2, *args, **kwargs)
 
 cdef class Unpacker(object):
     """
@@ -455,13 +481,13 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cdef object _unpack(self, bint construct):
+    cdef object _unpack(self, ExecMode exec_mode):
         cdef int ret
         cdef object obj
         while 1:
-            ret = template_execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head, construct)
+            ret = template_execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head, exec_mode)
             if ret == 1:
-                if construct:
+                if exec_mode:
                     obj = template_data(&self.ctx)
                 else:
                     obj = None
@@ -473,21 +499,39 @@ cdef class Unpacker(object):
                     continue
                 raise StopIteration("No more data to unpack.")
             else:
-                raise ValueError("Unpack failed: error = %d" % (ret,))
+                raise UnpackException(ret, "Unpack failed: error = %d" % (ret,))
 
     def unpack(self):
         """unpack one object"""
-        return self._unpack(1)
+        return self._unpack(EXEC_CONSTRUCT)
 
     def skip(self):
         """read and ignore one object, returning None"""
-        return self._unpack(0)
+        return self._unpack(EXEC_SKIP)
+
+    def read_array_header(self):
+        """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
+        try:
+            return self._unpack(EXEC_ARRAY_SIZE)
+        except UnpackException as exc:
+            if exc.code == -2:
+                raise UnexpectedTypeException('Did not find an array header')
+            raise
+
+    def read_map_header(self):
+        """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
+        try:
+            return self._unpack(EXEC_MAP_SIZE)
+        except UnpackException as exc:
+            if exc.code == -2:
+                raise UnexpectedTypeException('Did not find a map header')
+            raise
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        return self._unpack(1)
+        return self._unpack(EXEC_CONSTRUCT)
 
     # for debug.
     #def _buf(self):
