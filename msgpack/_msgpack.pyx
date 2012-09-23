@@ -451,7 +451,7 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cdef _unpack(self, bint construct):
+    cdef object _unpack(self, bint construct):
         cdef int ret
         cdef object obj
         while 1:
