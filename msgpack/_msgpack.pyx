@@ -458,13 +458,11 @@ cdef class Unpacker(object):
     def read_bytes(self, Py_ssize_t nbytes):
         """read a specified number of raw bytes from the stream"""
         cdef size_t nread
-        ret = ''
-        while len(ret) < nbytes and self.file_like is not None:
-            if self.buf_head == self.buf_tail:
-                self.fill_buffer()
-            nread = min(self.buf_tail - self.buf_head, nbytes - len(ret))
-            ret += PyBytes_FromStringAndSize(self.buf + self.buf_head, nread)
-            self.buf_head += nread
+        nread = min(self.buf_tail - self.buf_head, nbytes)
+        ret = PyBytes_FromStringAndSize(self.buf + self.buf_head, nread)
+        self.buf_head += nread
+        if len(ret) < nbytes and self.file_like is not None:
+            ret += self.file_like.read(nbytes - len(ret))
         return ret
 
     def __iter__(self):
