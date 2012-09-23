@@ -95,7 +95,7 @@ msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context
 }
 
 
-msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off)
+msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off, int construct)
 {
 	assert(len >= *off);
 
@@ -117,14 +117,17 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 
 	int ret;
 
+#define construct_cb(name) \
+    construct && msgpack_unpack_callback(name)
+
 #define push_simple_value(func) \
-	if(msgpack_unpack_callback(func)(user, &obj) < 0) { goto _failed; } \
+	if(construct_cb(func)(user, &obj) < 0) { goto _failed; } \
 	goto _push
 #define push_fixed_value(func, arg) \
-	if(msgpack_unpack_callback(func)(user, arg, &obj) < 0) { goto _failed; } \
+	if(construct_cb(func)(user, arg, &obj) < 0) { goto _failed; } \
 	goto _push
 #define push_variable_value(func, base, pos, len) \
-	if(msgpack_unpack_callback(func)(user, \
+	if(construct_cb(func)(user, \
 		(const char*)base, (const char*)pos, len, &obj) < 0) { goto _failed; } \
 	goto _push
 
@@ -140,9 +143,9 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 
 #define start_container(func, count_, ct_) \
 	if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
-	if(msgpack_unpack_callback(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
+	if(construct_cb(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
 	if((count_) == 0) { obj = stack[top].obj; \
-		msgpack_unpack_callback(func##_end)(user, &obj); \
+		construct_cb(func##_end)(user, &obj); \
 		goto _push; } \
 	stack[top].ct = ct_; \
 	stack[top].size  = count_; \
@@ -340,10 +343,10 @@ _push:
 	c = &stack[top-1];
 	switch(c->ct) {
 	case CT_ARRAY_ITEM:
-		if(msgpack_unpack_callback(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
+		if(construct_cb(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
 		if(++c->count == c->size) {
 			obj = c->obj;
-			msgpack_unpack_callback(_array_end)(user, &obj);
+			construct_cb(_array_end)(user, &obj);
 			--top;
 			/*printf("stack pop %d\n", top);*/
 			goto _push;
@@ -354,10 +357,10 @@ _push:
 		c->ct = CT_MAP_VALUE;
 		goto _header_again;
 	case CT_MAP_VALUE:
-		if(msgpack_unpack_callback(_map_item)(user, &c->obj, c->map_key, obj) < 0) { goto _failed; }
+		if(construct_cb(_map_item)(user, &c->obj, c->map_key, obj) < 0) { goto _failed; }
 		if(++c->count == c->size) {
 			obj = c->obj;
-			msgpack_unpack_callback(_map_end)(user, &obj);
+			construct_cb(_map_end)(user, &obj);
 			--top;
 			/*printf("stack pop %d\n", top);*/
 			goto _push;
@@ -399,6 +402,7 @@ _end:
 	*off = p - (const unsigned char*)data;
 
 	return ret;
+#undef construct_cb
 }
 
 
