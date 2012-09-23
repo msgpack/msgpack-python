@@ -147,8 +147,12 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	goto _finish_size;
 
 #define start_container(func, count_, ct_) \
-	if(exec_mode == EXEC_ARRAY_SIZE && ct_ == CT_ARRAY_ITEM) { return_size(count_); } \
-	else if(exec_mode == EXEC_MAP_SIZE && ct_ == CT_MAP_KEY) { return_size(count_); } \
+	switch(exec_mode) { \
+	case EXEC_ARRAY_SIZE: \
+		if (ct_ == CT_ARRAY_ITEM) { return_size(count_); } break; \
+	case EXEC_MAP_SIZE: \
+		if (ct_ == CT_MAP_KEY) { return_size(count_); } break; \
+	} \
 	if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
 	if(construct_cb(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
 	if((count_) == 0) { obj = stack[top].obj; \
