@@ -31,14 +31,14 @@ def testPack():
 
 def testPackUnicode():
     test_data = [
-        six.u(""), six.u("abcd"), (six.u("defgh"),), six.u("Русский текст"),
+        six.u(""), six.u("abcd"), [six.u("defgh")], six.u("Русский текст"),
         ]
     for td in test_data:
-        re = unpackb(packb(td, encoding='utf-8'), use_list=0, encoding='utf-8')
+        re = unpackb(packb(td, encoding='utf-8'), use_list=1, encoding='utf-8')
         assert_equal(re, td)
         packer = Packer(encoding='utf-8')
         data = packer.pack(td)
-        re = Unpacker(BytesIO(data), encoding='utf-8').unpack()
+        re = Unpacker(BytesIO(data), encoding='utf-8', use_list=1).unpack()
         assert_equal(re, td)
 
 def testPackUTF32():
@@ -63,20 +63,19 @@ def testPackBytes():
         check(td)
 
 def testIgnoreUnicodeErrors():
-    re = unpackb(packb(b'abc\xeddef'),
-        encoding='utf-8', unicode_errors='ignore')
+    re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
     assert_equal(re, "abcdef")
 
 @raises(UnicodeDecodeError)
 def testStrictUnicodeUnpack():
-    unpackb(packb(b'abc\xeddef'), encoding='utf-8')
+    unpackb(packb(b'abc\xeddef'), encoding='utf-8', use_list=1)
 
 @raises(UnicodeEncodeError)
 def testStrictUnicodePack():
     packb(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():
-    re = unpackb(packb(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8')
+    re = unpackb(packb(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8', use_list=1)
     assert_equal(re, six.u("abcdef"))
 
 @raises(TypeError)
@@ -84,7 +83,7 @@ def testNoEncoding():
     packb(six.u("abc"), encoding=None)
 
 def testDecodeBinary():
-    re = unpackb(packb("abc"), encoding=None)
+    re = unpackb(packb("abc"), encoding=None, use_list=1)
     assert_equal(re, b"abc")
 
 def testPackFloat():
