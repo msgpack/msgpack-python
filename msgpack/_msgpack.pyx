@@ -269,7 +269,7 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
            bint use_list=0, encoding=None, unicode_errors="strict",
            ):
     """
-    unpack an object from stream.
+    unpack an object from stream. discards any content remaining on the stream after the unpacked object.
     """
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, list_hook=list_hook,
