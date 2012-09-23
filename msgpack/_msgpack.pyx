@@ -217,8 +217,10 @@ cdef extern from "unpack.h":
 def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=0, encoding=None, unicode_errors="strict",
             ):
+    """Unpack packed_bytes to object. Returns an unpacked object.
+
+    Raises `ValueError` when `packed` contains extra bytes.
     """
-    Unpack packed_bytes to object. Returns an unpacked object."""
     cdef template_context ctx
     cdef size_t off = 0
     cdef int ret
@@ -268,13 +270,15 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 def unpack(object stream, object object_hook=None, object list_hook=None,
            bint use_list=0, encoding=None, unicode_errors="strict",
            ):
-    """
-    unpack an object from stream.
+    """Unpack an object from `stream`.
+
+    Raises `ValueError` when `stream` has extra bytes.
     """
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, list_hook=list_hook,
                    encoding=encoding, unicode_errors=unicode_errors,
                    )
+
 
 cdef class Unpacker(object):
     """
