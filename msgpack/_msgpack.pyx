@@ -179,12 +179,14 @@ cdef class Packer(object):
         return buf
 
     cpdef pack_array_header(self, size_t size):
+        """returns the header for an array of the given size n, to be followed by its n packed elements"""
         msgpack_pack_array(&self.pk, size)
         buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
         self.pk.length = 0
         return buf
 
     cpdef pack_map_header(self, size_t size):
+        """returns the header for a map of the given size n, to be followed by its n packed key-value pairs"""
         msgpack_pack_map(&self.pk, size)
         buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
         self.pk.length = 0
