@@ -227,7 +227,7 @@ cdef extern from "unpack.h":
         PyObject* key
 
     int template_execute(template_context* ctx, const_char_ptr data,
-                         size_t len, size_t* off, ExecMode exec_mode)
+                         size_t len, size_t* off, ExecMode exec_mode) except -1
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
