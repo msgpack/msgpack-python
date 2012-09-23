@@ -500,7 +500,7 @@ cdef class Unpacker(object):
         """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
         try:
             return self._unpack(EXEC_ARRAY_SIZE)
-        except UnpackException, exc:
+        except UnpackException as exc:
             if exc.code == -2:
                 raise UnexpectedTypeException('Did not find an array header')
             raise
@@ -509,7 +509,7 @@ cdef class Unpacker(object):
         """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
         try:
             return self._unpack(EXEC_MAP_SIZE)
-        except UnpackException, exc:
+        except UnpackException as exc:
             if exc.code == -2:
                 raise UnexpectedTypeException('Did not find a map header')
             raise
