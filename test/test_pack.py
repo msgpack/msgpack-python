@@ -110,10 +110,9 @@ def test_odict():
     seq = [(b'one', 1), (b'two', 2), (b'three', 3), (b'four', 4)]
     od = odict(seq)
     assert_equal(unpackb(packb(od), use_list=1), dict(seq))
-    # After object_pairs_hook is implemented.
-    #def pair_hook(seq):
-    #    return seq
-    #assert_equal(unpackb(packb(od), object_pairs_hook=pair_hook), seq)
+    def pair_hook(seq):
+        return seq
+    assert_equal(unpackb(packb(od), object_pairs_hook=pair_hook), seq)
 
 
 if __name__ == '__main__':
