@@ -95,7 +95,7 @@ msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context
 }
 
 
-msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off, int construct)
+msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off, const ExecMode exec_mode)
 {
 	assert(len >= *off);
 
@@ -118,7 +118,7 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	int ret;
 
 #define construct_cb(name) \
-    construct && msgpack_unpack_callback(name)
+	exec_mode && msgpack_unpack_callback(name)
 
 #define push_simple_value(func) \
 	if(construct_cb(func)(user, &obj) < 0) { goto _failed; } \
@@ -141,7 +141,14 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	cs = _cs; \
 	goto _fixed_trail_again
 
+#define return_size(count_) \
+	if (top) { goto _wrong_type; } \
+	msgpack_unpack_callback(_uint32)(user, count_, &obj); \
+	goto _finish_size;
+
 #define start_container(func, count_, ct_) \
+	if(exec_mode == EXEC_ARRAY_SIZE && ct_ == CT_ARRAY_ITEM) { return_size(count_); } \
+	else if(exec_mode == EXEC_MAP_SIZE && ct_ == CT_MAP_KEY) { return_size(count_); } \
 	if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
 	if(construct_cb(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
 	if((count_) == 0) { obj = stack[top].obj; \
@@ -380,6 +387,10 @@ _header_again:
 
 
 _finish:
+	if (exec_mode == EXEC_ARRAY_SIZE || exec_mode == EXEC_MAP_SIZE)
+		goto _wrong_type;
+
+_finish_size:
 	stack[0].obj = obj;
 	++p;
 	ret = 1;
@@ -389,6 +400,10 @@ _finish:
 _failed:
 	/*printf("** FAILED **\n"); */
 	ret = -1;
+	goto _end;
+
+_wrong_type:
+	ret = -2;
 	goto _end;
 
 _out:
@@ -402,7 +417,6 @@ _end:
 	*off = p - (const unsigned char*)data;
 
 	return ret;
-#undef construct_cb
 }
 
 
@@ -412,6 +426,8 @@ _end:
 #undef msgpack_unpack_object
 #undef msgpack_unpack_user
 
+#undef construct_cb
+#undef return_size
 #undef push_simple_value
 #undef push_fixed_value
 #undef push_variable_value
