@@ -29,7 +29,7 @@ def test_decode_hook():
 def test_decode_pairs_hook():
     packed = packb([3, {1: 2, 3: 4}])
     prod_sum = 1 * 2 + 3 * 4
-    unpacked = unpackb(packed, object_pairs_hook=lambda l: sum(k * v for k, v in l))
+    unpacked = unpackb(packed, object_pairs_hook=lambda l: sum(k * v for k, v in l), use_list=1)
     eq_(unpacked[1], prod_sum)
 
 @raises(ValueError)
