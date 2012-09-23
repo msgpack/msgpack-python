@@ -9,8 +9,8 @@ def test_unpack_buffer():
     from array import array
     buf = array('b')
     buf.fromstring(packb(('foo', 'bar')))
-    obj = unpackb(buf)
-    assert_equal((b'foo', b'bar'), obj)
+    obj = unpackb(buf, use_list=1)
+    assert_equal([b'foo', b'bar'], obj)
 
 if __name__ == '__main__':
     main()

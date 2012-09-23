@@ -1,12 +1,16 @@
 # coding: utf-8
 #cython: embedsignature=True
 
+import warnings
+
 from cpython cimport *
 cdef extern from "Python.h":
     ctypedef char* const_char_ptr "const char*"
     ctypedef char* const_void_ptr "const void*"
     ctypedef struct PyObject
     cdef int PyObject_AsReadBuffer(object o, const_void_ptr* buff, Py_ssize_t* buf_len) except -1
+    char* __FILE__
+    int __LINE__
 
 from libc.stdlib cimport *
 from libc.string cimport *
@@ -195,7 +199,7 @@ def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', use
 
 cdef extern from "unpack.h":
     ctypedef struct msgpack_user:
-        int use_list
+        bint use_list
         PyObject* object_hook
         PyObject* list_hook
         char *encoding
@@ -215,7 +219,7 @@ cdef extern from "unpack.h":
 
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
-            bint use_list=0, encoding=None, unicode_errors="strict",
+            use_list=None, encoding=None, unicode_errors="strict",
             ):
     """Unpack packed_bytes to object. Returns an unpacked object.
 
@@ -227,6 +231,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
     cdef char* buf
     cdef Py_ssize_t buf_len
+
     PyObject_AsReadBuffer(packed, <const_void_ptr*>&buf, &buf_len)
 
     if encoding is None:
@@ -245,7 +250,11 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         err = PyBytes_AsString(berrors)
 
     template_init(&ctx)
-    ctx.user.use_list = use_list
+    if use_list is None:
+        warnings.warn("Set use_list explicitly.", category=DeprecationWarning, stacklevel=1)
+        ctx.user.use_list = 0
+    else:
+        ctx.user.use_list = use_list
     ctx.user.object_hook = ctx.user.list_hook = NULL
     ctx.user.encoding = <const_char_ptr>enc
     ctx.user.unicode_errors = <const_char_ptr>err
@@ -268,12 +277,15 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
-           bint use_list=0, encoding=None, unicode_errors="strict",
+           use_list=None, encoding=None, unicode_errors="strict",
            ):
     """Unpack an object from `stream`.
 
     Raises `ValueError` when `stream` has extra bytes.
     """
+    if use_list is None:
+        warnings.warn("Set use_list explicitly.", category=DeprecationWarning, stacklevel=1)
+        use_list = 0
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, list_hook=list_hook,
                    encoding=encoding, unicode_errors=unicode_errors,
@@ -292,7 +304,7 @@ cdef class Unpacker(object):
     (default: min(1024**2, max_buffer_size))
 
     If `use_list` is true, msgpack list is deserialized to Python list.
-    Otherwise, it is deserialized to Python tuple. (default: False)
+    Otherwise, it is deserialized to Python tuple.
 
     `object_hook` is same to simplejson. If it is not None, it should be callable
     and Unpacker calls it when deserializing key-value.
@@ -330,7 +342,6 @@ cdef class Unpacker(object):
     cdef object file_like
     cdef object file_like_read
     cdef Py_ssize_t read_size
-    cdef bint use_list
     cdef object object_hook
     cdef object _bencoding
     cdef object _berrors
@@ -345,12 +356,15 @@ cdef class Unpacker(object):
         free(self.buf)
         self.buf = NULL
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=0,
+    def __init__(self, file_like=None, Py_ssize_t read_size=0, use_list=None,
                  object object_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  object object_pairs_hook=None,
                  ):
-        self.use_list = use_list
+        if use_list is None:
+            warnings.warn("Set use_list explicitly.", category=DeprecationWarning, stacklevel=1)
+            use_list = 0
+
         self.file_like = file_like
         if file_like:
             self.file_like_read = file_like.read

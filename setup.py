@@ -18,7 +18,7 @@ except ImportError:
 
 def cythonize(src):
     sys.stderr.write("cythonize: %r\n" % (src,))
-    cython_compiler.compile([src])
+    cython_compiler.compile([src], emit_linenums=True)
 
 def ensure_source(src):
     pyx = os.path.splitext(src)[0] + '.pyx'

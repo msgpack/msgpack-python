@@ -5,7 +5,7 @@ from msgpack import Unpacker, BufferFull
 import nose
 
 def test_foobar():
-    unpacker = Unpacker(read_size=3)
+    unpacker = Unpacker(read_size=3, use_list=1)
     unpacker.feed(b'foobar')
     assert unpacker.unpack() == ord(b'f')
     assert unpacker.unpack() == ord(b'o')
@@ -29,7 +29,7 @@ def test_foobar():
     assert k == len(b'foobar')
 
 def test_foobar_skip():
-    unpacker = Unpacker(read_size=3)
+    unpacker = Unpacker(read_size=3, use_list=1)
     unpacker.feed(b'foobar')
     assert unpacker.unpack() == ord(b'f')
     unpacker.skip()
@@ -45,7 +45,7 @@ def test_foobar_skip():
 
 def test_maxbuffersize():
     nose.tools.assert_raises(ValueError, Unpacker, read_size=5, max_buffer_size=3)
-    unpacker = Unpacker(read_size=3, max_buffer_size=3)
+    unpacker = Unpacker(read_size=3, max_buffer_size=3, use_list=1)
     unpacker.feed(b'fo')
     nose.tools.assert_raises(BufferFull, unpacker.feed, b'ob')
     unpacker.feed(b'o')

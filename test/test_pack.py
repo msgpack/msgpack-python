@@ -11,8 +11,8 @@ from msgpack import packb, unpackb, Unpacker, Packer
 
 from io import BytesIO
 
-def check(data):
-    re = unpackb(packb(data))
+def check(data, use_list=False):
+    re = unpackb(packb(data), use_list=use_list)
     assert_equal(re, data)
 
 def testPack():
@@ -34,7 +34,7 @@ def testPackUnicode():
         six.u(""), six.u("abcd"), (six.u("defgh"),), six.u("Русский текст"),
         ]
     for td in test_data:
-        re = unpackb(packb(td, encoding='utf-8'), encoding='utf-8')
+        re = unpackb(packb(td, encoding='utf-8'), use_list=0, encoding='utf-8')
         assert_equal(re, td)
         packer = Packer(encoding='utf-8')
         data = packer.pack(td)
@@ -46,11 +46,11 @@ def testPackUTF32():
         test_data = [
             six.u(""),
             six.u("abcd"),
-            (six.u("defgh"),),
+            [six.u("defgh")],
             six.u("Русский текст"),
             ]
         for td in test_data:
-            re = unpackb(packb(td, encoding='utf-32'), encoding='utf-32')
+            re = unpackb(packb(td, encoding='utf-32'), use_list=1, encoding='utf-32')
             assert_equal(re, td)
     except LookupError:
         raise SkipTest
@@ -110,7 +110,7 @@ class odict(dict):
 def test_odict():
     seq = [(b'one', 1), (b'two', 2), (b'three', 3), (b'four', 4)]
     od = odict(seq)
-    assert_equal(unpackb(packb(od)), dict(seq))
+    assert_equal(unpackb(packb(od), use_list=1), dict(seq))
     # After object_pairs_hook is implemented.
     #def pair_hook(seq):
     #    return seq
