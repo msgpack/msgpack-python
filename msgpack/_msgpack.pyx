@@ -209,7 +209,7 @@ cdef extern from "unpack.h":
         PyObject* key
 
     int template_execute(template_context* ctx, const_char_ptr data,
-                         size_t len, size_t* off, bool construct) except -1
+                         size_t len, size_t* off, bint construct) except -1
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
@@ -255,7 +255,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if not PyCallable_Check(list_hook):
             raise TypeError("list_hook must be a callable.")
         ctx.user.list_hook = <PyObject*>list_hook
-    ret = template_execute(&ctx, buf, buf_len, &off, True)
+    ret = template_execute(&ctx, buf, buf_len, &off, 1)
     if ret == 1:
         obj = template_data(&ctx)
         if off < buf_len:
@@ -451,12 +451,18 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cpdef _unpack(self, bool construct):
+    cdef _unpack(self, bint construct):
         cdef int ret
+        cdef object obj
         while 1:
             ret = template_execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head, construct)
             if ret == 1:
-                return
+                if construct:
+                    obj = template_data(&self.ctx)
+                else:
+                    obj = None
+                template_init(&self.ctx)
+                return obj
             elif ret == 0:
                 if self.file_like is not None:
                     self.read_from_file()
@@ -465,23 +471,19 @@ cdef class Unpacker(object):
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
-    cpdef unpack(self):
+    def unpack(self):
         """unpack one object"""
-        self._unpack(True)
-        o = template_data(&self.ctx)
-        template_init(&self.ctx)
+        return self._unpack(1)
 
-
-    cpdef skip(self):
+    def skip(self):
         """read and ignore one object, returning None"""
-        self._unpack(False)
-        template_init(&self.ctx)
+        return self._unpack(0)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        return self.unpack()
+        return self._unpack(1)
 
     # for debug.
     #def _buf(self):
