@@ -219,7 +219,7 @@ cdef extern from "unpack.h":
 
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
-            use_list=None, encoding=None, unicode_errors="strict",
+            bint use_list=1, encoding=None, unicode_errors="strict",
             ):
     """Unpack packed_bytes to object. Returns an unpacked object.
 
@@ -250,11 +250,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         err = PyBytes_AsString(berrors)
 
     template_init(&ctx)
-    if use_list is None:
-        warnings.warn("Set use_list explicitly.", category=DeprecationWarning, stacklevel=1)
-        ctx.user.use_list = 0
-    else:
-        ctx.user.use_list = use_list
+    ctx.user.use_list = use_list
     ctx.user.object_hook = ctx.user.list_hook = NULL
     ctx.user.encoding = <const_char_ptr>enc
     ctx.user.unicode_errors = <const_char_ptr>err
@@ -277,15 +273,12 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
-           use_list=None, encoding=None, unicode_errors="strict",
+           bint use_list=1, encoding=None, unicode_errors="strict",
            ):
     """Unpack an object from `stream`.
 
     Raises `ValueError` when `stream` has extra bytes.
     """
-    if use_list is None:
-        warnings.warn("Set use_list explicitly.", category=DeprecationWarning, stacklevel=1)
-        use_list = 0
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, list_hook=list_hook,
                    encoding=encoding, unicode_errors=unicode_errors,
@@ -356,15 +349,11 @@ cdef class Unpacker(object):
         free(self.buf)
         self.buf = NULL
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=0, use_list=None,
+    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1,
                  object object_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  object object_pairs_hook=None,
                  ):
-        if use_list is None:
-            warnings.warn("Set use_list explicitly.", category=DeprecationWarning, stacklevel=1)
-            use_list = 0
-
         self.file_like = file_like
         if file_like:
             self.file_like_read = file_like.read
