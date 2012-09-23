@@ -197,6 +197,7 @@ cdef extern from "unpack.h":
     ctypedef struct msgpack_user:
         int use_list
         PyObject* object_hook
+        bint has_pairs_hook # call object_hook with k-v pairs
         PyObject* list_hook
         char *encoding
         char *unicode_errors
@@ -213,18 +214,32 @@ cdef extern from "unpack.h":
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
-cdef inline init_ctx(template_context *ctx, object object_hook, object list_hook, bint use_list, encoding, unicode_errors):
+cdef inline init_ctx(template_context *ctx, object object_hook, object object_pairs_hook, object list_hook, bint use_list, encoding, unicode_errors):
     template_init(ctx)
     ctx.user.use_list = use_list
     ctx.user.object_hook = ctx.user.list_hook = <PyObject*>NULL
+
+    if object_hook is not None and object_pairs_hook is not None:
+        raise ValueError("object_pairs_hook and object_hook are mutually exclusive.")
+
     if object_hook is not None:
         if not PyCallable_Check(object_hook):
             raise TypeError("object_hook must be a callable.")
         ctx.user.object_hook = <PyObject*>object_hook
+
+    if object_pairs_hook is None:
+        ctx.user.has_pairs_hook = False
+    else:
+        if not PyCallable_Check(object_pairs_hook):
+            raise TypeError("object_pairs_hook must be a callable.")
+        ctx.user.object_hook = <PyObject*>object_pairs_hook
+        ctx.user.has_pairs_hook = True
+
     if list_hook is not None:
         if not PyCallable_Check(list_hook):
             raise TypeError("list_hook must be a callable.")
         ctx.user.list_hook = <PyObject*>list_hook
+
     if encoding is None:
         ctx.user.encoding = NULL
         ctx.user.unicode_errors = NULL
@@ -240,7 +255,7 @@ cdef inline init_ctx(template_context *ctx, object object_hook, object list_hook
             _berrors = unicode_errors
         ctx.user.unicode_errors = PyBytes_AsString(_berrors)
 
-def unpackb(object packed, object object_hook=None, object list_hook=None,
+def unpackb(object packed, object object_hook=None, object object_pairs_hook=None, object list_hook=None,
             bint use_list=0, encoding=None, unicode_errors="strict",
             ):
     """Unpack packed_bytes to object. Returns an unpacked object.
@@ -255,7 +270,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef Py_ssize_t buf_len
     PyObject_AsReadBuffer(packed, <const_void_ptr*>&buf, &buf_len)
 
-    init_ctx(&ctx, object_hook, list_hook, use_list, encoding, unicode_errors)
+    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, encoding, unicode_errors)
     ret = template_execute(&ctx, buf, buf_len, &off, 1)
     if ret == 1:
         obj = template_data(&ctx)
@@ -266,7 +281,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         return None
 
 
-def unpack(object stream, object object_hook=None, object list_hook=None,
+def unpack(object stream, object object_hook=None, object object_pairs_hook=None, object list_hook=None,
            bint use_list=0, encoding=None, unicode_errors="strict",
            ):
     """Unpack an object from `stream`.
@@ -274,7 +289,7 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
     Raises `ValueError` when `stream` has extra bytes.
     """
     return unpackb(stream.read(), use_list=use_list,
-                   object_hook=object_hook, list_hook=list_hook,
+                   object_hook=object_hook, object_pairs_hook=object_pairs_hook, list_hook=list_hook,
                    encoding=encoding, unicode_errors=unicode_errors,
                    )
 
@@ -294,7 +309,10 @@ cdef class Unpacker(object):
     Otherwise, it is deserialized to Python tuple. (default: False)
 
     `object_hook` is same to simplejson. If it is not None, it should be callable
-    and Unpacker calls it when deserializing key-value.
+    and Unpacker calls it with a dict argument after deserializing a map.
+
+    `object_pairs_hook` is same to simplejson. If it is not None, it should be callable
+    and Unpacker calls it with a list of key-value pairs after deserializing a map.
 
     `encoding` is encoding used for decoding msgpack bytes. If it is None (default),
     msgpack bytes is deserialized to Python bytes.
@@ -345,7 +363,7 @@ cdef class Unpacker(object):
         self.buf = NULL
 
     def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=0,
-                 object object_hook=None, object list_hook=None,
+                 object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  ):
         self.use_list = use_list
@@ -368,7 +386,7 @@ cdef class Unpacker(object):
         self.buf_size = read_size
         self.buf_head = 0
         self.buf_tail = 0
-        init_ctx(&self.ctx, object_hook, list_hook, use_list, encoding, unicode_errors)
+        init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, encoding, unicode_errors)
 
     def feed(self, object next_bytes):
         cdef char* buf
