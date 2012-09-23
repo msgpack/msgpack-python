@@ -178,6 +178,17 @@ cdef class Packer(object):
         self.pk.length = 0
         return buf
 
+    cpdef pack_array_header(self, size_t size):
+        msgpack_pack_array(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
+
+    cpdef pack_map_header(self, size_t size):
+        msgpack_pack_map(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
     """
