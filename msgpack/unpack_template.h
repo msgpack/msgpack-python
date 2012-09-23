@@ -357,7 +357,7 @@ _push:
 		c->ct = CT_MAP_VALUE;
 		goto _header_again;
 	case CT_MAP_VALUE:
-		if(construct_cb(_map_item)(user, &c->obj, c->map_key, obj) < 0) { goto _failed; }
+		if(construct_cb(_map_item)(user, c->count, &c->obj, c->map_key, obj) < 0) { goto _failed; }
 		if(++c->count == c->size) {
 			obj = c->obj;
 			construct_cb(_map_end)(user, &obj);

@@ -26,6 +26,16 @@ def test_decode_hook():
     unpacked = unpackb(packed, object_hook=_decode_complex, use_list=1)
     eq_(unpacked[1], 1+2j)
 
+def test_decode_pairs_hook():
+    packed = packb([3, {1: 2, 3: 4}])
+    prod_sum = 1 * 2 + 3 * 4
+    unpacked = unpackb(packed, object_pairs_hook=lambda l: sum(k * v for k, v in l), use_list=1)
+    eq_(unpacked[1], prod_sum)
+
+@raises(ValueError)
+def test_only_one_obj_hook():
+    unpackb(b'', object_hook=lambda x: x, object_pairs_hook=lambda x: x)
+
 @raises(ValueError)
 def test_bad_hook():
     packed = packb([3, 1+2j], default=lambda o: o)

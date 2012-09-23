@@ -13,6 +13,7 @@ Changes
 
 Changes
 -------
+* Warn when use_list is not specified. It's default value will be changed in 0.3.
 
 Bugs fixed
 -----------
