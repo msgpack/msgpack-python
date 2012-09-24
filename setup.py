@@ -18,7 +18,7 @@ except ImportError:
 
 def cythonize(src):
     sys.stderr.write("cythonize: %r\n" % (src,))
-    cython_compiler.compile([src])
+    cython_compiler.compile([src], cplus=True)
 
 def ensure_source(src):
     pyx = os.path.splitext(src)[0] + '.pyx'
@@ -67,7 +67,7 @@ if have_cython:
 else:
     Sdist = sdist
 
-sources = ['msgpack/_msgpack.c']
+sources = ['msgpack/_msgpack.cpp']
 libraries = []
 if sys.platform == 'win32':
     libraries.append('ws2_32')

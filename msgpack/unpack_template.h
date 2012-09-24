@@ -95,7 +95,8 @@ msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context
 }
 
 
-msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off, int construct)
+template <bool construct>
+msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off)
 {
 	assert(len >= *off);
 
@@ -380,6 +381,8 @@ _header_again:
 
 
 _finish:
+	if (!construct)
+		msgpack_unpack_callback(_nil)(user, &obj);
 	stack[0].obj = obj;
 	++p;
 	ret = 1;
@@ -405,19 +408,21 @@ _end:
 #undef construct_cb
 }
 
-
-#undef msgpack_unpack_func
-#undef msgpack_unpack_callback
-#undef msgpack_unpack_struct
-#undef msgpack_unpack_object
-#undef msgpack_unpack_user
-
 #undef push_simple_value
 #undef push_fixed_value
 #undef push_variable_value
 #undef again_fixed_trail
 #undef again_fixed_trail_if_zero
 #undef start_container
+
+static const execute_fn template_construct = &template_execute<true>;
+static const execute_fn template_skip = &template_execute<false>;
+
+#undef msgpack_unpack_func
+#undef msgpack_unpack_callback
+#undef msgpack_unpack_struct
+#undef msgpack_unpack_object
+#undef msgpack_unpack_user
 
 #undef NEXT_CS
 
