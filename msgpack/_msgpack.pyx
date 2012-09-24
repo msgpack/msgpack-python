@@ -212,6 +212,8 @@ cdef extern from "unpack.h":
                                size_t len, size_t* off) except -1
     execute_fn template_construct
     execute_fn template_skip
+    execute_fn read_array_header
+    execute_fn read_map_header
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
@@ -481,6 +483,14 @@ cdef class Unpacker(object):
     def skip(self):
         """read and ignore one object, returning None"""
         return self._unpack(template_skip)
+
+    def read_array_header(self):
+        """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
+        return self._unpack(read_array_header)
+
+    def read_map_header(self):
+        """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
+        return self._unpack(read_map_header)
 
     def __iter__(self):
         return self
