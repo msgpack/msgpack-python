@@ -99,9 +99,9 @@ def testArraySize(sizes=[0, 5, 50, 1000]):
             bio.write(packer.pack(i))
 
     bio.seek(0)
-    unpacker = Unpacker(bio)
+    unpacker = Unpacker(bio, use_list=1)
     for size in sizes:
-        assert unpacker.unpack() == tuple(range(size))
+        assert unpacker.unpack() == list(range(size))
 
 def testMapSize(sizes=[0, 5, 50, 1000]):
     bio = six.BytesIO()
@@ -115,7 +115,7 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
     bio.seek(0)
     unpacker = Unpacker(bio)
     for size in sizes:
-        assert unpacker.unpack() == {i: i * 2 for i in range(size)}
+        assert unpacker.unpack() == dict((i, i * 2) for i in range(size))
 
 
 
