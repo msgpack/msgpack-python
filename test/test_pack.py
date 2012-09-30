@@ -90,6 +90,35 @@ def testPackFloat():
     assert_equal(packb(1.0, use_single_float=True),  b'\xca' + struct.pack('>f', 1.0))
     assert_equal(packb(1.0, use_single_float=False), b'\xcb' + struct.pack('>d', 1.0))
 
+def testArraySize(sizes=[0, 5, 50, 1000]):
+    bio = six.BytesIO()
+    packer = Packer()
+    for size in sizes:
+        bio.write(packer.pack_array_header(size))
+        for i in range(size):
+            bio.write(packer.pack(i))
+
+    bio.seek(0)
+    unpacker = Unpacker(bio)
+    for size in sizes:
+        assert unpacker.unpack() == tuple(range(size))
+
+def testMapSize(sizes=[0, 5, 50, 1000]):
+    bio = six.BytesIO()
+    packer = Packer()
+    for size in sizes:
+        bio.write(packer.pack_map_header(size))
+        for i in range(size):
+            bio.write(packer.pack(i)) # key
+            bio.write(packer.pack(i * 2)) # value
+
+    bio.seek(0)
+    unpacker = Unpacker(bio)
+    for size in sizes:
+        assert unpacker.unpack() == {i: i * 2 for i in range(size)}
+
+
+
 
 class odict(dict):
     '''Reimplement OrderedDict to run test on Python 2.6'''

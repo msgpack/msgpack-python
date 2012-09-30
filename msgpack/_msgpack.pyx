@@ -182,6 +182,17 @@ cdef class Packer(object):
         self.pk.length = 0
         return buf
 
+    cpdef pack_array_header(self, size_t size):
+        msgpack_pack_array(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
+
+    cpdef pack_map_header(self, size_t size):
+        msgpack_pack_map(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
     """
@@ -213,8 +224,12 @@ cdef extern from "unpack.h":
         unsigned int ct
         PyObject* key
 
-    int template_execute(template_context* ctx, const_char_ptr data,
-                         size_t len, size_t* off, bint construct) except -1
+    ctypedef int (*execute_fn)(template_context* ctx, const_char_ptr data,
+                               size_t len, size_t* off) except -1
+    execute_fn template_construct
+    execute_fn template_skip
+    execute_fn read_array_header
+    execute_fn read_map_header
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
@@ -277,7 +292,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     PyObject_AsReadBuffer(packed, <const_void_ptr*>&buf, &buf_len)
 
     init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, encoding, unicode_errors)
-    ret = template_execute(&ctx, buf, buf_len, &off, 1)
+    ret = template_construct(&ctx, buf, buf_len, &off)
     if ret == 1:
         obj = template_data(&ctx)
         if off < buf_len:
@@ -452,16 +467,13 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cdef object _unpack(self, bint construct):
+    cdef object _unpack(self, execute_fn execute):
         cdef int ret
         cdef object obj
         while 1:
-            ret = template_execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head, construct)
+            ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
             if ret == 1:
-                if construct:
-                    obj = template_data(&self.ctx)
-                else:
-                    obj = None
+                obj = template_data(&self.ctx)
                 template_init(&self.ctx)
                 return obj
             elif ret == 0:
@@ -474,17 +486,25 @@ cdef class Unpacker(object):
 
     def unpack(self):
         """unpack one object"""
-        return self._unpack(1)
+        return self._unpack(template_construct)
 
     def skip(self):
         """read and ignore one object, returning None"""
-        return self._unpack(0)
+        return self._unpack(template_skip)
+
+    def read_array_header(self):
+        """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
+        return self._unpack(read_array_header)
+
+    def read_map_header(self):
+        """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
+        return self._unpack(read_map_header)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        return self._unpack(1)
+        return self._unpack(template_construct)
 
     # for debug.
     #def _buf(self):

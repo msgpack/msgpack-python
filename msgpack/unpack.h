@@ -42,6 +42,7 @@ typedef struct unpack_user {
 
 #define msgpack_unpack_user unpack_user
 
+typedef int (*execute_fn)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off);
 
 struct template_context;
 typedef struct template_context template_context;

@@ -18,7 +18,7 @@ except ImportError:
 
 def cythonize(src):
     sys.stderr.write("cythonize: %r\n" % (src,))
-    cython_compiler.compile([src], emit_linenums=True)
+    cython_compiler.compile([src], cplus=True, emit_linenums=True)
 
 def ensure_source(src):
     pyx = os.path.splitext(src)[0] + '.pyx'
@@ -34,13 +34,6 @@ Install Cython >= 0.16 or install msgpack from PyPI.
           os.stat(src).st_mtime < os.stat(pyx).st_mtime and
           have_cython):
         cythonize(pyx)
-
-    # Use C++ compiler on win32.
-    # MSVC9 doesn't provide stdint.h when using C Compiler.
-    if sys.platform == 'win32':
-        cpp = src + 'pp'
-        shutil.copy(src, cpp)
-        return cpp
     else:
         return src
 
@@ -67,7 +60,7 @@ if have_cython:
 else:
     Sdist = sdist
 
-sources = ['msgpack/_msgpack.c']
+sources = ['msgpack/_msgpack.cpp']
 libraries = []
 if sys.platform == 'win32':
     libraries.append('ws2_32')
