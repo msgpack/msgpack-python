@@ -467,11 +467,16 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cdef object _unpack(self, execute_fn execute):
+    cdef object _unpack(self, execute_fn execute, object write_bytes):
         cdef int ret
         cdef object obj
+        cdef size_t prev_head
         while 1:
+            prev_head = self.buf_head
             ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
+            if write_bytes is not None:
+                write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
+
             if ret == 1:
                 obj = template_data(&self.ctx)
                 template_init(&self.ctx)
@@ -484,27 +489,35 @@ cdef class Unpacker(object):
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
-    def unpack(self):
-        """unpack one object"""
-        return self._unpack(template_construct)
+    def unpack(self, object write_bytes=None):
+        """
+        unpack one object
 
-    def skip(self):
-        """read and ignore one object, returning None"""
-        return self._unpack(template_skip)
+        If write_bytes is not None, it will be called with parts of the raw message as it is unpacked.
+        """
+        return self._unpack(template_construct, write_bytes)
 
-    def read_array_header(self):
+    def skip(self, object write_bytes=None):
+        """
+        read and ignore one object, returning None
+
+        If write_bytes is not None, it will be called with parts of the raw message as it is unpacked.
+        """
+        return self._unpack(template_skip, write_bytes)
+
+    def read_array_header(self, object write_bytes=None):
         """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
-        return self._unpack(read_array_header)
+        return self._unpack(read_array_header, write_bytes)
 
-    def read_map_header(self):
+    def read_map_header(self, object write_bytes=None):
         """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
-        return self._unpack(read_map_header)
+        return self._unpack(read_map_header, write_bytes)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        return self._unpack(template_construct)
+        return self._unpack(template_construct, None)
 
     # for debug.
     #def _buf(self):
