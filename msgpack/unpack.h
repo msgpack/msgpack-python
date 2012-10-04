@@ -22,6 +22,7 @@
 typedef struct unpack_user {
     int use_list;
     PyObject *object_hook;
+    bool has_pairs_hook;
     PyObject *list_hook;
     const char *encoding;
     const char *unicode_errors;
@@ -41,6 +42,7 @@ typedef struct unpack_user {
 
 #define msgpack_unpack_user unpack_user
 
+typedef int (*execute_fn)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off);
 
 struct template_context;
 typedef struct template_context template_context;
@@ -160,9 +162,7 @@ static inline int template_callback_array_item(unpack_user* u, unsigned int curr
 static inline int template_callback_array_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->list_hook) {
-        PyObject *arglist = Py_BuildValue("(O)", *c);
-        PyObject *new_c = PyEval_CallObject(u->list_hook, arglist);
-        Py_DECREF(arglist);
+        PyObject *new_c = PyEval_CallFunction(u->list_hook, "(O)", *c);
         Py_DECREF(*c);
         *c = new_c;
     }
@@ -171,16 +171,31 @@ static inline int template_callback_array_end(unpack_user* u, msgpack_unpack_obj
 
 static inline int template_callback_map(unpack_user* u, unsigned int n, msgpack_unpack_object* o)
 {
-    PyObject *p = PyDict_New();
+    PyObject *p;
+    if (u->has_pairs_hook) {
+        p = PyList_New(n); // Or use tuple?
+    }
+    else {
+        p = PyDict_New();
+    }
     if (!p)
         return -1;
     *o = p;
     return 0;
 }
 
-static inline int template_callback_map_item(unpack_user* u, msgpack_unpack_object* c, msgpack_unpack_object k, msgpack_unpack_object v)
+static inline int template_callback_map_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object k, msgpack_unpack_object v)
 {
-    if (PyDict_SetItem(*c, k, v) == 0) {
+    if (u->has_pairs_hook) {
+        msgpack_unpack_object item = PyTuple_Pack(2, k, v);
+        if (!item)
+            return -1;
+        Py_DECREF(k);
+        Py_DECREF(v);
+        PyList_SET_ITEM(*c, current, item);
+        return 0;
+    }
+    else if (PyDict_SetItem(*c, k, v) == 0) {
         Py_DECREF(k);
         Py_DECREF(v);
         return 0;
@@ -191,9 +206,7 @@ static inline int template_callback_map_item(unpack_user* u, msgpack_unpack_obje
 static inline int template_callback_map_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->object_hook) {
-        PyObject *arglist = Py_BuildValue("(O)", *c);
-        PyObject *new_c = PyEval_CallObject(u->object_hook, arglist);
-        Py_DECREF(arglist);
+        PyObject *new_c = PyEval_CallFunction(u->object_hook, "(O)", *c);
         Py_DECREF(*c);
         *c = new_c;
     }

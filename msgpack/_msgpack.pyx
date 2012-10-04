@@ -1,12 +1,16 @@
 # coding: utf-8
 #cython: embedsignature=True
 
+import warnings
+
 from cpython cimport *
 cdef extern from "Python.h":
     ctypedef char* const_char_ptr "const char*"
     ctypedef char* const_void_ptr "const void*"
     ctypedef struct PyObject
     cdef int PyObject_AsReadBuffer(object o, const_void_ptr* buff, Py_ssize_t* buf_len) except -1
+    char* __FILE__
+    int __LINE__
 
 from libc.stdlib cimport *
 from libc.string cimport *
@@ -139,11 +143,19 @@ cdef class Packer(object):
             ret = msgpack_pack_raw(&self.pk, len(o))
             if ret == 0:
                 ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
-        elif PyDict_Check(o):
+        elif PyDict_CheckExact(o):
             d = <dict>o
             ret = msgpack_pack_map(&self.pk, len(d))
             if ret == 0:
-                for k,v in d.iteritems():
+                for k, v in d.iteritems():
+                    ret = self._pack(k, nest_limit-1)
+                    if ret != 0: break
+                    ret = self._pack(v, nest_limit-1)
+                    if ret != 0: break
+        elif PyDict_Check(o):
+            ret = msgpack_pack_map(&self.pk, len(o))
+            if ret == 0:
+                for k, v in o.items():
                     ret = self._pack(k, nest_limit-1)
                     if ret != 0: break
                     ret = self._pack(v, nest_limit-1)
@@ -170,6 +182,17 @@ cdef class Packer(object):
         self.pk.length = 0
         return buf
 
+    cpdef pack_array_header(self, size_t size):
+        msgpack_pack_array(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
+
+    cpdef pack_map_header(self, size_t size):
+        msgpack_pack_map(&self.pk, size)
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
     """
@@ -187,8 +210,9 @@ def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', use
 
 cdef extern from "unpack.h":
     ctypedef struct msgpack_user:
-        int use_list
+        bint use_list
         PyObject* object_hook
+        bint has_pairs_hook # call object_hook with k-v pairs
         PyObject* list_hook
         char *encoding
         char *unicode_errors
@@ -200,70 +224,97 @@ cdef extern from "unpack.h":
         unsigned int ct
         PyObject* key
 
-    int template_execute(template_context* ctx, const_char_ptr data,
-                         size_t len, size_t* off) except -1
+    ctypedef int (*execute_fn)(template_context* ctx, const_char_ptr data,
+                               size_t len, size_t* off) except -1
+    execute_fn template_construct
+    execute_fn template_skip
+    execute_fn read_array_header
+    execute_fn read_map_header
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
+cdef inline init_ctx(template_context *ctx, object object_hook, object object_pairs_hook, object list_hook, bint use_list, encoding, unicode_errors):
+    template_init(ctx)
+    ctx.user.use_list = use_list
+    ctx.user.object_hook = ctx.user.list_hook = <PyObject*>NULL
+
+    if object_hook is not None and object_pairs_hook is not None:
+        raise ValueError("object_pairs_hook and object_hook are mutually exclusive.")
+
+    if object_hook is not None:
+        if not PyCallable_Check(object_hook):
+            raise TypeError("object_hook must be a callable.")
+        ctx.user.object_hook = <PyObject*>object_hook
+
+    if object_pairs_hook is None:
+        ctx.user.has_pairs_hook = False
+    else:
+        if not PyCallable_Check(object_pairs_hook):
+            raise TypeError("object_pairs_hook must be a callable.")
+        ctx.user.object_hook = <PyObject*>object_pairs_hook
+        ctx.user.has_pairs_hook = True
+
+    if list_hook is not None:
+        if not PyCallable_Check(list_hook):
+            raise TypeError("list_hook must be a callable.")
+        ctx.user.list_hook = <PyObject*>list_hook
+
+    if encoding is None:
+        ctx.user.encoding = NULL
+        ctx.user.unicode_errors = NULL
+    else:
+        if isinstance(encoding, unicode):
+            _bencoding = encoding.encode('ascii')
+        else:
+            _bencoding = encoding
+        ctx.user.encoding = PyBytes_AsString(_bencoding)
+        if isinstance(unicode_errors, unicode):
+            _berrors = unicode_errors.encode('ascii')
+        else:
+            _berrors = unicode_errors
+        ctx.user.unicode_errors = PyBytes_AsString(_berrors)
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
-            bint use_list=0, encoding=None, unicode_errors="strict",
+            bint use_list=1, encoding=None, unicode_errors="strict",
+            object_pairs_hook=None,
             ):
+    """Unpack packed_bytes to object. Returns an unpacked object.
+
+    Raises `ValueError` when `packed` contains extra bytes.
     """
-    Unpack packed_bytes to object. Returns an unpacked object."""
     cdef template_context ctx
     cdef size_t off = 0
     cdef int ret
 
     cdef char* buf
     cdef Py_ssize_t buf_len
+
     PyObject_AsReadBuffer(packed, <const_void_ptr*>&buf, &buf_len)
 
-    if encoding is None:
-        enc = NULL
-        err = NULL
-    else:
-        if isinstance(encoding, unicode):
-            bencoding = encoding.encode('ascii')
-        else:
-            bencoding = encoding
-        if isinstance(unicode_errors, unicode):
-            berrors = unicode_errors.encode('ascii')
-        else:
-            berrors = unicode_errors
-        enc = PyBytes_AsString(bencoding)
-        err = PyBytes_AsString(berrors)
-
-    template_init(&ctx)
-    ctx.user.use_list = use_list
-    ctx.user.object_hook = ctx.user.list_hook = NULL
-    ctx.user.encoding = <const_char_ptr>enc
-    ctx.user.unicode_errors = <const_char_ptr>err
-    if object_hook is not None:
-        if not PyCallable_Check(object_hook):
-            raise TypeError("object_hook must be a callable.")
-        ctx.user.object_hook = <PyObject*>object_hook
-    if list_hook is not None:
-        if not PyCallable_Check(list_hook):
-            raise TypeError("list_hook must be a callable.")
-        ctx.user.list_hook = <PyObject*>list_hook
-    ret = template_execute(&ctx, buf, buf_len, &off)
+    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, encoding, unicode_errors)
+    ret = template_construct(&ctx, buf, buf_len, &off)
     if ret == 1:
-        return template_data(&ctx)
+        obj = template_data(&ctx)
+        if off < buf_len:
+            raise ValueError("Extra data.")
+        return obj
     else:
         return None
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
-           bint use_list=0, encoding=None, unicode_errors="strict",
+           bint use_list=1, encoding=None, unicode_errors="strict",
+           object_pairs_hook=None,
            ):
-    """
-    unpack an object from stream.
+    """Unpack an object from `stream`.
+
+    Raises `ValueError` when `stream` has extra bytes.
     """
     return unpackb(stream.read(), use_list=use_list,
-                   object_hook=object_hook, list_hook=list_hook,
+                   object_hook=object_hook, object_pairs_hook=object_pairs_hook, list_hook=list_hook,
                    encoding=encoding, unicode_errors=unicode_errors,
                    )
+
 
 cdef class Unpacker(object):
     """
@@ -277,10 +328,13 @@ cdef class Unpacker(object):
     (default: min(1024**2, max_buffer_size))
 
     If `use_list` is true, msgpack list is deserialized to Python list.
-    Otherwise, it is deserialized to Python tuple. (default: False)
+    Otherwise, it is deserialized to Python tuple.
 
     `object_hook` is same to simplejson. If it is not None, it should be callable
-    and Unpacker calls it when deserializing key-value.
+    and Unpacker calls it with a dict argument after deserializing a map.
+
+    `object_pairs_hook` is same to simplejson. If it is not None, it should be callable
+    and Unpacker calls it with a list of key-value pairs after deserializing a map.
 
     `encoding` is encoding used for decoding msgpack bytes. If it is None (default),
     msgpack bytes is deserialized to Python bytes.
@@ -315,7 +369,6 @@ cdef class Unpacker(object):
     cdef object file_like
     cdef object file_like_read
     cdef Py_ssize_t read_size
-    cdef bint use_list
     cdef object object_hook
     cdef object _bencoding
     cdef object _berrors
@@ -330,10 +383,10 @@ cdef class Unpacker(object):
         free(self.buf)
         self.buf = NULL
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=0,
-                 object object_hook=None, object list_hook=None,
-                 encoding=None, unicode_errors='strict', int max_buffer_size=0):
-        self.use_list = use_list
+    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1,
+                 object object_hook=None, object object_pairs_hook=None, object list_hook=None,
+                 encoding=None, unicode_errors='strict', int max_buffer_size=0,
+                 ):
         self.file_like = file_like
         if file_like:
             self.file_like_read = file_like.read
@@ -353,31 +406,7 @@ cdef class Unpacker(object):
         self.buf_size = read_size
         self.buf_head = 0
         self.buf_tail = 0
-        template_init(&self.ctx)
-        self.ctx.user.use_list = use_list
-        self.ctx.user.object_hook = self.ctx.user.list_hook = <PyObject*>NULL
-        if object_hook is not None:
-            if not PyCallable_Check(object_hook):
-                raise TypeError("object_hook must be a callable.")
-            self.ctx.user.object_hook = <PyObject*>object_hook
-        if list_hook is not None:
-            if not PyCallable_Check(list_hook):
-                raise TypeError("list_hook must be a callable.")
-            self.ctx.user.list_hook = <PyObject*>list_hook
-        if encoding is None:
-            self.ctx.user.encoding = NULL
-            self.ctx.user.unicode_errors = NULL
-        else:
-            if isinstance(encoding, unicode):
-                self._bencoding = encoding.encode('ascii')
-            else:
-                self._bencoding = encoding
-            self.ctx.user.encoding = PyBytes_AsString(self._bencoding)
-            if isinstance(unicode_errors, unicode):
-                self._berrors = unicode_errors.encode('ascii')
-            else:
-                self._berrors = unicode_errors
-            self.ctx.user.unicode_errors = PyBytes_AsString(self._berrors)
+        init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, encoding, unicode_errors)
 
     def feed(self, object next_bytes):
         cdef char* buf
@@ -438,20 +467,20 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cpdef unpack(self):
-        """unpack one object"""
+    cdef object _unpack(self, execute_fn execute):
         cdef int ret
+        cdef object obj
         while 1:
-            ret = template_execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
+            ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
             if ret == 1:
-                o = template_data(&self.ctx)
+                obj = template_data(&self.ctx)
                 template_init(&self.ctx)
-                return o
+                return obj
             elif ret == 0:
                 if self.file_like is not None:
                     self.read_from_file()
                     continue
-                raise StopIteration("No more unpack data.")
+                raise StopIteration("No more data to unpack.")
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
@@ -465,11 +494,27 @@ cdef class Unpacker(object):
             ret += self.file_like.read(nbytes - len(ret))
         return ret
 
+    def unpack(self):
+        """unpack one object"""
+        return self._unpack(template_construct)
+
+    def skip(self):
+        """read and ignore one object, returning None"""
+        return self._unpack(template_skip)
+
+    def read_array_header(self):
+        """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
+        return self._unpack(read_array_header)
+
+    def read_map_header(self):
+        """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
+        return self._unpack(read_map_header)
+
     def __iter__(self):
         return self
 
     def __next__(self):
-        return self.unpack()
+        return self._unpack(template_construct)
 
     # for debug.
     #def _buf(self):

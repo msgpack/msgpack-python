@@ -95,6 +95,7 @@ msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context
 }
 
 
+template <bool construct>
 msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off)
 {
 	assert(len >= *off);
@@ -117,14 +118,17 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 
 	int ret;
 
+#define construct_cb(name) \
+    construct && msgpack_unpack_callback(name)
+
 #define push_simple_value(func) \
-	if(msgpack_unpack_callback(func)(user, &obj) < 0) { goto _failed; } \
+	if(construct_cb(func)(user, &obj) < 0) { goto _failed; } \
 	goto _push
 #define push_fixed_value(func, arg) \
-	if(msgpack_unpack_callback(func)(user, arg, &obj) < 0) { goto _failed; } \
+	if(construct_cb(func)(user, arg, &obj) < 0) { goto _failed; } \
 	goto _push
 #define push_variable_value(func, base, pos, len) \
-	if(msgpack_unpack_callback(func)(user, \
+	if(construct_cb(func)(user, \
 		(const char*)base, (const char*)pos, len, &obj) < 0) { goto _failed; } \
 	goto _push
 
@@ -140,9 +144,9 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 
 #define start_container(func, count_, ct_) \
 	if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
-	if(msgpack_unpack_callback(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
+	if(construct_cb(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
 	if((count_) == 0) { obj = stack[top].obj; \
-		msgpack_unpack_callback(func##_end)(user, &obj); \
+		construct_cb(func##_end)(user, &obj); \
 		goto _push; } \
 	stack[top].ct = ct_; \
 	stack[top].size  = count_; \
@@ -340,10 +344,10 @@ _push:
 	c = &stack[top-1];
 	switch(c->ct) {
 	case CT_ARRAY_ITEM:
-		if(msgpack_unpack_callback(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
+		if(construct_cb(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
 		if(++c->count == c->size) {
 			obj = c->obj;
-			msgpack_unpack_callback(_array_end)(user, &obj);
+			construct_cb(_array_end)(user, &obj);
 			--top;
 			/*printf("stack pop %d\n", top);*/
 			goto _push;
@@ -354,10 +358,10 @@ _push:
 		c->ct = CT_MAP_VALUE;
 		goto _header_again;
 	case CT_MAP_VALUE:
-		if(msgpack_unpack_callback(_map_item)(user, &c->obj, c->map_key, obj) < 0) { goto _failed; }
+		if(construct_cb(_map_item)(user, c->count, &c->obj, c->map_key, obj) < 0) { goto _failed; }
 		if(++c->count == c->size) {
 			obj = c->obj;
-			msgpack_unpack_callback(_map_end)(user, &obj);
+			construct_cb(_map_end)(user, &obj);
 			--top;
 			/*printf("stack pop %d\n", top);*/
 			goto _push;
@@ -377,6 +381,8 @@ _header_again:
 
 
 _finish:
+	if (!construct)
+		msgpack_unpack_callback(_nil)(user, &obj);
 	stack[0].obj = obj;
 	++p;
 	ret = 1;
@@ -399,21 +405,87 @@ _end:
 	*off = p - (const unsigned char*)data;
 
 	return ret;
+#undef construct_cb
 }
 
-
-#undef msgpack_unpack_func
-#undef msgpack_unpack_callback
-#undef msgpack_unpack_struct
-#undef msgpack_unpack_object
-#undef msgpack_unpack_user
-
+#undef SWITCH_RANGE_BEGIN
+#undef SWITCH_RANGE
+#undef SWITCH_RANGE_DEFAULT
+#undef SWITCH_RANGE_END
 #undef push_simple_value
 #undef push_fixed_value
 #undef push_variable_value
 #undef again_fixed_trail
 #undef again_fixed_trail_if_zero
 #undef start_container
+
+template <unsigned int fixed_offset, unsigned int var_offset>
+msgpack_unpack_func(int, _container_header)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off)
+{
+	assert(len >= *off);
+	uint32_t size;
+	const unsigned char *const p = (unsigned char*)data + *off;
+
+#define inc_offset(inc) \
+	if (len - *off < inc) \
+		return 0; \
+	*off += inc;
+
+	switch (*p) {
+	case var_offset:
+		inc_offset(3);
+		size = _msgpack_load16(uint16_t, p + 1);
+		break;
+	case var_offset + 1:
+		inc_offset(5);
+		size = _msgpack_load32(uint32_t, p + 1);
+		break;
+#ifdef USE_CASE_RANGE
+	case fixed_offset + 0x0 ... fixed_offset + 0xf:
+#else
+	case fixed_offset + 0x0:
+	case fixed_offset + 0x1:
+	case fixed_offset + 0x2:
+	case fixed_offset + 0x3:
+	case fixed_offset + 0x4:
+	case fixed_offset + 0x5:
+	case fixed_offset + 0x6:
+	case fixed_offset + 0x7:
+	case fixed_offset + 0x8:
+	case fixed_offset + 0x9:
+	case fixed_offset + 0xa:
+	case fixed_offset + 0xb:
+	case fixed_offset + 0xc:
+	case fixed_offset + 0xd:
+	case fixed_offset + 0xe:
+	case fixed_offset + 0xf:
+#endif
+		++*off;
+		size = ((unsigned int)*p) & 0x0f;
+		break;
+	default:
+		PyErr_SetString(PyExc_ValueError, "Unexpected type header on stream");
+		return -1;
+    }
+	msgpack_unpack_callback(_uint32)(&ctx->user, size, &ctx->stack[0].obj);
+	return 1;
+}
+
+#undef SWITCH_RANGE_BEGIN
+#undef SWITCH_RANGE
+#undef SWITCH_RANGE_DEFAULT
+#undef SWITCH_RANGE_END
+
+static const execute_fn template_construct = &template_execute<true>;
+static const execute_fn template_skip = &template_execute<false>;
+static const execute_fn read_array_header = &template_container_header<0x90, 0xdc>;
+static const execute_fn read_map_header = &template_container_header<0x80, 0xde>;
+
+#undef msgpack_unpack_func
+#undef msgpack_unpack_callback
+#undef msgpack_unpack_struct
+#undef msgpack_unpack_object
+#undef msgpack_unpack_user
 
 #undef NEXT_CS
 

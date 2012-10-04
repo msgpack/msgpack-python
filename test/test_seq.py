@@ -34,7 +34,7 @@ def test_exceeding_unpacker_read_size():
     f = io.BytesIO(dumpf.getvalue())
     dumpf.close()
 
-    unpacker = msgpack.Unpacker(f, read_size=read_size)
+    unpacker = msgpack.Unpacker(f, read_size=read_size, use_list=1)
 
     read_count = 0
     for idx, o in enumerate(unpacker):

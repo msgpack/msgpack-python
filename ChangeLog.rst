@@ -1,3 +1,24 @@
+0.3.0
+=====
+:release date: in development
+
+Changes
+-------
+* Add ``.skip()`` method to ``Unpacker`` (thanks to jnothman)
+
+
+0.2.3
+=======
+:release date: in development
+
+Changes
+-------
+* Warn when use_list is not specified. It's default value will be changed in 0.3.
+
+Bugs fixed
+-----------
+* Can't pack subclass of dict.
+
 0.2.2
 =======
 :release date: 2012-09-21
