@@ -49,5 +49,18 @@ def test_array_hook():
     unpacked = unpackb(packed, list_hook=_arr_to_str, use_list=1)
     eq_(unpacked, '123')
 
+
+class DecodeError(Exception):
+    pass
+
+def bad_complex_decoder(o):
+    raise DecodeError("Ooops!")
+
+
+@raises(DecodeError)
+def test_an_exception_in_objecthook1():
+    packed = packb({1: {'__complex__': True, 'real': 1, 'imag': 2}})
+    unpackb(packed, object_hook=bad_complex_decoder)
+
 if __name__ == '__main__':
     main()
