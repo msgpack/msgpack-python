@@ -68,6 +68,7 @@ Also possible to pack/unpack user's data types. Here is an example for
 ``datetime.datetime``.
 
 ::
+
     import datetime
 
     import msgpack
