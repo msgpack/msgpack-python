@@ -347,7 +347,7 @@ _push:
 		if(construct_cb(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
 		if(++c->count == c->size) {
 			obj = c->obj;
-			construct_cb(_array_end)(user, &obj);
+			if (construct_cb(_array_end)(user, &obj) < 0) { goto _failed; }
 			--top;
 			/*printf("stack pop %d\n", top);*/
 			goto _push;

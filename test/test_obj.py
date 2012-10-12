@@ -62,5 +62,13 @@ def test_an_exception_in_objecthook1():
     packed = packb({1: {'__complex__': True, 'real': 1, 'imag': 2}})
     unpackb(packed, object_hook=bad_complex_decoder)
 
+
+@raises(DecodeError)
+def test_an_exception_in_objecthook2():
+    packed = packb({1: [{'__complex__': True, 'real': 1, 'imag': 2}]})
+    unpackb(packed, list_hook=bad_complex_decoder, use_list=1)
+
+
+
 if __name__ == '__main__':
     main()
