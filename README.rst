@@ -54,10 +54,11 @@ stream.
 
    unpacker = msgpack.Unpacker()
    while True:
-       data = buf.read(4)
+       data = buf.read(16)
        if not data:
            break
-       unpacker.seed(buf.read(16))
+       unpacker.feed(data)
+
        for unpacked in unpacker:
            print unpacked
 
