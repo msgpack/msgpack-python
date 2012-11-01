@@ -57,7 +57,7 @@ stream.
        data = buf.read(4)
        if not data:
            break
-       unpacker.seed(buf.read(16))
+       unpacker.feed(buf.read(16))
        for unpacked in unpacker:
            print unpacked
 
