@@ -52,14 +52,15 @@ stream.
 
    buf.seek(0)
 
-   unpacker = msgpack.Unpacker()
-   while True:
-       data = buf.read(4)
+    unpacker = msgpack.Unpacker()
+    while True:
+       data = buf.read(16)
        if not data:
            break
-       unpacker.feed(buf.read(16))
-       for unpacked in unpacker:
-           print unpacked
+       unpacker.feed(data)
+
+    for unpacked in unpacker:
+       print unpacked
 
 packing/unpacking of custom data type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
