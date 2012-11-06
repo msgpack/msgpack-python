@@ -384,7 +384,7 @@ cdef class Unpacker(object):
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  ):
-        cdef char *cenc, *cerr
+        cdef char *cenc=NULL, *cerr=NULL
 
         self.file_like = file_like
         if file_like:
