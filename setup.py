@@ -34,8 +34,7 @@ Install Cython >= 0.16 or install msgpack from PyPI.
           os.stat(src).st_mtime < os.stat(pyx).st_mtime and
           have_cython):
         cythonize(pyx)
-    else:
-        return src
+    return src
 
 
 class BuildExt(build_ext):
