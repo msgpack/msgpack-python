@@ -1,8 +1,6 @@
 # coding: utf-8
 #cython: embedsignature=True
 
-import warnings
-
 from cpython cimport *
 cdef extern from "Python.h":
     ctypedef char* const_char_ptr "const char*"
@@ -233,7 +231,9 @@ cdef extern from "unpack.h":
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
-cdef inline init_ctx(template_context *ctx, object object_hook, object object_pairs_hook, object list_hook, bint use_list, encoding, unicode_errors):
+cdef inline init_ctx(template_context *ctx,
+                     object object_hook, object object_pairs_hook, object list_hook,
+                     bint use_list, char* encoding, char* unicode_errors):
     template_init(ctx)
     ctx.user.use_list = use_list
     ctx.user.object_hook = ctx.user.list_hook = <PyObject*>NULL
@@ -259,20 +259,8 @@ cdef inline init_ctx(template_context *ctx, object object_hook, object object_pa
             raise TypeError("list_hook must be a callable.")
         ctx.user.list_hook = <PyObject*>list_hook
 
-    if encoding is None:
-        ctx.user.encoding = NULL
-        ctx.user.unicode_errors = NULL
-    else:
-        if isinstance(encoding, unicode):
-            _bencoding = encoding.encode('ascii')
-        else:
-            _bencoding = encoding
-        ctx.user.encoding = PyBytes_AsString(_bencoding)
-        if isinstance(unicode_errors, unicode):
-            _berrors = unicode_errors.encode('ascii')
-        else:
-            _berrors = unicode_errors
-        ctx.user.unicode_errors = PyBytes_AsString(_berrors)
+    ctx.user.encoding = encoding
+    ctx.user.unicode_errors = unicode_errors
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=1, encoding=None, unicode_errors="strict",
@@ -288,10 +276,22 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
     cdef char* buf
     cdef Py_ssize_t buf_len
+    cdef char* cenc = NULL
+    cdef char* cerr = NULL
 
     PyObject_AsReadBuffer(packed, <const_void_ptr*>&buf, &buf_len)
 
-    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, encoding, unicode_errors)
+    if encoding is not None:
+        if isinstance(encoding, unicode):
+            encoding = encoding.encode('ascii')
+        cenc = PyBytes_AsString(encoding)
+
+    if unicode_errors is not None:
+        if isinstance(unicode_errors, unicode):
+            unicode_errors = unicode_errors.encode('ascii')
+        cerr = PyBytes_AsString(unicode_errors)
+
+    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
     ret = template_construct(&ctx, buf, buf_len, &off)
     if ret == 1:
         obj = template_data(&ctx)
@@ -370,10 +370,7 @@ cdef class Unpacker(object):
     cdef object file_like_read
     cdef Py_ssize_t read_size
     cdef object object_hook
-    cdef object _bencoding
-    cdef object _berrors
-    cdef char *encoding
-    cdef char *unicode_errors
+    cdef object encoding, unicode_errors
     cdef size_t max_buffer_size
 
     def __cinit__(self):
@@ -387,6 +384,8 @@ cdef class Unpacker(object):
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  ):
+        cdef char *cenc, *cerr
+
         self.file_like = file_like
         if file_like:
             self.file_like_read = file_like.read
@@ -406,7 +405,20 @@ cdef class Unpacker(object):
         self.buf_size = read_size
         self.buf_head = 0
         self.buf_tail = 0
-        init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, encoding, unicode_errors)
+
+        if encoding is not None:
+            if isinstance(encoding, unicode):
+                encoding = encoding.encode('ascii')
+            self.encoding = encoding
+            cenc = PyBytes_AsString(encoding)
+
+        if unicode_errors is not None:
+            if isinstance(unicode_errors, unicode):
+                unicode_errors = unicode_errors.encode('ascii')
+            self.unicode_errors = unicode_errors
+            cerr = PyBytes_AsString(unicode_errors)
+
+        init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
 
     def feed(self, object next_bytes):
         cdef char* buf
