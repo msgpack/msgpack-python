@@ -6,6 +6,9 @@ MessagePack Python Binding
 :version: 0.2.0
 :date: 2012-06-27
 
+.. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
+   :target: https://travis-ci.org/#!/msgpack/msgpack-python
+
 HOW TO USE
 -----------
 
