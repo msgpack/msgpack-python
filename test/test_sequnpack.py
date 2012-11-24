@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import six
 from msgpack import Unpacker, BufferFull
 import nose
 
@@ -55,6 +56,21 @@ def test_maxbuffersize():
     assert ord('o') == next(unpacker)
     assert ord('b') == next(unpacker)
 
+
+def test_readbytes():
+    unpacker = Unpacker(read_size=3)
+    unpacker.feed(b'foobar')
+    assert unpacker.unpack() == ord(b'f')
+    assert unpacker.read_bytes(3) == b'oob'
+    assert unpacker.unpack() == ord(b'a')
+    assert unpacker.unpack() == ord(b'r')
+
+    # Test buffer refill
+    unpacker = Unpacker(six.BytesIO(b'foobar'), read_size=3)
+    assert unpacker.unpack() == ord(b'f')
+    assert unpacker.read_bytes(3) == b'oob'
+    assert unpacker.unpack() == ord(b'a')
+    assert unpacker.unpack() == ord(b'r')
 
 if __name__ == '__main__':
     nose.main()

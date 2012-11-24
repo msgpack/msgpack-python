@@ -496,6 +496,16 @@ cdef class Unpacker(object):
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
+    def read_bytes(self, Py_ssize_t nbytes):
+        """read a specified number of raw bytes from the stream"""
+        cdef size_t nread
+        nread = min(self.buf_tail - self.buf_head, nbytes)
+        ret = PyBytes_FromStringAndSize(self.buf + self.buf_head, nread)
+        self.buf_head += nread
+        if len(ret) < nbytes and self.file_like is not None:
+            ret += self.file_like.read(nbytes - len(ret))
+        return ret
+
     def unpack(self):
         """unpack one object"""
         return self._unpack(template_construct)
