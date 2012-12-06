@@ -90,6 +90,9 @@ Also possible to pack/unpack user's data types. Here is an example for
     packed_dict = msgpack.packb(useful_dict, default=encode_datetime)
     this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime)
 
+``Unpacker``'s ``object_hook`` callback receives a dict; the
+``object_pairs_hook`` callback may instead be used to receive a list of
+key-value pairs.
 
 INSTALL
 ---------
