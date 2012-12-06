@@ -94,6 +94,36 @@ Also possible to pack/unpack user's data types. Here is an example for
 ``object_pairs_hook`` callback may instead be used to receive a list of
 key-value pairs.
 
+
+advanced unpacking control
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As an alternative to iteration, ``Unpacker`` objects provide ``unpack``,
+``skip``, ``read_array_header`` and ``read_map_header`` methods. The former two
+read an entire message from the stream, respectively deserialising and returning
+the result, or ignoring it. The latter two methods return the number of elements
+in the upcoming container, so that each element in an array, or key-value pair
+in a map, can be unpacked or skipped individually.
+
+Each of these methods may optionally write the packed data it reads to a
+callback function:
+
+::
+
+    from io import BytesIO
+
+    def distribute(unpacker, get_worker):
+        nelems = unpacker.read_map_header()
+        for i in range(nelems):
+            # Select a worker for the given key
+            key = unpacker.unpack()
+            worker = get_worker(key)
+
+            # Send the value as a packed message to worker
+            bytestream = BytesIO()
+            unpacker.skip(bytestream.write)
+            worker.send(bytestream.getvalue())
+
 INSTALL
 ---------
 You can use ``pip`` or ``easy_install`` to install msgpack::
