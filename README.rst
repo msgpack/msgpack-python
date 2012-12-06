@@ -42,7 +42,7 @@ streaming unpacking
 ^^^^^^^^^^^^^^^^^^^
 
 ``Unpacker`` is a "streaming unpacker". It unpacks multiple objects from one
-stream.
+stream (or from bytes provided through its ``feed`` method).
 
 ::
 
