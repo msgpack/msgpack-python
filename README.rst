@@ -9,6 +9,13 @@ MessagePack Python Binding
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
 
+WHAT IT IS
+----------
+
+`MessagePack <http://msgpack.org/>`_ is a fast, compact binary serialization format, suitable for
+similar data to JSON. This package provides CPython bindings for reading and
+writing MessagePack data.
+
 HOW TO USE
 -----------
 
@@ -35,14 +42,14 @@ To unpack it to list, Use ``use_list`` option.
    >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=True)
    [1, 2, 3]
 
-Read docstring for other options.
+Read the docstring for other options.
 
 
 streaming unpacking
 ^^^^^^^^^^^^^^^^^^^
 
-``Unpacker`` is "streaming unpacker". It unpacks multiple objects from one
-stream.
+``Unpacker`` is a "streaming unpacker". It unpacks multiple objects from one
+stream (or from bytes provided through its ``feed`` method).
 
 ::
 
@@ -55,20 +62,15 @@ stream.
 
    buf.seek(0)
 
-   unpacker = msgpack.Unpacker()
-   while True:
-       data = buf.read(16)
-       if not data:
-           break
-       unpacker.feed(data)
+   unpacker = msgpack.Unpacker(buf)
+   for unpacked in unpacker:
+       print unpacked
 
-       for unpacked in unpacker:
-           print unpacked
 
 packing/unpacking of custom data type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Also possible to pack/unpack user's data types. Here is an example for
+It is also possible to pack/unpack custom data types. Here is an example for
 ``datetime.datetime``.
 
 ::
@@ -96,6 +98,39 @@ Also possible to pack/unpack user's data types. Here is an example for
     packed_dict = msgpack.packb(useful_dict, default=encode_datetime)
     this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime)
 
+``Unpacker``'s ``object_hook`` callback receives a dict; the
+``object_pairs_hook`` callback may instead be used to receive a list of
+key-value pairs.
+
+
+advanced unpacking control
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+As an alternative to iteration, ``Unpacker`` objects provide ``unpack``,
+``skip``, ``read_array_header`` and ``read_map_header`` methods. The former two
+read an entire message from the stream, respectively deserialising and returning
+the result, or ignoring it. The latter two methods return the number of elements
+in the upcoming container, so that each element in an array, or key-value pair
+in a map, can be unpacked or skipped individually.
+
+Each of these methods may optionally write the packed data it reads to a
+callback function:
+
+::
+
+    from io import BytesIO
+
+    def distribute(unpacker, get_worker):
+        nelems = unpacker.read_map_header()
+        for i in range(nelems):
+            # Select a worker for the given key
+            key = unpacker.unpack()
+            worker = get_worker(key)
+
+            # Send the value as a packed message to worker
+            bytestream = BytesIO()
+            unpacker.skip(bytestream.write)
+            worker.send(bytestream.getvalue())
 
 INSTALL
 ---------
