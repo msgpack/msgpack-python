@@ -42,6 +42,9 @@ To unpack it to list, Use ``use_list`` option.
    >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=True)
    [1, 2, 3]
 
+The default behavior will be changed in the future. (probably 0.4)
+You should always pass the ``use_list`` keyword argument.
+
 Read the docstring for other options.
 
 
@@ -149,6 +152,27 @@ You can install msgpack without compiler with them.
 When you can't use binary distribution, you need to install Visual Studio
 or Windows SDK on Windows. (NOTE: Visual C++ Express 2010 doesn't support
 amd64. Windows SDK is recommanded way to build amd64 msgpack without any fee.)
+
+
+PERFORMANCE NOTE
+-----------------
+
+GC
+^^
+
+CPython's GC starts when growing allocated object.
+This means unpacking may cause useless GC.
+You can use ``gc.disable()`` when unpacking large message.
+
+use_list
+^^^^^^^^^
+List is the default sequence type of Python.
+But tuple is lighter than list.
+You can use ``use_list=False`` while unpacking when performance is important.
+
+Python's dict can't use list as key and MessagePack allows array for key of mapping.
+``use_list=False`` allows unpacking such message.
+Another way to unpacking such object is using ``object_pairs_hook``.
 
 
 TEST
