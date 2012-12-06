@@ -35,13 +35,13 @@ To unpack it to list, Use ``use_list`` option.
    >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=True)
    [1, 2, 3]
 
-Read docstring for other options.
+Read the docstring for other options.
 
 
 streaming unpacking
 ^^^^^^^^^^^^^^^^^^^
 
-``Unpacker`` is "streaming unpacker". It unpacks multiple objects from one
+``Unpacker`` is a "streaming unpacker". It unpacks multiple objects from one
 stream.
 
 ::
@@ -59,10 +59,11 @@ stream.
    for unpacked in unpacker:
        print unpacked
 
+
 packing/unpacking of custom data type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Also possible to pack/unpack user's data types. Here is an example for
+It is also possible to pack/unpack custom data types. Here is an example for
 ``datetime.datetime``.
 
 ::
