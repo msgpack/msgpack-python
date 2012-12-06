@@ -29,21 +29,20 @@ msgpack provides ``dumps`` and ``loads`` as alias for compatibility with
 ``pack`` and ``dump`` packs to file-like object.
 ``unpack`` and ``load`` unpacks from file-like object.
 
+::
+
    >>> import msgpack
    >>> msgpack.packb([1, 2, 3])
    '\x93\x01\x02\x03'
    >>> msgpack.unpackb(_)
-   (1, 2, 3)
-
-
-``unpack`` unpacks msgpack's array to Python's tuple.
-To unpack it to list, Use ``use_list`` option.
-
-   >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=True)
    [1, 2, 3]
 
-The default behavior will be changed in the future. (probably 0.4)
-You should always pass the ``use_list`` keyword argument.
+``unpack`` unpacks msgpack's array to Python's list, but can unpack to tuple::
+
+   >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
+   (1, 2, 3)
+
+You should always pass the ``use_list`` keyword argument. See performance issues relating to use_list_ below.
 
 Read the docstring for other options.
 
