@@ -5,7 +5,8 @@
 Changes
 -------
 * Add ``.skip()`` method to ``Unpacker`` (thanks to jnothman)
-
+* Add capturing feature. You can pass the writable object to
+  ``Unpacker.unpack()`` as a second parameter.
 
 0.2.3
 =======
