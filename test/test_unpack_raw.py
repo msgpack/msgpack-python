@@ -5,18 +5,20 @@ from nose.tools import *
 import six
 from msgpack import Unpacker, packb
 
+
 def test_write_bytes():
     unpacker = Unpacker()
     unpacker.feed(b'abc')
     f = six.BytesIO()
     assert_equal(unpacker.unpack(f.write), ord('a'))
     assert_equal(f.getvalue(), b'a')
-    f.truncate(0)
-    assert_is_none(unpacker.skip(f.write))
+    f = six.BytesIO()
+    assert unpacker.skip(f.write) is None
     assert_equal(f.getvalue(), b'b')
-    f.truncate(0)
-    assert_is_none(unpacker.skip())
+    f = six.BytesIO()
+    assert unpacker.skip() is None
     assert_equal(f.getvalue(), b'')
+
 
 def test_write_bytes_multi_buffer():
     long_val = (5) * 100
