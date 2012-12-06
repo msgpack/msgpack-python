@@ -9,6 +9,13 @@ MessagePack Python Binding
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
 
+WHAT IT IS
+----------
+
+`MessagePack <http://msgpack.org/>`_ is a fast, compact binary serialization format, suitable for
+similar data to JSON. This package provides CPython bindings for reading and
+writing MessagePack data.
+
 HOW TO USE
 -----------
 
