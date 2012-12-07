@@ -3,8 +3,8 @@ MessagePack Python Binding
 ===========================
 
 :author: INADA Naoki
-:version: 0.2.0
-:date: 2012-06-27
+:version: 0.3.0
+:date: 2012-12-07
 
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
@@ -15,6 +15,13 @@ WHAT IT IS
 `MessagePack <http://msgpack.org/>`_ is a fast, compact binary serialization format, suitable for
 similar data to JSON. This package provides CPython bindings for reading and
 writing MessagePack data.
+
+NOTE for msgpack 0.2.x users
+----------------------------
+
+The default value of ``use_list`` keyword argument is ``True`` from 0.3.x.
+You should pass the argument explicitly for backward compatibility.
+
 
 HOW TO USE
 -----------

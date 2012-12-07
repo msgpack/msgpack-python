@@ -327,7 +327,7 @@ cdef class Unpacker(object):
     `read_size` is used as `file_like.read(read_size)`.
     (default: min(1024**2, max_buffer_size))
 
-    If `use_list` is true, msgpack list is deserialized to Python list.
+    If `use_list` is true (default), msgpack list is deserialized to Python list.
     Otherwise, it is deserialized to Python tuple.
 
     `object_hook` is same to simplejson. If it is not None, it should be callable

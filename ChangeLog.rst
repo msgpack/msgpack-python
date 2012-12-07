@@ -2,6 +2,12 @@
 =====
 :release date: in development
 
+Inconpatible Changes
+--------------------
+
+* Default value of ``use_list`` is ``True`` for now. (It was ``False`` for 0.2.x)
+  You should pass it explicitly for compatibility to 0.2.x.
+
 Changes
 -------
 * Add ``.skip()`` method to ``Unpacker`` (thanks to jnothman)
