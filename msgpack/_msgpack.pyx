@@ -38,8 +38,13 @@ cdef extern from "pack.h":
 cdef int DEFAULT_RECURSE_LIMIT=511
 
 
-class BufferFull(Exception):
-    pass
+from msgpack.exceptions import (
+        UnpackException,
+        BufferFull,
+        OutOfData,
+        UnpackValueError,
+        ExtraData,
+        )
 
 
 cdef class Packer(object):
@@ -102,7 +107,7 @@ cdef class Packer(object):
         cdef dict d
 
         if nest_limit < 0:
-            raise ValueError("Too deep.")
+            raise UnpackValueError("recursion limit exceeded.")
 
         if o is None:
             ret = msgpack_pack_nil(&self.pk)
@@ -296,7 +301,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     if ret == 1:
         obj = template_data(&ctx)
         if off < buf_len:
-            raise ValueError("Extra data.")
+            raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
     else:
         return None
@@ -425,7 +430,7 @@ cdef class Unpacker(object):
         cdef Py_ssize_t buf_len
         if self.file_like is not None:
             raise AssertionError(
-                    "unpacker.feed() is not be able to use with`file_like`.")
+                    "unpacker.feed() is not be able to use with `file_like`.")
         PyObject_AsReadBuffer(next_bytes, <const_void_ptr*>&buf, &buf_len)
         self.append_buffer(buf, buf_len)
 
@@ -479,7 +484,7 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cdef object _unpack(self, execute_fn execute, object write_bytes):
+    cdef object _unpack(self, execute_fn execute, object write_bytes, bint iter=0):
         cdef int ret
         cdef object obj
         cdef size_t prev_head
@@ -497,7 +502,10 @@ cdef class Unpacker(object):
                 if self.file_like is not None:
                     self.read_from_file()
                     continue
-                raise StopIteration("No more data to unpack.")
+                if iter:
+                    raise StopIteration("No more data to unpack.")
+                else:
+                    raise OutOfData("No more data to unpack.")
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
@@ -539,7 +547,7 @@ cdef class Unpacker(object):
         return self
 
     def __next__(self):
-        return self._unpack(template_construct, None)
+        return self._unpack(template_construct, None, 1)
 
     # for debug.
     #def _buf(self):

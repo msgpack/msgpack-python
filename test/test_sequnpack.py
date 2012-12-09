@@ -3,6 +3,7 @@
 
 import six
 from msgpack import Unpacker, BufferFull
+from msgpack.exceptions import OutOfData
 import nose
 
 def test_foobar():
@@ -17,7 +18,7 @@ def test_foobar():
     try:
         o = unpacker.unpack()
         assert 0, "should raise exception"
-    except StopIteration:
+    except OutOfData:
         assert 1, "ok"
 
     unpacker.feed(b'foo')
@@ -41,7 +42,7 @@ def test_foobar_skip():
     try:
         o = unpacker.unpack()
         assert 0, "should raise exception"
-    except StopIteration:
+    except OutOfData:
         assert 1, "ok"
 
 def test_maxbuffersize():
