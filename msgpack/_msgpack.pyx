@@ -426,6 +426,7 @@ cdef class Unpacker(object):
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
 
     def feed(self, object next_bytes):
+        """Append `next_bytes` to internal buffer."""
         cdef char* buf
         cdef Py_ssize_t buf_len
         if self.file_like is not None:
@@ -523,7 +524,11 @@ cdef class Unpacker(object):
         """
         unpack one object
 
-        If write_bytes is not None, it will be called with parts of the raw message as it is unpacked.
+        If write_bytes is not None, it will be called with parts of the raw
+        message as it is unpacked.
+
+        When there are not enough bytes for unpacking, `unpack()` raises
+        `OutOfData` Exception.
         """
         return self._unpack(template_construct, write_bytes)
 
@@ -531,16 +536,30 @@ cdef class Unpacker(object):
         """
         read and ignore one object, returning None
 
-        If write_bytes is not None, it will be called with parts of the raw message as it is unpacked.
+        If write_bytes is not None, it will be called with parts of the raw
+        message as it is unpacked.
+
+        When there are not enough bytes for unpacking, `unpack()` raises
+        `OutOfData` Exception.
         """
         return self._unpack(template_skip, write_bytes)
 
     def read_array_header(self, object write_bytes=None):
-        """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
+        """assuming the next object is an array, return its size n, such that
+        the next n unpack() calls will iterate over its contents.
+
+        When there are not enough bytes for unpacking, `unpack()` raises
+        `OutOfData` Exception.
+        """
         return self._unpack(read_array_header, write_bytes)
 
     def read_map_header(self, object write_bytes=None):
-        """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
+        """assuming the next object is a map, return its size n, such that the
+        next n * 2 unpack() calls will iterate over its key-value pairs.
+
+        When there are not enough bytes for unpacking, `unpack()` raises
+        `OutOfData` Exception.
+        """
         return self._unpack(read_map_header, write_bytes)
 
     def __iter__(self):
