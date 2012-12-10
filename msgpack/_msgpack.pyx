@@ -38,8 +38,12 @@ cdef extern from "pack.h":
 cdef int DEFAULT_RECURSE_LIMIT=511
 
 
-class BufferFull(Exception):
-    pass
+from msgpack.exceptions import (
+        BufferFull,
+        OutOfData,
+        UnpackValueError,
+        ExtraData,
+        )
 
 
 cdef class Packer(object):
@@ -102,7 +106,7 @@ cdef class Packer(object):
         cdef dict d
 
         if nest_limit < 0:
-            raise ValueError("Too deep.")
+            raise UnpackValueError("recursion limit exceeded.")
 
         if o is None:
             ret = msgpack_pack_nil(&self.pk)
@@ -174,7 +178,9 @@ cdef class Packer(object):
     cpdef pack(self, object obj):
         cdef int ret
         ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
-        if ret:
+        if ret == -1:
+            raise MemoryError
+        elif ret:  # should not happen.
             raise TypeError
         buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
         self.pk.length = 0
@@ -296,7 +302,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     if ret == 1:
         obj = template_data(&ctx)
         if off < buf_len:
-            raise ValueError("Extra data.")
+            raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
     else:
         return None
@@ -421,11 +427,12 @@ cdef class Unpacker(object):
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
 
     def feed(self, object next_bytes):
+        """Append `next_bytes` to internal buffer."""
         cdef char* buf
         cdef Py_ssize_t buf_len
         if self.file_like is not None:
             raise AssertionError(
-                    "unpacker.feed() is not be able to use with`file_like`.")
+                    "unpacker.feed() is not be able to use with `file_like`.")
         PyObject_AsReadBuffer(next_bytes, <const_void_ptr*>&buf, &buf_len)
         self.append_buffer(buf, buf_len)
 
@@ -479,7 +486,7 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cdef object _unpack(self, execute_fn execute, object write_bytes):
+    cdef object _unpack(self, execute_fn execute, object write_bytes, bint iter=0):
         cdef int ret
         cdef object obj
         cdef size_t prev_head
@@ -497,7 +504,10 @@ cdef class Unpacker(object):
                 if self.file_like is not None:
                     self.read_from_file()
                     continue
-                raise StopIteration("No more data to unpack.")
+                if iter:
+                    raise StopIteration("No more data to unpack.")
+                else:
+                    raise OutOfData("No more data to unpack.")
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
@@ -515,7 +525,10 @@ cdef class Unpacker(object):
         """
         unpack one object
 
-        If write_bytes is not None, it will be called with parts of the raw message as it is unpacked.
+        If write_bytes is not None, it will be called with parts of the raw
+        message as it is unpacked.
+
+        Raises `OutOfData` when there are no more bytes to unpack.
         """
         return self._unpack(template_construct, write_bytes)
 
@@ -523,23 +536,34 @@ cdef class Unpacker(object):
         """
         read and ignore one object, returning None
 
-        If write_bytes is not None, it will be called with parts of the raw message as it is unpacked.
+        If write_bytes is not None, it will be called with parts of the raw
+        message as it is unpacked.
+
+        Raises `OutOfData` when there are no more bytes to unpack.
         """
         return self._unpack(template_skip, write_bytes)
 
     def read_array_header(self, object write_bytes=None):
-        """assuming the next object is an array, return its size n, such that the next n unpack() calls will iterate over its contents."""
+        """assuming the next object is an array, return its size n, such that
+        the next n unpack() calls will iterate over its contents.
+
+        Raises `OutOfData` when there are no more bytes to unpack.
+        """
         return self._unpack(read_array_header, write_bytes)
 
     def read_map_header(self, object write_bytes=None):
-        """assuming the next object is a map, return its size n, such that the next n * 2 unpack() calls will iterate over its key-value pairs."""
+        """assuming the next object is a map, return its size n, such that the
+        next n * 2 unpack() calls will iterate over its key-value pairs.
+
+        Raises `OutOfData` when there are no more bytes to unpack.
+        """
         return self._unpack(read_map_header, write_bytes)
 
     def __iter__(self):
         return self
 
     def __next__(self):
-        return self._unpack(template_construct, None)
+        return self._unpack(template_construct, None, 1)
 
     # for debug.
     #def _buf(self):

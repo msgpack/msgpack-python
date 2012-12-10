@@ -19,8 +19,14 @@ writing MessagePack data.
 NOTE for msgpack 0.2.x users
 ----------------------------
 
+The msgpack 0.3 have some incompatible changes.
+
 The default value of ``use_list`` keyword argument is ``True`` from 0.3.x.
 You should pass the argument explicitly for backward compatibility.
+
+`Unpacker.unpack()` and some unpack methods now raises `OutOfData`
+instead of `StopIteration`.
+`StopIteration` is used for iterator protocol only.
 
 
 HOW TO USE
