@@ -1,12 +1,3 @@
-0.3.0
-=====
-:release date: in development
-
-Changes
--------
-* Add ``.skip()`` method to ``Unpacker`` (thanks to jnothman)
-
-
 0.2.3
 =======
 :release date: in development
@@ -14,6 +5,7 @@ Changes
 Changes
 -------
 * Warn when use_list is not specified. It's default value will be changed in 0.3.
+* Add ``.skip()`` method to ``Unpacker`` (thanks to jnothman)
 
 Bugs fixed
 -----------
