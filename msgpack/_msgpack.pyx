@@ -39,7 +39,6 @@ cdef int DEFAULT_RECURSE_LIMIT=511
 
 
 from msgpack.exceptions import (
-        UnpackException,
         BufferFull,
         OutOfData,
         UnpackValueError,
