@@ -186,17 +186,48 @@ cdef class Packer(object):
         self.pk.length = 0
         return buf
 
-    cpdef pack_array_header(self, size_t size):
-        msgpack_pack_array(&self.pk, size)
+    def pack_array_header(self, size_t size):
+        cdef int ret = msgpack_pack_array(&self.pk, size)
+        if ret == -1:
+            raise MemoryError
+        elif ret:  # should not happen
+            raise TypeError
         buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
         self.pk.length = 0
         return buf
 
-    cpdef pack_map_header(self, size_t size):
-        msgpack_pack_map(&self.pk, size)
+    def pack_map_header(self, size_t size):
+        cdef int ret = msgpack_pack_map(&self.pk, size)
+        if ret == -1:
+            raise MemoryError
+        elif ret:  # should not happen
+            raise TypeError
         buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
         self.pk.length = 0
         return buf
+
+    def pack_map_pairs(self, object pairs):
+        """
+        Pack *pairs* as msgpack map type.
+
+        *pairs* should sequence of pair.
+        (`len(pairs)` and `for k, v in *pairs*:` should be supported.)
+        """
+        cdef int ret = msgpack_pack_map(&self.pk, len(pairs))
+        if ret == 0:
+            for k, v in pairs:
+                ret = self._pack(k)
+                if ret != 0: break
+                ret = self._pack(v)
+                if ret != 0: break
+        if ret == -1:
+            raise MemoryError
+        elif ret:  # should not happen
+            raise TypeError
+        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        self.pk.length = 0
+        return buf
+
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
     """

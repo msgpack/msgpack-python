@@ -118,8 +118,6 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
         assert unpacker.unpack() == dict((i, i * 2) for i in range(size))
 
 
-
-
 class odict(dict):
     '''Reimplement OrderedDict to run test on Python 2.6'''
     def __init__(self, seq):
@@ -142,6 +140,15 @@ def test_odict():
     def pair_hook(seq):
         return seq
     assert_equal(unpackb(packb(od), object_pairs_hook=pair_hook, use_list=1), seq)
+
+
+def test_pairlist():
+    pairlist = [(b'a', 1), (2, b'b'), (b'foo', b'bar')]
+    packer = Packer()
+    packed = packer.pack_map_pairs(pairlist)
+    unpacked = unpackb(packed, object_pairs_hook=list)
+    assert pairlist == unpacked
+
 
 
 if __name__ == '__main__':
