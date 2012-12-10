@@ -529,8 +529,7 @@ cdef class Unpacker(object):
         If write_bytes is not None, it will be called with parts of the raw
         message as it is unpacked.
 
-        When there are not enough bytes for unpacking, `unpack()` raises
-        `OutOfData` Exception.
+        Raises `OutOfData` when there are no more bytes to unpack.
         """
         return self._unpack(template_construct, write_bytes)
 
@@ -541,8 +540,7 @@ cdef class Unpacker(object):
         If write_bytes is not None, it will be called with parts of the raw
         message as it is unpacked.
 
-        When there are not enough bytes for unpacking, `unpack()` raises
-        `OutOfData` Exception.
+        Raises `OutOfData` when there are no more bytes to unpack.
         """
         return self._unpack(template_skip, write_bytes)
 
@@ -550,8 +548,7 @@ cdef class Unpacker(object):
         """assuming the next object is an array, return its size n, such that
         the next n unpack() calls will iterate over its contents.
 
-        When there are not enough bytes for unpacking, `unpack()` raises
-        `OutOfData` Exception.
+        Raises `OutOfData` when there are no more bytes to unpack.
         """
         return self._unpack(read_array_header, write_bytes)
 
@@ -559,8 +556,7 @@ cdef class Unpacker(object):
         """assuming the next object is a map, return its size n, such that the
         next n * 2 unpack() calls will iterate over its key-value pairs.
 
-        When there are not enough bytes for unpacking, `unpack()` raises
-        `OutOfData` Exception.
+        Raises `OutOfData` when there are no more bytes to unpack.
         """
         return self._unpack(read_map_header, write_bytes)
 
