@@ -13,6 +13,12 @@ Changes
 * Add ``.skip()`` method to ``Unpacker`` (thanks to jnothman)
 * Add capturing feature. You can pass the writable object to
   ``Unpacker.unpack()`` as a second parameter.
+* Add ``Packer.pack_array_header`` and ``Packer.pack_map_header``.
+  These methods only pack header of each type.
+* Add ``autoreset`` option to ``Packer`` (default: True).
+  Packer doesn't return packed bytes and clear internal buffer.
+* Add ``Packer.pack_map_pairs``. It packs sequence of pair to map type.
+
 
 0.2.3
 =======
