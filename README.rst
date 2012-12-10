@@ -3,8 +3,8 @@ MessagePack Python Binding
 ===========================
 
 :author: INADA Naoki
-:version: 0.2.0
-:date: 2012-06-27
+:version: 0.2.3
+:date: 2012-12-11
 
 HOW TO USE
 -----------
