@@ -1,5 +1,5 @@
 """Test Unpacker's read_array_header and read_map_header methods"""
-from msgpack import packb, Unpacker
+from msgpack import packb, Unpacker, OutOfData
 UnexpectedTypeException = ValueError
 
 def test_read_array_header():
@@ -12,7 +12,7 @@ def test_read_array_header():
     try:
         unpacker.unpack()
         assert 0, 'should raise exception'
-    except StopIteration:
+    except OutOfData:
         assert 1, 'okay'
 
 
@@ -25,7 +25,7 @@ def test_read_map_header():
     try:
         unpacker.unpack()
         assert 0, 'should raise exception'
-    except StopIteration:
+    except OutOfData:
         assert 1, 'okay'
 
 def test_incorrect_type_array():
