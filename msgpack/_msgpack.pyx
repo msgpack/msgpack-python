@@ -54,6 +54,16 @@ cdef class Packer(object):
         packer = Packer()
         astream.write(packer.pack(a))
         astream.write(packer.pack(b))
+
+    Packer's constructor has some keyword arguments:
+
+    * *defaut* - Convert user type to builtin type that Packer supports.
+      See also simplejson's document.
+    * *encoding* - Convert unicode to bytes with this encoding. (default: 'utf-8')
+    * *unicode_erros* - Error handler for encoding unicode. (default: 'strict')
+    * *use_single_float* - Use single precision float type for float. (default: False)
+    * *autoreset* - Reset buffer after each pack and return it's content as `bytes`. (default: True).
+      If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -62,6 +72,7 @@ cdef class Packer(object):
     cdef char *encoding
     cdef char *unicode_errors
     cdef bool use_float
+    cdef bint autoreset
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
@@ -71,8 +82,9 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False):
+    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False, bint autoreset=1):
         self.use_float = use_single_float
+        self.autoreset = autoreset
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
@@ -182,9 +194,10 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen.
             raise TypeError
-        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-        self.pk.length = 0
-        return buf
+        if self.autoreset:
+            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            self.pk.length = 0
+            return buf
 
     def pack_array_header(self, size_t size):
         cdef int ret = msgpack_pack_array(&self.pk, size)
@@ -192,9 +205,10 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-        self.pk.length = 0
-        return buf
+        if self.autoreset:
+            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            self.pk.length = 0
+            return buf
 
     def pack_map_header(self, size_t size):
         cdef int ret = msgpack_pack_map(&self.pk, size)
@@ -202,9 +216,10 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-        self.pk.length = 0
-        return buf
+        if self.autoreset:
+            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            self.pk.length = 0
+            return buf
 
     def pack_map_pairs(self, object pairs):
         """
@@ -224,9 +239,18 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+        if self.autoreset:
+            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            self.pk.length = 0
+            return buf
+
+    def reset(self):
+        """Clear internal buffer."""
         self.pk.length = 0
-        return buf
+
+    def bytes(self):
+        """Return buffer content."""
+        return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
 
 
 def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
