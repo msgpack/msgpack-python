@@ -19,7 +19,8 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "sysdep.h"
-#include "pack_define.h"
+#include <limits.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
