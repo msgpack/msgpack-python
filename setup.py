@@ -2,7 +2,6 @@
 # coding: utf-8
 import os
 import sys
-import shutil
 from glob import glob
 from distutils.command.sdist import sdist
 from setuptools import setup, Extension
@@ -59,7 +58,6 @@ if have_cython:
 else:
     Sdist = sdist
 
-sources = ['msgpack/_msgpack.cpp']
 libraries = []
 if sys.platform == 'win32':
     libraries.append('ws2_32')
@@ -69,13 +67,20 @@ if sys.byteorder == 'big':
 else:
     macros = [('__LITTLE_ENDIAN__', '1')]
 
-msgpack_mod = Extension('msgpack._msgpack',
-                        sources=sources,
-                        libraries=libraries,
-                        include_dirs=['.'],
-                        define_macros=macros,
-                        )
-del sources, libraries, macros
+ext_modules = []
+ext_modules.append(Extension('msgpack._packer',
+                             sources=['msgpack/_packer.cpp'],
+                             libraries=libraries,
+                             include_dirs=['.'],
+                             define_macros=macros,
+                             ))
+ext_modules.append(Extension('msgpack._unpacker',
+                             sources=['msgpack/_unpacker.cpp'],
+                             libraries=libraries,
+                             include_dirs=['.'],
+                             define_macros=macros,
+                             ))
+del libraries, macros
 
 
 desc = 'MessagePack (de)serializer.'
@@ -89,7 +94,7 @@ setup(name='msgpack-python',
       author_email='songofacandy@gmail.com',
       version=version_str,
       cmdclass={'build_ext': BuildExt, 'sdist': Sdist},
-      ext_modules=[msgpack_mod],
+      ext_modules=ext_modules,
       packages=['msgpack'],
       description=desc,
       long_description=long_desc,

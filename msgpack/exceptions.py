@@ -21,3 +21,9 @@ class ExtraData(ValueError):
 
     def __str__(self):
         return "unpack(b) recieved extra data."
+
+class PackException(Exception):
+    pass
+
+class PackValueError(PackException, ValueError):
+    pass
