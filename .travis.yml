@@ -2,6 +2,9 @@ language: python
 python:
     - 2.7
 
+env:
+    - PIP_USE_MIRRORS=true
+
 install:
     - pip install --use-mirrors tox
     - sudo apt-get update -qq
