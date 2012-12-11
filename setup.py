@@ -2,7 +2,6 @@
 # coding: utf-8
 import os
 import sys
-import shutil
 from glob import glob
 from distutils.command.sdist import sdist
 from setuptools import setup, Extension
