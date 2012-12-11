@@ -7,7 +7,7 @@ python:
 install:
     - sudo apt-get update -qq
     - sudo apt-get install -q cython
-    - cython --cplus msgpack/_msgpack.pyx
+    - cython msgpack/_msgpack.pyx
     - pip install six --use-mirrors
     - python setup.py install
 
