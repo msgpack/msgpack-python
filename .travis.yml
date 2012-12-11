@@ -3,6 +3,7 @@ python:
     - 2.7
 
 install:
+    - pip install --use-mirrors tox
     - sudo apt-get update -qq
     - sudo apt-get install -q cython
     - sudo apt-get install -q python2.6-dev python2.7-dev python3.2-dev python3.3-dev
