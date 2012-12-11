@@ -59,7 +59,7 @@ if have_cython:
 else:
     Sdist = sdist
 
-sources = ['msgpack/_msgpack.cpp']
+sources = ['msgpack/_packer.cpp']
 libraries = []
 if sys.platform == 'win32':
     libraries.append('ws2_32')
@@ -69,7 +69,7 @@ if sys.byteorder == 'big':
 else:
     macros = [('__LITTLE_ENDIAN__', '1')]
 
-msgpack_mod = Extension('msgpack._msgpack',
+msgpack_mod = Extension('msgpack._packer',
                         sources=sources,
                         libraries=libraries,
                         include_dirs=['.'],
