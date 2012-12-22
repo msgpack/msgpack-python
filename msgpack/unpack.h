@@ -206,6 +206,9 @@ static inline int template_callback_map_end(unpack_user* u, msgpack_unpack_objec
 {
     if (u->object_hook) {
         PyObject *new_c = PyEval_CallFunction(u->object_hook, "(O)", *c);
+        if (new_c == NULL) {
+            return -1;
+        }
         Py_DECREF(*c);
         *c = new_c;
     }
