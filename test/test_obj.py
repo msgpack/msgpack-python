@@ -34,7 +34,7 @@ def test_decode_pairs_hook():
 
 @raises(ValueError)
 def test_only_one_obj_hook():
-    unpackb(b'', object_hook=lambda x: x, object_pairs_hook=lambda x: x, use_list=1)
+    unpackb(b'', object_hook=lambda x: x, object_pairs_hook=lambda x: x)
 
 @raises(ValueError)
 def test_bad_hook():
