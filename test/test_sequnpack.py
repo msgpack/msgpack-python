@@ -46,7 +46,7 @@ def test_foobar_skip():
         assert 1, "ok"
 
 def test_maxbuffersize():
-    nose.tools.assert_raises(ValueError, Unpacker, read_size=5, max_buffer_size=3)
+    nose.tools.assert_raises(ValueError, Unpacker, read_size=5, max_buffer_size=3, use_list=1)
     unpacker = Unpacker(read_size=3, max_buffer_size=3, use_list=1)
     unpacker.feed(b'fo')
     nose.tools.assert_raises(BufferFull, unpacker.feed, b'ob')

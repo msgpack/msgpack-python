@@ -146,7 +146,7 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
 	if(construct_cb(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
 	if((count_) == 0) { obj = stack[top].obj; \
-		construct_cb(func##_end)(user, &obj); \
+		if (construct_cb(func##_end)(user, &obj) < 0) { goto _failed; } \
 		goto _push; } \
 	stack[top].ct = ct_; \
 	stack[top].size  = count_; \
