@@ -20,9 +20,19 @@ Changes
 * Add ``Packer.pack_map_pairs``. It packs sequence of pair to map type.
 
 
+
+0.2.4
+=======
+:release date: 2012-12-22
+
+Bugs fixed
+----------
+
+* Fix SEGV when object_hook or object_pairs_hook raise Exception. (#39)
+
 0.2.3
 =======
-:release date: in development
+:release date: 2012-12-11
 
 Changes
 -------
