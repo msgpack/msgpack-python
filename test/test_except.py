@@ -6,6 +6,7 @@ from msgpack import packb, unpackb
 
 import datetime
 
+
 class DummyException(Exception):
     pass
 
@@ -26,6 +27,11 @@ def test_raise_from_object_hook():
                   object_hook=hook)
     assert_raises(DummyException, unpackb, packb({'fizz': {'buzz': 'spam'}}),
                   object_pairs_hook=hook)
+
+
+@raises(ValueError)
+def test_invalidvalue():
+    unpackb(b'\xd9\x97#DL_')
 
 
 if __name__ == '__main__':

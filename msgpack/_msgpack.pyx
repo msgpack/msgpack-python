@@ -210,7 +210,7 @@ cdef extern from "unpack.h":
         PyObject* key
 
     int template_execute(template_context* ctx, const_char_ptr data,
-                         size_t len, size_t* off, bint construct) except -1
+                         size_t len, size_t* off, bint construct) except? -1
     void template_init(template_context* ctx)
     object template_data(template_context* ctx)
 
@@ -285,6 +285,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if off < buf_len:
             raise ValueError("Extra data.")
         return obj
+    elif ret < 0:
+        raise ValueError("Unpack failed: error = %d" % (ret,))
     else:
         return None
 
