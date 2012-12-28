@@ -38,7 +38,7 @@ cdef extern from "unpack.h":
         PyObject* key
 
     ctypedef int (*execute_fn)(template_context* ctx, const_char_ptr data,
-                               size_t len, size_t* off) except -1
+                               size_t len, size_t* off) except? -1
     execute_fn template_construct
     execute_fn template_skip
     execute_fn read_array_header
@@ -113,6 +113,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if off < buf_len:
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
+    elif ret < 0:
+        raise ValueError("Unpack failed: error = %d" % (ret,))
     else:
         raise UnpackValueError
 
