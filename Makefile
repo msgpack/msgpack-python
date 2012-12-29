@@ -9,4 +9,4 @@ python3:
 	python3 setup.py build sdist
 
 test:
-	nosetests test
+	py.test test
