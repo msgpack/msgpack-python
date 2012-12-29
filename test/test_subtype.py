@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from nose import main
-from nose.tools import *
 from msgpack import packb, unpackb
 from collections import namedtuple
 
@@ -18,10 +16,6 @@ class MyTuple(tuple):
 MyNamedTuple = namedtuple('MyNamedTuple', 'x y')
 
 def test_types():
-    assert_equal(packb(dict()), packb(MyDict()))
-    assert_equal(packb(list()), packb(MyList()))
-    assert_equal(packb(MyNamedTuple(1,2)), packb((1,2)))
-
-
-if __name__ == '__main__':
-    main()
+    assert packb(MyDict()) == packb(dict())
+    assert packb(MyList()) == packb(list())
+    assert packb(MyNamedTuple(1, 2)) == packb((1, 2))

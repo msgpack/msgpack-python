@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from nose import main
-from nose.tools import *
 from msgpack import unpackb
 
 def check(src, should, use_list=0):
-    assert_equal(unpackb(src, use_list=use_list), should)
+    assert unpackb(src, use_list=use_list) == should
 
 def testSimpleValue():
     check(b"\x93\xc0\xc2\xc3", 
@@ -70,6 +68,3 @@ def testMap():
             b"\xdf\x00\x00\x00\x02\xc0\xc2\xc3\xc2",
         ({}, {None: False}, {True: False, None: False}, {},
             {None: False}, {True: False, None: False}))
-
-if __name__ == '__main__':
-    main()

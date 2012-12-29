@@ -4,7 +4,8 @@
 import six
 from msgpack import Unpacker, BufferFull
 from msgpack.exceptions import OutOfData
-import nose
+from pytest import raises
+
 
 def test_foobar():
     unpacker = Unpacker(read_size=3, use_list=1)
@@ -15,11 +16,8 @@ def test_foobar():
     assert unpacker.unpack() == ord(b'b')
     assert unpacker.unpack() == ord(b'a')
     assert unpacker.unpack() == ord(b'r')
-    try:
-        o = unpacker.unpack()
-        assert 0, "should raise exception"
-    except OutOfData:
-        assert 1, "ok"
+    with raises(OutOfData):
+        unpacker.unpack()
 
     unpacker.feed(b'foo')
     unpacker.feed(b'bar')
@@ -39,17 +37,16 @@ def test_foobar_skip():
     unpacker.skip()
     assert unpacker.unpack() == ord(b'a')
     unpacker.skip()
-    try:
-        o = unpacker.unpack()
-        assert 0, "should raise exception"
-    except OutOfData:
-        assert 1, "ok"
+    with raises(OutOfData):
+        unpacker.unpack()
 
 def test_maxbuffersize():
-    nose.tools.assert_raises(ValueError, Unpacker, read_size=5, max_buffer_size=3)
+    with raises(ValueError):
+        Unpacker(read_size=5, max_buffer_size=3)
     unpacker = Unpacker(read_size=3, max_buffer_size=3, use_list=1)
     unpacker.feed(b'fo')
-    nose.tools.assert_raises(BufferFull, unpacker.feed, b'ob')
+    with raises(BufferFull):
+        unpacker.feed(b'ob')
     unpacker.feed(b'o')
     assert ord('f') == next(unpacker)
     unpacker.feed(b'b')
@@ -73,5 +70,3 @@ def test_readbytes():
     assert unpacker.unpack() == ord(b'a')
     assert unpacker.unpack() == ord(b'r')
 
-if __name__ == '__main__':
-    nose.main()

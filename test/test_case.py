@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from nose import main
-from nose.tools import *
 from msgpack import packb, unpackb
 
 
 def check(length, obj):
     v = packb(obj)
-    assert_equal(len(v), length, "%r length should be %r but get %r" % (obj, length, len(v)))
-    assert_equal(unpackb(v, use_list=0), obj)
+    assert len(v) == length, \
+        "%r length should be %r but get %r" % (obj, length, len(v))
+    assert unpackb(v, use_list=0) == obj
 
 def test_1():
     for o in [None, True, False, 0, 1, (1 << 6), (1 << 7) - 1, -1,
@@ -70,8 +69,8 @@ def test_array32():
 
 
 def match(obj, buf):
-    assert_equal(packb(obj), buf)
-    assert_equal(unpackb(buf, use_list=0), obj)
+    assert packb(obj) == buf
+    assert unpackb(buf, use_list=0) == obj
 
 def test_match():
     cases = [
@@ -99,7 +98,5 @@ def test_match():
         match(v, p)
 
 def test_unicode():
-    assert_equal(b'foobar', unpackb(packb('foobar'), use_list=1))
+    assert unpackb(packb('foobar'), use_list=1) == b'foobar'
 
-if __name__ == '__main__':
-    main()

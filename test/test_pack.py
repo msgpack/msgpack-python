@@ -3,9 +3,7 @@
 
 import six
 import struct
-from nose import main
-from nose.tools import *
-from nose.plugins.skip import SkipTest
+from pytest import raises, xfail
 
 from msgpack import packb, unpackb, Unpacker, Packer
 
@@ -13,7 +11,7 @@ from io import BytesIO
 
 def check(data, use_list=False):
     re = unpackb(packb(data), use_list=use_list)
-    assert_equal(re, data)
+    assert re == data
 
 def testPack():
     test_data = [
@@ -35,11 +33,11 @@ def testPackUnicode():
         ]
     for td in test_data:
         re = unpackb(packb(td, encoding='utf-8'), use_list=1, encoding='utf-8')
-        assert_equal(re, td)
+        assert re == td
         packer = Packer(encoding='utf-8')
         data = packer.pack(td)
         re = Unpacker(BytesIO(data), encoding='utf-8', use_list=1).unpack()
-        assert_equal(re, td)
+        assert re == td
 
 def testPackUTF32():
     try:
@@ -51,9 +49,9 @@ def testPackUTF32():
             ]
         for td in test_data:
             re = unpackb(packb(td, encoding='utf-32'), use_list=1, encoding='utf-32')
-            assert_equal(re, td)
-    except LookupError:
-        raise SkipTest
+            assert re == td
+    except LookupError as e:
+        xfail(e)
 
 def testPackBytes():
     test_data = [
@@ -64,31 +62,31 @@ def testPackBytes():
 
 def testIgnoreUnicodeErrors():
     re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
-    assert_equal(re, "abcdef")
+    assert re == "abcdef"
 
-@raises(UnicodeDecodeError)
 def testStrictUnicodeUnpack():
-    unpackb(packb(b'abc\xeddef'), encoding='utf-8', use_list=1)
+    with raises(UnicodeDecodeError):
+        unpackb(packb(b'abc\xeddef'), encoding='utf-8', use_list=1)
 
-@raises(UnicodeEncodeError)
 def testStrictUnicodePack():
-    packb(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
+    with raises(UnicodeEncodeError):
+        packb(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():
     re = unpackb(packb(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8', use_list=1)
-    assert_equal(re, six.u("abcdef"))
+    assert re == six.u("abcdef")
 
-@raises(TypeError)
 def testNoEncoding():
-    packb(six.u("abc"), encoding=None)
+    with raises(TypeError):
+        packb(six.u("abc"), encoding=None)
 
 def testDecodeBinary():
     re = unpackb(packb("abc"), encoding=None, use_list=1)
-    assert_equal(re, b"abc")
+    assert re == b"abc"
 
 def testPackFloat():
-    assert_equal(packb(1.0, use_single_float=True),  b'\xca' + struct.pack('>f', 1.0))
-    assert_equal(packb(1.0, use_single_float=False), b'\xcb' + struct.pack('>d', 1.0))
+    assert packb(1.0, use_single_float=True)  == b'\xca' + struct.pack('>f', 1.0)
+    assert packb(1.0, use_single_float=False) == b'\xcb' + struct.pack('>d', 1.0)
 
 def testArraySize(sizes=[0, 5, 50, 1000]):
     bio = six.BytesIO()
@@ -151,10 +149,10 @@ class odict(dict):
 def test_odict():
     seq = [(b'one', 1), (b'two', 2), (b'three', 3), (b'four', 4)]
     od = odict(seq)
-    assert_equal(unpackb(packb(od), use_list=1), dict(seq))
+    assert unpackb(packb(od), use_list=1) == dict(seq)
     def pair_hook(seq):
         return seq
-    assert_equal(unpackb(packb(od), object_pairs_hook=pair_hook, use_list=1), seq)
+    assert unpackb(packb(od), object_pairs_hook=pair_hook, use_list=1) == seq
 
 
 def test_pairlist():
@@ -163,8 +161,3 @@ def test_pairlist():
     packed = packer.pack_map_pairs(pairlist)
     unpacked = unpackb(packed, object_pairs_hook=list)
     assert pairlist == unpacked
-
-
-
-if __name__ == '__main__':
-    main()

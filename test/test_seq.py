@@ -2,9 +2,6 @@
 # coding: utf-8
 
 import six
-from nose import main
-from nose.tools import *
-
 import io
 import msgpack
 
@@ -38,13 +35,8 @@ def test_exceeding_unpacker_read_size():
 
     read_count = 0
     for idx, o in enumerate(unpacker):
-        assert_equal(type(o), bytes)
-        assert_equal(o, gen_binary_data(idx))
+        assert type(o) == bytes
+        assert o == gen_binary_data(idx)
         read_count += 1
 
-    assert_equal(read_count, NUMBER_OF_STRINGS)
-
-
-if __name__ == '__main__':
-    main()
-    #test_exceeding_unpacker_read_size()
+    assert read_count == NUMBER_OF_STRINGS
