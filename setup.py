@@ -41,10 +41,10 @@ class BuildExt(build_ext):
         try:
             ext.sources = list(map(ensure_source, ext.sources))
         except NoCython:
-            print "WARNING"
-            print "Cython is required for building extension from checkout."
-            print "Install Cython >= 0.16 or install msgpack from PyPI."
-            print "Falling back to pure Python implementation."
+            print("WARNING")
+            print("Cython is required for building extension from checkout.")
+            print("Install Cython >= 0.16 or install msgpack from PyPI.")
+            print("Falling back to pure Python implementation.")
             return
         return build_ext.build_extension(self, ext)
 
