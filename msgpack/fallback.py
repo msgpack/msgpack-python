@@ -71,7 +71,8 @@ def unpack(stream, object_hook=None, list_hook=None, use_list=True,
             use_list=use_list, encoding=encoding, unicode_errors=unicode_errors,
             object_pairs_hook=object_pairs_hook)
     ret = unpacker._fb_unpack()
-    unpacker._fb_check_for_extradata()
+    if unpacker._fb_got_extradata():
+        raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret
 
 def unpackb(packed, object_hook=None, list_hook=None, use_list=True,
@@ -85,7 +86,8 @@ def unpackb(packed, object_hook=None, list_hook=None, use_list=True,
             object_pairs_hook=object_pairs_hook)
     unpacker.feed(packed)
     ret = unpacker._fb_unpack()
-    unpacker._fb_check_for_extradata()
+    if unpacker._fb_got_extradata():
+        raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret
 
 class Unpacker(object):
@@ -192,15 +194,16 @@ class Unpacker(object):
         self._fb_buf_i = 0
         self._fb_buf_n = sum(map(len, self._fb_buffers))
 
-    def _fb_check_for_extradata(self):
+    def _fb_got_extradata(self):
         if self._fb_buf_i != len(self._fb_buffers):
-            raise ExtraData
+            return True
         if self._fb_feeding:
-            return
+            return False
         if not self.file_like:
-            return
-        if not self.file_like.read(1):
-            raise ExtraData
+            return False
+        if self.file_like.read(1):
+            return True
+        return False
 
     def __iter__(self):
         return self
@@ -215,6 +218,12 @@ class Unpacker(object):
 
     def read_bytes(self, n):
         return self._fb_read(n)
+
+    def _fb_get_extradata(self):
+        bufs = self._fb_buffers[self._fb_buf_i:]
+        if bufs:
+            bufs[0] = bufs[0][self._fb_buf_o:]
+        return ''.join(bufs)
 
     def _fb_read(self, n, write_bytes=None):
         ret = ''
