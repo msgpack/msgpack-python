@@ -4,10 +4,28 @@ import sys
 import array
 import struct
 
-try:
-    import cStringIO as StringIO
-except ImportError:
-    import StringIO
+if hasattr(sys, 'pypy_version_info'):
+    # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
+    # StringBuilder is fastest.
+    from __pypy__.builders import StringBuilder
+    USING_STRINGBUILDER = True
+    class StringIO(object):
+        def __init__(self, s=''):
+            if s:
+                self.builder = StringBuilder(len(s))
+                self.builder.append(s)
+            else:
+                self.builder = StringBuilder()
+        def write(self, s):
+            self.builder.append(s)
+        def getvalue(self):
+            return self.builder.build()
+else:
+    USING_STRINGBUILDER = False
+    try:
+        from cStringIO import StringIO
+    except ImportError:
+        from StringIO import StringIO
 
 from msgpack.exceptions import (
         BufferFull,
@@ -362,7 +380,7 @@ class Packer(object):
         self.autoreset = autoreset
         self.encoding = encoding
         self.unicode_errors = unicode_errors
-        self.buffer = StringIO.StringIO()
+        self.buffer = StringIO()
         if default is not None:
             if not callable(default):
                 raise TypeError("default must be callable")
@@ -429,25 +447,33 @@ class Packer(object):
         self._pack(obj)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO.StringIO()
+            self.buffer = StringIO()
+        elif USING_STRINGBUILDER:
+            self.buffer = StringIO(ret)
         return ret
     def pack_map_pairs(self, pairs):
         self._fb_pack_map_pairs(len(pairs), pairs)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO.StringIO()
+            self.buffer = StringIO()
+        elif USING_STRINGBUILDER:
+            self.buffer = StringIO(ret)
         return ret
     def pack_array_header(self, n):
         self._fb_pack_array_header(n)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO.StringIO()
+            self.buffer = StringIO()
+        elif USING_STRINGBUILDER:
+            self.buffer = StringIO(ret)
         return ret
     def pack_map_header(self, n):
         self._fb_pack_map_header(n)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO.StringIO()
+            self.buffer = StringIO()
+        elif USING_STRINGBUILDER:
+            self.buffer = StringIO(ret)
         return ret
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
@@ -473,4 +499,4 @@ class Packer(object):
     def bytes(self):
         return self.buffer.getvalue()
     def reset(self):
-        self.buffer = StringIO.StringIO()
+        self.buffer = StringIO()
