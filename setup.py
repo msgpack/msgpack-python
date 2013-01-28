@@ -8,6 +8,9 @@ from setuptools import setup, Extension
 
 from distutils.command.build_ext import build_ext
 
+class NoCython(Exception):
+    pass
+
 try:
     import Cython.Compiler.Main as cython_compiler
     have_cython = True
@@ -24,10 +27,7 @@ def ensure_source(src):
 
     if not os.path.exists(src):
         if not have_cython:
-            raise Exception("""\
-Cython is required for building extension from checkout.
-Install Cython >= 0.16 or install msgpack from PyPI.
-""")
+            raise NoCython
         cythonize(pyx)
     elif (os.path.exists(pyx) and
           os.stat(src).st_mtime < os.stat(pyx).st_mtime and
@@ -38,7 +38,14 @@ Install Cython >= 0.16 or install msgpack from PyPI.
 
 class BuildExt(build_ext):
     def build_extension(self, ext):
-        ext.sources = list(map(ensure_source, ext.sources))
+        try:
+            ext.sources = list(map(ensure_source, ext.sources))
+        except NoCython:
+            print "WARNING"
+            print "Cython is required for building extension from checkout."
+            print "Install Cython >= 0.16 or install msgpack from PyPI."
+            print "Falling back to pure Python implementation."
+            return
         return build_ext.build_extension(self, ext)
 
 
