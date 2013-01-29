@@ -210,7 +210,7 @@ class Unpacker(object):
 
     def next(self):
         try:
-            ret = self._fb_unpack(None, None)
+            ret = self._fb_unpack(EX_CONSTRUCT, None)
             self._fb_consume()
             return ret
         except OutOfData:
