@@ -20,7 +20,7 @@ def test_partialdata():
     unpacker.feed(b'l')
     with raises(StopIteration): next(iter(unpacker))
     unpacker.feed(b'o')
-    assert next(iter(unpacker)) == 'hallo'
+    assert next(iter(unpacker)) == b'hallo'
 
 def test_foobar():
     unpacker = Unpacker(read_size=3, use_list=1)
