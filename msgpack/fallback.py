@@ -1,4 +1,4 @@
-# Fallback pure Python implementation of msgpack
+"""Fallback pure Python implementation of msgpack"""
 
 import sys
 import array
@@ -49,11 +49,11 @@ DEFAULT_RECURSE_LIMIT=511
 def pack(o, stream, default=None, encoding='utf-8', unicode_errors='strict'):
     """ Pack object `o` and write it to `stream` """
     packer = Packer(default=default, encoding=encoding,
-                        unicode_errors=unicode_errors)
+                    unicode_errors=unicode_errors)
     stream.write(packer.pack(o))
 
 def packb(o, default=None, encoding='utf-8', unicode_errors='struct',
-                use_single_float=False):
+          use_single_float=False):
     """ Pack object `o` and return packed bytes """
     packer = Packer(default=default,
                     encoding=encoding,
@@ -62,28 +62,30 @@ def packb(o, default=None, encoding='utf-8', unicode_errors='struct',
     return packer.pack(o)
 
 def unpack(stream, object_hook=None, list_hook=None, use_list=True,
-                encoding=None, unicode_errors='strict',
-                object_pairs_hook=None):
+           encoding=None, unicode_errors='strict',
+           object_pairs_hook=None):
     """ Unpack an object from `stream`.
 
     Raises `ExtraData` when `stream` has extra bytes. """
     unpacker = Unpacker(stream, object_hook=object_hook, list_hook=list_hook,
-            use_list=use_list, encoding=encoding, unicode_errors=unicode_errors,
-            object_pairs_hook=object_pairs_hook)
+                        use_list=use_list,
+                        encoding=encoding, unicode_errors=unicode_errors,
+                        object_pairs_hook=object_pairs_hook)
     ret = unpacker._fb_unpack()
     if unpacker._fb_got_extradata():
         raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret
 
 def unpackb(packed, object_hook=None, list_hook=None, use_list=True,
-                encoding=None, unicode_errors='strict',
-                object_pairs_hook=None):
+            encoding=None, unicode_errors='strict',
+            object_pairs_hook=None):
     """ Unpack an object from `packed`.
 
     Raises `ExtraData` when `packed` contains extra bytes. """
     unpacker = Unpacker(None, object_hook=object_hook, list_hook=list_hook,
-            use_list=use_list, encoding=encoding, unicode_errors=unicode_errors,
-            object_pairs_hook=object_pairs_hook)
+                        use_list=use_list,
+                        encoding=encoding, unicode_errors=unicode_errors,
+                        object_pairs_hook=object_pairs_hook)
     unpacker.feed(packed)
     ret = unpacker._fb_unpack()
     if unpacker._fb_got_extradata():
@@ -141,8 +143,8 @@ class Unpacker(object):
     """
 
     def __init__(self, file_like=None, read_size=0, use_list=True,
-            object_hook=None, object_pairs_hook=None, list_hook=None,
-            encoding=None, unicode_errors='strict', max_buffer_size=0):
+                 object_hook=None, object_pairs_hook=None, list_hook=None,
+                 encoding=None, unicode_errors='strict', max_buffer_size=0):
         if file_like is None:
             self._fb_feeding = True
         else:
@@ -174,8 +176,8 @@ class Unpacker(object):
         if object_pairs_hook is not None and not callable(object_pairs_hook):
             raise ValueError('`object_pairs_hook` is not callable')
         if object_hook is not None and object_pairs_hook is not None:
-            raise ValueError("object_pairs_hook and object_hook are mutually "+
-                                "exclusive")
+            raise ValueError("object_pairs_hook and object_hook are mutually "
+                             "exclusive")
 
     def feed(self, next_bytes):
         if isinstance(next_bytes, array.array):
@@ -394,7 +396,7 @@ class Unpacker(object):
 
 class Packer(object):
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                    use_single_float=False, autoreset=True):
+                 use_single_float=False, autoreset=True):
         self.use_float = use_single_float
         self.autoreset = autoreset
         self.encoding = encoding
@@ -404,6 +406,7 @@ class Packer(object):
             if not callable(default):
                 raise TypeError("default must be callable")
         self._default = default
+
     def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT):
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded")
@@ -461,10 +464,11 @@ class Packer(object):
             return
         if isinstance(obj, dict):
             return self._fb_pack_map_pairs(len(obj), obj.iteritems(),
-                                            nest_limit - 1)
+                                           nest_limit - 1)
         if self._default is not None:
             return self._pack(self._default(obj), nest_limit - 1)
         raise TypeError("Cannot serialize %r" % obj)
+
     def pack(self, obj):
         self._pack(obj)
         ret = self.buffer.getvalue()
@@ -473,6 +477,7 @@ class Packer(object):
         elif USING_STRINGBUILDER:
             self.buffer = StringIO(ret)
         return ret
+
     def pack_map_pairs(self, pairs):
         self._fb_pack_map_pairs(len(pairs), pairs)
         ret = self.buffer.getvalue()
@@ -481,6 +486,7 @@ class Packer(object):
         elif USING_STRINGBUILDER:
             self.buffer = StringIO(ret)
         return ret
+
     def pack_array_header(self, n):
         self._fb_pack_array_header(n)
         ret = self.buffer.getvalue()
@@ -489,6 +495,7 @@ class Packer(object):
         elif USING_STRINGBUILDER:
             self.buffer = StringIO(ret)
         return ret
+
     def pack_map_header(self, n):
         self._fb_pack_map_header(n)
         ret = self.buffer.getvalue()
@@ -497,6 +504,7 @@ class Packer(object):
         elif USING_STRINGBUILDER:
             self.buffer = StringIO(ret)
         return ret
+
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
             return self.buffer.write(chr(0x90 + n))
@@ -505,6 +513,7 @@ class Packer(object):
         if n <= 0xffffffff:
             return self.buffer.write(struct.pack(">BI", 0xdd, n))
         raise PackValueError("Array is too large")
+
     def _fb_pack_map_header(self, n):
         if n <= 0x0f:
             return self.buffer.write(chr(0x80 + n))
@@ -513,12 +522,15 @@ class Packer(object):
         if n <= 0xffffffff:
             return self.buffer.write(struct.pack(">BI", 0xdf, n))
         raise PackValueError("Dict is too large")
+
     def _fb_pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
         self._fb_pack_map_header(n)
         for (k, v) in pairs:
             self._pack(k, nest_limit - 1)
             self._pack(v, nest_limit - 1)
+
     def bytes(self):
         return self.buffer.getvalue()
+
     def reset(self):
         self.buffer = StringIO()
