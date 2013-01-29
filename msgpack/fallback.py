@@ -4,13 +4,28 @@ import sys
 import array
 import struct
 
+if sys.version_info[0] == 3:
+    PY3 = True
+    int_types = int
+    Unicode = str
+    xrange = range
+    def dict_iteritems(d):
+        return d.items()
+else:
+    PY3 = False
+    int_types = (int, long)
+    Unicode = unicode
+    def dict_iteritems(d):
+        return d.iteritems()
+
+
 if hasattr(sys, 'pypy_version_info'):
     # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
     # StringBuilder is fastest.
     from __pypy__.builders import StringBuilder
     USING_STRINGBUILDER = True
     class StringIO(object):
-        def __init__(self, s=''):
+        def __init__(self, s=b''):
             if s:
                 self.builder = StringBuilder(len(s))
                 self.builder.append(s)
@@ -22,10 +37,7 @@ if hasattr(sys, 'pypy_version_info'):
             return self.builder.build()
 else:
     USING_STRINGBUILDER = False
-    try:
-        from cStringIO import StringIO
-    except ImportError:
-        from StringIO import StringIO
+    from io import BytesIO as StringIO
 
 from msgpack.exceptions import (
         BufferFull,
@@ -156,7 +168,7 @@ class Unpacker(object):
         self._fb_buf_o = 0
         self._fb_buf_i = 0
         self._fb_buf_n = 0
-        self.max_buffer_size = (sys.maxint if max_buffer_size == 0
+        self.max_buffer_size = (2**31-1 if max_buffer_size == 0
                                         else max_buffer_size)
         self.read_size = (read_size if read_size != 0
                             else min(self.max_buffer_size, 2048))
@@ -221,7 +233,7 @@ class Unpacker(object):
         bufs = self._fb_buffers[self._fb_buf_i:]
         if bufs:
             bufs[0] = bufs[0][self._fb_buf_o:]
-        return ''.join(bufs)
+        return b''.join(bufs)
 
     def _fb_read(self, n, write_bytes=None):
         if (write_bytes is None and self._fb_buf_i < len(self._fb_buffers)
@@ -229,7 +241,7 @@ class Unpacker(object):
             self._fb_buf_o += n
             return self._fb_buffers[self._fb_buf_i][
                     self._fb_buf_o-n:self._fb_buf_o]
-        ret = ''
+        ret = b''
         while len(ret) != n:
             if self._fb_buf_i == len(self._fb_buffers):
                 if self._fb_feeding:
@@ -255,11 +267,12 @@ class Unpacker(object):
 
     def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
         typ = TYPE_IMMEDIATE
-        b = ord(self._fb_read(1, write_bytes))
+        c = self._fb_read(1, write_bytes)
+        b = ord(c)
         if   b & 0b10000000 == 0:
             obj = b
         elif b & 0b11100000 == 0b11100000:
-            obj = struct.unpack("b", chr(b))[0]
+            obj = struct.unpack("b", c)[0]
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
             obj = self._fb_read(n, write_bytes)
@@ -374,6 +387,7 @@ class Unpacker(object):
             return ret
         except OutOfData:
             raise StopIteration
+    __next__ = next
 
     def skip(self, write_bytes=None):
         self._fb_unpack(EX_SKIP, write_bytes)
@@ -411,12 +425,12 @@ class Packer(object):
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded")
         if obj is None:
-            return self.buffer.write(chr(0xc0))
+            return self.buffer.write(b"\xc0")
         if isinstance(obj, bool):
             if obj:
-                return self.buffer.write(chr(0xc3))
-            return self.buffer.write(chr(0xc2))
-        if isinstance(obj, int) or isinstance(obj, long):
+                return self.buffer.write(b"\xc3")
+            return self.buffer.write(b"\xc2")
+        if isinstance(obj, int_types):
             if 0 <= obj < 0x80:
                 return self.buffer.write(struct.pack("B", obj))
             if -0x20 <= obj < 0:
@@ -438,12 +452,12 @@ class Packer(object):
             if -0x8000000000000000 <= obj < -0x80000000:
                 return self.buffer.write(struct.pack(">Bq", 0xd3, obj))
             raise PackValueError("Integer value out of range")
-        if isinstance(obj, str) or isinstance(obj, unicode):
-            if isinstance(obj, unicode):
+        if isinstance(obj, (Unicode, bytes)):
+            if isinstance(obj, Unicode):
                 obj = obj.encode(self.encoding, self.unicode_errors)
             n = len(obj)
             if n <= 0x1f:
-                self.buffer.write(chr(0xa0 + n))
+                self.buffer.write(struct.pack('B', 0xa0 + n))
                 return self.buffer.write(obj)
             if n <= 0xffff:
                 self.buffer.write(struct.pack(">BH", 0xda, n))
@@ -463,7 +477,7 @@ class Packer(object):
                 self._pack(obj[i], nest_limit - 1)
             return
         if isinstance(obj, dict):
-            return self._fb_pack_map_pairs(len(obj), obj.iteritems(),
+            return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
                                            nest_limit - 1)
         if self._default is not None:
             return self._pack(self._default(obj), nest_limit - 1)
@@ -507,7 +521,7 @@ class Packer(object):
 
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
-            return self.buffer.write(chr(0x90 + n))
+            return self.buffer.write(struct.pack('B', 0x90 + n))
         if n <= 0xffff:
             return self.buffer.write(struct.pack(">BH", 0xdc, n))
         if n <= 0xffffffff:
@@ -516,7 +530,7 @@ class Packer(object):
 
     def _fb_pack_map_header(self, n):
         if n <= 0x0f:
-            return self.buffer.write(chr(0x80 + n))
+            return self.buffer.write(struct.pack('B', 0x80 + n))
         if n <= 0xffff:
             return self.buffer.write(struct.pack(">BH", 0xde, n))
         if n <= 0xffffffff:
