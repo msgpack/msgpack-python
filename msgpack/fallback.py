@@ -430,7 +430,8 @@ class Packer(object):
                 obj = obj.encode(self.encoding, self.unicode_errors)
             n = len(obj)
             if n <= 0x1f:
-                return self.buffer.write(chr(0xa0 + n) + obj)
+                self.buffer.write(chr(0xa0 + n))
+                return self.buffer.write(obj)
             if n <= 0xffff:
                 return self.buffer.write(struct.pack(">BH%ds" % n,0xda, n, obj))
             if n <= 0xffffffff:
