@@ -208,16 +208,12 @@ class Unpacker(object):
     def __iter__(self):
         return self
 
-    def next(self):
-        try:
-            ret = self._fb_unpack(EX_CONSTRUCT, None)
-            self._fb_consume()
-            return ret
-        except OutOfData:
-            raise StopIteration
-
     def read_bytes(self, n):
         return self._fb_read(n)
+
+    def _fb_rollback(self):
+        self._fb_buf_i = 0
+        self._fb_buf_o = 0
 
     def _fb_get_extradata(self):
         bufs = self._fb_buffers[self._fb_buf_i:]
@@ -244,6 +240,7 @@ class Unpacker(object):
                 self._fb_buf_o = 0
                 self._fb_buf_i += 1
         if len(ret) != n:
+            self._fb_rollback()
             raise OutOfData
         if write_bytes is not None:
             write_bytes(ret)
@@ -362,6 +359,14 @@ class Unpacker(object):
             return obj
         assert typ == TYPE_IMMEDIATE
         return obj
+
+    def next(self):
+        try:
+            ret = self._fb_unpack(EX_CONSTRUCT, None)
+            self._fb_consume()
+            return ret
+        except OutOfData:
+            raise StopIteration
 
     def skip(self, write_bytes=None):
         self._fb_unpack(EX_SKIP, write_bytes)

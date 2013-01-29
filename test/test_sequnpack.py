@@ -7,6 +7,21 @@ from msgpack.exceptions import OutOfData
 from pytest import raises
 
 
+def test_partialdata():
+    unpacker = Unpacker()
+    unpacker.feed(b'\xa5')
+    with raises(StopIteration): next(iter(unpacker))
+    unpacker.feed(b'h')
+    with raises(StopIteration): next(iter(unpacker))
+    unpacker.feed(b'a')
+    with raises(StopIteration): next(iter(unpacker))
+    unpacker.feed(b'l')
+    with raises(StopIteration): next(iter(unpacker))
+    unpacker.feed(b'l')
+    with raises(StopIteration): next(iter(unpacker))
+    unpacker.feed(b'o')
+    assert next(iter(unpacker)) == 'hallo'
+
 def test_foobar():
     unpacker = Unpacker(read_size=3, use_list=1)
     unpacker.feed(b'foobar')
