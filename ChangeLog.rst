@@ -10,6 +10,7 @@ Inconpatible Changes
 
 Changes
 -------
+* Pure Python fallback module is added. (thanks to bwesterb)
 * Add ``.skip()`` method to ``Unpacker`` (thanks to jnothman)
 * Add capturing feature. You can pass the writable object to
   ``Unpacker.unpack()`` as a second parameter.
