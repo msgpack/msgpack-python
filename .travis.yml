@@ -12,4 +12,4 @@ install:
     - cython --cplus msgpack/_packer.pyx
     - cython --cplus msgpack/_unpacker.pyx
 
-script: "tox"
+script: "tox && MSGPACK_PUREPYTHON=x tox"
