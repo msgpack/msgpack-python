@@ -222,6 +222,11 @@ class Unpacker(object):
         return ''.join(bufs)
 
     def _fb_read(self, n, write_bytes=None):
+        if (write_bytes is None and self._fb_buf_i < len(self._fb_buffers)
+                and self._fb_buf_o + n < len(self._fb_buffers[self._fb_buf_i])):
+            self._fb_buf_o += n
+            return self._fb_buffers[self._fb_buf_i][
+                    self._fb_buf_o-n:self._fb_buf_o]
         ret = ''
         while len(ret) != n:
             if self._fb_buf_i == len(self._fb_buffers):
