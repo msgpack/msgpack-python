@@ -258,7 +258,7 @@ class Unpacker(object):
             obj = struct.unpack("b", chr(b))[0]
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
-            obj = struct.unpack("%ds" % n, self._fb_read(n, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
@@ -294,11 +294,11 @@ class Unpacker(object):
             obj = struct.unpack(">q", self._fb_read(8, write_bytes))[0]
         elif b == 0xda:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
-            obj = struct.unpack("%ds" % n, self._fb_read(n, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b == 0xdb:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
-            obj = struct.unpack("%ds" % n, self._fb_read(n, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b == 0xdc:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
@@ -433,9 +433,11 @@ class Packer(object):
                 self.buffer.write(chr(0xa0 + n))
                 return self.buffer.write(obj)
             if n <= 0xffff:
-                return self.buffer.write(struct.pack(">BH%ds" % n,0xda, n, obj))
+                self.buffer.write(struct.pack(">BH", 0xda, n))
+                return self.buffer.write(obj)
             if n <= 0xffffffff:
-                return self.buffer.write(struct.pack(">BI%ds" % n,0xdb, n, obj))
+                self.buffer.write(struct.pack(">BI", 0xdb, n))
+                return self.buffer.write(obj)
             raise PackValueError("String is too large")
         if isinstance(obj, float):
             if self.use_float:
