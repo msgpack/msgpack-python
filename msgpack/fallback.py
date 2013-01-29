@@ -1,15 +1,27 @@
 # Fallback pure Python implementation of msgpack
 
+#
+# Easy imports
+#
 import sys
 import array
 import struct
 
+#
+# Tricky imports
+#
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
+# We will use wStringIO for buffering the writes for packing.
+# Normally, we will use cStringIO.StringIO.
+# On PyPy we will use PyPy's own StringBuilder.
 if hasattr(sys, 'pypy_version_info'):
-    # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
-    # StringBuilder is fastest.
     from __pypy__.builders import StringBuilder
     USING_STRINGBUILDER = True
-    class StringIO(object):
+    class wStringIO(object):
         def __init__(self, s=''):
             if s:
                 self.builder = StringBuilder(len(s))
@@ -22,10 +34,18 @@ if hasattr(sys, 'pypy_version_info'):
             return self.builder.build()
 else:
     USING_STRINGBUILDER = False
-    try:
-        from cStringIO import StringIO
-    except ImportError:
-        from StringIO import StringIO
+    wStringIO = StringIO
+
+# We will use rStringIO for unpacking.
+# Normally, this is a mmap.  A normal StringIO is not a drop-in replacement ---
+# it misses the __len__ operation.
+# TODO add fallback for when mmap is unavailable
+import mmap
+def rStringIO(s):
+    m = mmap.mmap(-1, len(s))
+    m.write(s)
+    m.seek(0)
+    return m
 
 from msgpack.exceptions import (
         BufferFull,
@@ -184,13 +204,13 @@ class Unpacker(object):
         if self._fb_buf_n + len(next_bytes) > self.max_buffer_size:
             raise BufferFull
         self._fb_buf_n += len(next_bytes)
-        self._fb_buffers.append(next_bytes)
+        self._fb_buffers.append(rStringIO(next_bytes))
 
     def _fb_consume(self):
         self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
         if self._fb_buffers:
-            self._fb_buffers[0] = self._fb_buffers[0][self._fb_buf_o:]
-        self._fb_buf_o = 0
+            self._fb_buffers[0] = rStringIO(self._fb_buffers[0][
+                                            self._fb_buffers[0].tell():])
         self._fb_buf_i = 0
         self._fb_buf_n = sum(map(len, self._fb_buffers))
 
@@ -212,16 +232,20 @@ class Unpacker(object):
         return self._fb_read(n)
 
     def _fb_rollback(self):
+        for buf in self._fb_buffers:
+            buf.seek(0)
         self._fb_buf_i = 0
-        self._fb_buf_o = 0
 
     def _fb_get_extradata(self):
         bufs = self._fb_buffers[self._fb_buf_i:]
         if bufs:
-            bufs[0] = bufs[0][self._fb_buf_o:]
-        return ''.join(bufs)
+            bufs[0] = rStringIO(bufs[0][bufs[0].tell():])
+        return ''.join([buf[:] for buf in bufs])
 
     def _fb_read(self, n, write_bytes=None):
+        if (write_bytes is None and self._fb_buf_i < len(self._fb_buffers)
+                and self._fb_buffers[0].tell() + n < len(self._fb_buffers[0])):
+            return self._fb_buffers[0].read(n)
         ret = ''
         while len(ret) != n:
             if self._fb_buf_i == len(self._fb_buffers):
@@ -230,14 +254,12 @@ class Unpacker(object):
                 tmp = self.file_like.read(self.read_size)
                 if not tmp:
                     break
-                self._fb_buffers.append(tmp)
+                self._fb_buffers.append(rStringIO(tmp))
                 continue
             sliced = n - len(ret)
-            ret += self._fb_buffers[self._fb_buf_i][
-                        self._fb_buf_o:self._fb_buf_o + sliced]
-            self._fb_buf_o += sliced
-            if self._fb_buf_o >= len(self._fb_buffers[self._fb_buf_i]):
-                self._fb_buf_o = 0
+            ret += self._fb_buffers[self._fb_buf_i].read(sliced)
+            if (self._fb_buffers[self._fb_buf_i].tell()
+                    ==  len(self._fb_buffers[self._fb_buf_i])):
                 self._fb_buf_i += 1
         if len(ret) != n:
             self._fb_rollback()
@@ -394,7 +416,7 @@ class Packer(object):
         self.autoreset = autoreset
         self.encoding = encoding
         self.unicode_errors = unicode_errors
-        self.buffer = StringIO()
+        self.buffer = wStringIO()
         if default is not None:
             if not callable(default):
                 raise TypeError("default must be callable")
@@ -464,33 +486,33 @@ class Packer(object):
         self._pack(obj)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO()
+            self.buffer = wStringIO()
         elif USING_STRINGBUILDER:
-            self.buffer = StringIO(ret)
+            self.buffer = wStringIO(ret)
         return ret
     def pack_map_pairs(self, pairs):
         self._fb_pack_map_pairs(len(pairs), pairs)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO()
+            self.buffer = wStringIO()
         elif USING_STRINGBUILDER:
-            self.buffer = StringIO(ret)
+            self.buffer = wStringIO(ret)
         return ret
     def pack_array_header(self, n):
         self._fb_pack_array_header(n)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO()
+            self.buffer = wStringIO()
         elif USING_STRINGBUILDER:
-            self.buffer = StringIO(ret)
+            self.buffer = wStringIO(ret)
         return ret
     def pack_map_header(self, n):
         self._fb_pack_map_header(n)
         ret = self.buffer.getvalue()
         if self.autoreset:
-            self.buffer = StringIO()
+            self.buffer = wStringIO()
         elif USING_STRINGBUILDER:
-            self.buffer = StringIO(ret)
+            self.buffer = wStringIO(ret)
         return ret
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
@@ -516,4 +538,4 @@ class Packer(object):
     def bytes(self):
         return self.buffer.getvalue()
     def reset(self):
-        self.buffer = StringIO()
+        self.buffer = wStringIO()
