@@ -176,10 +176,19 @@ class Unpacker(object):
             raise ValueError("read_size must be smaller than max_buffer_size")
         self.encoding = encoding
         self.unicode_errors = unicode_errors
-        self.use_list = use_list
-        self.list_hook = list_hook
-        self.object_hook = object_hook
-        self.object_pairs_hook = object_pairs_hook
+
+        if list_hook is not None:
+            self.list_hook = lambda iter: list_hook(list(iter))
+        elif use_list:
+            self.list_hook = list
+        else:
+            self.list_hook = tuple
+        if object_hook is not None:
+            self.object_hook = lambda iter: object_hook(dict(iter))
+        elif object_pairs_hook is not None:
+            self.object_hook = lambda iter: object_pairs_hook(list(iter))
+        else:
+            self.object_hook = dict
 
         if list_hook is not None and not callable(list_hook):
             raise ValueError('`list_hook` is not callable')
@@ -335,7 +344,7 @@ class Unpacker(object):
             if typ != TYPE_ARRAY:
                 raise UnpackValueError("Expected array")
             return n
-        if execute == EX_READ_MAP_HEADER:
+        elif execute == EX_READ_MAP_HEADER:
             if typ != TYPE_MAP:
                 raise UnpackValueError("Expected map")
             return n
@@ -343,16 +352,10 @@ class Unpacker(object):
         if typ == TYPE_ARRAY:
             if execute == EX_SKIP:
                 for i in xrange(n):
-                    # TODO check whether we need to call `list_hook`
                     self._fb_unpack(EX_SKIP, write_bytes)
                 return
-            ret = []
-            for i in xrange(n):
-                ret.append(self._fb_unpack(EX_CONSTRUCT, write_bytes))
-            if self.list_hook is not None:
-                ret = self.list_hook(ret)
-            # TODO is the interaction between `list_hook` and `use_list` ok?
-            return ret if self.use_list else tuple(ret)
+            return self.list_hook(self._fb_unpack(EX_CONSTRUCT, write_bytes)
+                   for i in xrange(n))
         if typ == TYPE_MAP:
             if execute == EX_SKIP:
                 for i in xrange(n):
@@ -360,17 +363,9 @@ class Unpacker(object):
                     self._fb_unpack(EX_SKIP, write_bytes)
                     self._fb_unpack(EX_SKIP, write_bytes)
                 return
-            ret = []
-            for i in xrange(n):
-                ret.append((self._fb_unpack(EX_CONSTRUCT, write_bytes),
-                            self._fb_unpack(EX_CONSTRUCT, write_bytes)))
-            if self.object_pairs_hook is not None:
-                ret = self.object_pairs_hook(ret)
-            else:
-                ret = dict(ret)
-            if self.object_hook is not None:
-                ret = self.object_hook(ret)
-            return ret
+            return self.object_hook(
+                    (self._fb_unpack(EX_CONSTRUCT, write_bytes), self._fb_unpack(EX_CONSTRUCT, write_bytes))
+                    for i in xrange(n))
         if execute == EX_SKIP:
             return
         if typ == TYPE_RAW:
