@@ -75,18 +75,19 @@ else:
     macros = [('__LITTLE_ENDIAN__', '1')]
 
 ext_modules = []
-ext_modules.append(Extension('msgpack._packer',
-                             sources=['msgpack/_packer.cpp'],
-                             libraries=libraries,
-                             include_dirs=['.'],
-                             define_macros=macros,
-                             ))
-ext_modules.append(Extension('msgpack._unpacker',
-                             sources=['msgpack/_unpacker.cpp'],
-                             libraries=libraries,
-                             include_dirs=['.'],
-                             define_macros=macros,
-                             ))
+if not hasattr(sys, 'pypy_version_info'):
+    ext_modules.append(Extension('msgpack._packer',
+                                 sources=['msgpack/_packer.cpp'],
+                                 libraries=libraries,
+                                 include_dirs=['.'],
+                                 define_macros=macros,
+                                 ))
+    ext_modules.append(Extension('msgpack._unpacker',
+                                 sources=['msgpack/_unpacker.cpp'],
+                                 libraries=libraries,
+                                 include_dirs=['.'],
+                                 define_macros=macros,
+                                 ))
 del libraries, macros
 
 
