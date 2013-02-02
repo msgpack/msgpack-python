@@ -46,7 +46,12 @@ class BuildExt(build_ext):
             print("Install Cython >= 0.16 or install msgpack from PyPI.")
             print("Falling back to pure Python implementation.")
             return
-        return build_ext.build_extension(self, ext)
+        try:
+            return build_ext.build_extension(self, ext)
+        except Exception as e:
+            print("WARNING: Failed to compile extensiom modules.")
+            print("msgpack uses fallback pure python implementation.")
+            print(e)
 
 
 exec(open('msgpack/_version.py').read())
