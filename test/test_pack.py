@@ -151,7 +151,7 @@ def test_odict():
     od = odict(seq)
     assert unpackb(packb(od), use_list=1) == dict(seq)
     def pair_hook(seq):
-        return seq
+        return list(seq)
     assert unpackb(packb(od), object_pairs_hook=pair_hook, use_list=1) == seq
 
 
