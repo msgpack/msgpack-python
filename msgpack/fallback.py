@@ -360,16 +360,19 @@ class Unpacker(object):
                     self._fb_unpack(EX_SKIP, write_bytes)
                     self._fb_unpack(EX_SKIP, write_bytes)
                 return
-            ret = []
-            for i in xrange(n):
-                ret.append((self._fb_unpack(EX_CONSTRUCT, write_bytes),
-                            self._fb_unpack(EX_CONSTRUCT, write_bytes)))
             if self.object_pairs_hook is not None:
-                ret = self.object_pairs_hook(ret)
+                ret = self.object_pairs_hook(
+                        (self._fb_unpack(EX_CONSTRUCT, write_bytes),
+                         self._fb_unpack(EX_CONSTRUCT, write_bytes))
+                            for _ in xrange(n)
+                        )
             else:
-                ret = dict(ret)
-            if self.object_hook is not None:
-                ret = self.object_hook(ret)
+                ret = {}
+                for _ in xrange(n):
+                    key = self._fb_unpack(EX_CONSTRUCT, write_bytes)
+                    ret[key] = self._fb_unpack(EX_CONSTRUCT, write_bytes)
+                if self.object_hook is not None:
+                    ret = self.object_hook(ret)
             return ret
         if execute == EX_SKIP:
             return
@@ -421,7 +424,7 @@ class Packer(object):
                 raise TypeError("default must be callable")
         self._default = default
 
-    def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT):
+    def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT, isinstance=isinstance):
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded")
         if obj is None:
@@ -454,6 +457,10 @@ class Packer(object):
             raise PackValueError("Integer value out of range")
         if isinstance(obj, (Unicode, bytes)):
             if isinstance(obj, Unicode):
+                if self.encoding is None:
+                    raise TypeError(
+                            "Can't encode unicode string: "
+                            "no encoding is specified")
                 obj = obj.encode(self.encoding, self.unicode_errors)
             n = len(obj)
             if n <= 0x1f:
