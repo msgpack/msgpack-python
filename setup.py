@@ -46,7 +46,12 @@ class BuildExt(build_ext):
             print("Install Cython >= 0.16 or install msgpack from PyPI.")
             print("Falling back to pure Python implementation.")
             return
-        return build_ext.build_extension(self, ext)
+        try:
+            return build_ext.build_extension(self, ext)
+        except Exception as e:
+            print("WARNING: Failed to compile extensiom modules.")
+            print("msgpack uses fallback pure python implementation.")
+            print(e)
 
 
 exec(open('msgpack/_version.py').read())
@@ -75,18 +80,19 @@ else:
     macros = [('__LITTLE_ENDIAN__', '1')]
 
 ext_modules = []
-ext_modules.append(Extension('msgpack._packer',
-                             sources=['msgpack/_packer.cpp'],
-                             libraries=libraries,
-                             include_dirs=['.'],
-                             define_macros=macros,
-                             ))
-ext_modules.append(Extension('msgpack._unpacker',
-                             sources=['msgpack/_unpacker.cpp'],
-                             libraries=libraries,
-                             include_dirs=['.'],
-                             define_macros=macros,
-                             ))
+if not hasattr(sys, 'pypy_version_info'):
+    ext_modules.append(Extension('msgpack._packer',
+                                 sources=['msgpack/_packer.cpp'],
+                                 libraries=libraries,
+                                 include_dirs=['.'],
+                                 define_macros=macros,
+                                 ))
+    ext_modules.append(Extension('msgpack._unpacker',
+                                 sources=['msgpack/_unpacker.cpp'],
+                                 libraries=libraries,
+                                 include_dirs=['.'],
+                                 define_macros=macros,
+                                 ))
 del libraries, macros
 
 
