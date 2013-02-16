@@ -22,6 +22,7 @@ else:
 if hasattr(sys, 'pypy_version_info'):
     # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
     # StringBuilder is fastest.
+    from __pypy__ import newlist_hint
     from __pypy__.builders import StringBuilder
     USING_STRINGBUILDER = True
     class StringIO(object):
@@ -38,6 +39,7 @@ if hasattr(sys, 'pypy_version_info'):
 else:
     USING_STRINGBUILDER = False
     from io import BytesIO as StringIO
+    newlist_hint = lambda size: []
 
 from msgpack.exceptions import (
         BufferFull,
@@ -346,7 +348,7 @@ class Unpacker(object):
                     # TODO check whether we need to call `list_hook`
                     self._fb_unpack(EX_SKIP, write_bytes)
                 return
-            ret = []
+            ret = newlist_hint(n)
             for i in xrange(n):
                 ret.append(self._fb_unpack(EX_CONSTRUCT, write_bytes))
             if self._list_hook is not None:
