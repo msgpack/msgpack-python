@@ -192,10 +192,10 @@ Another way to unpacking such object is using ``object_pairs_hook``.
 
 TEST
 ----
-MessagePack uses `nosetest` for testing.
+MessagePack uses `pytest` for testing.
 Run test with following command:
 
-    $ nosetests test
+    $ py.test
 
 
 ..
