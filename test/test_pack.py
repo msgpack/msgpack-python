@@ -5,7 +5,7 @@ import six
 import struct
 from pytest import raises, xfail
 
-from msgpack import packb, unpackb, Unpacker, Packer
+from msgpack import packb, unpackb, Unpacker, Packer, pack
 
 from io import BytesIO
 
@@ -161,3 +161,35 @@ def test_pairlist():
     packed = packer.pack_map_pairs(pairlist)
     unpacked = unpackb(packed, object_pairs_hook=list)
     assert pairlist == unpacked
+
+def test_ret_as_buff():
+    packer = Packer()
+    ret = packer.pack([1, 2], True)
+    if six.PY3:
+        assert type(ret) == memoryview
+    else:
+        assert type(ret) == buffer
+
+def test_get_buffer():
+    packer = Packer(autoreset=0)
+    packer.pack([1, 2])
+    if six.PY3:
+        assert type(packer.buffer()) == memoryview
+    else:
+        assert type(packer.buffer()) == buffer
+    assert len(packer.buffer()) == 3
+
+def test_buff_to_stream():
+    class StreamMock(object):
+        def write(self, b):
+            self.b_type = type(b)
+            self.b_len = len(b)
+
+    stream = StreamMock()
+    pack([1, 2], stream, ret_as_buff=True)
+    assert stream.b_len == 3
+
+    if six.PY3:
+        assert stream.b_type == memoryview
+    else:
+        assert stream.b_type == buffer

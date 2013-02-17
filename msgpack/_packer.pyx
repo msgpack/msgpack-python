@@ -34,6 +34,9 @@ cdef extern from "pack.h":
     int msgpack_pack_raw(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
 
+cdef extern from "buff_converter.h":
+    object buff_to_buff(char *, Py_ssize_t)
+
 cdef int DEFAULT_RECURSE_LIMIT=511
 
 
@@ -179,7 +182,7 @@ cdef class Packer(object):
             raise TypeError("can't serialize %r" % (o,))
         return ret
 
-    cpdef pack(self, object obj):
+    cpdef pack(self, object obj, bint ret_as_buff=0):
         cdef int ret
         ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
         if ret == -1:
@@ -187,7 +190,11 @@ cdef class Packer(object):
         elif ret:  # should not happen.
             raise TypeError
         if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            if not ret_as_buff:
+                buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            else:
+                buf = buff_to_buff(self.pk.buf, self.pk.length)
+
             self.pk.length = 0
             return buf
 
@@ -244,12 +251,15 @@ cdef class Packer(object):
         """Return buffer content."""
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
 
+    def buffer(self):
+        return buff_to_buff(self.pk.buf, self.pk.length)
 
-def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
+
+def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict', bint ret_as_buff=0):
     """
     pack an object `o` and write it to stream)."""
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
-    stream.write(packer.pack(o))
+    stream.write(packer.pack(o, ret_as_buff))
 
 def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False):
     """
