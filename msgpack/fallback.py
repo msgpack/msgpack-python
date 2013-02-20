@@ -1,4 +1,4 @@
-"""Fallback pure Python implementation of msgpack"""
+"""Pure Python implementation of msgpack"""
 
 import sys
 import array
@@ -46,10 +46,11 @@ from msgpack.exceptions import (
         PackValueError,
         ExtraData)
 
-EX_SKIP                 = 0 
+EX_SKIP                 = 0
 EX_CONSTRUCT            = 1
 EX_READ_ARRAY_HEADER    = 2
 EX_READ_MAP_HEADER      = 3
+EX_CONSTRUCT_SIMPLE     = 4
 
 TYPE_IMMEDIATE          = 0
 TYPE_ARRAY              = 1
@@ -275,7 +276,10 @@ class Unpacker(object):
             obj = struct.unpack("b", c)[0]
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
-            obj = self._fb_read(n, write_bytes)
+            if execute == EX_CONSTRUCT_SIMPLE:
+                obj = n
+            else:
+                obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
@@ -311,11 +315,17 @@ class Unpacker(object):
             obj = struct.unpack(">q", self._fb_read(8, write_bytes))[0]
         elif b == 0xda:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
-            obj = self._fb_read(n, write_bytes)
+            if execute == EX_CONSTRUCT_SIMPLE:
+                obj = n
+            else:
+                obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b == 0xdb:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
-            obj = self._fb_read(n, write_bytes)
+            if execute == EX_CONSTRUCT_SIMPLE:
+                obj = n
+            else:
+                obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b == 0xdc:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
@@ -331,6 +341,9 @@ class Unpacker(object):
             typ = TYPE_MAP
         else:
             raise UnpackValueError("Unknown header: 0x%x" % b)
+        if execute == EX_CONSTRUCT_SIMPLE:
+            if typ in (TYPE_ARRAY, TYPE_MAP):
+                return (typ, n)
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
                 raise UnpackValueError("Expected array")
@@ -377,10 +390,14 @@ class Unpacker(object):
         if execute == EX_SKIP:
             return
         if typ == TYPE_RAW:
+            if execute == EX_CONSTRUCT_SIMPLE:
+                return (TYPE_RAW, obj)
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
             return obj
         assert typ == TYPE_IMMEDIATE
+        if execute == EX_CONSTRUCT_SIMPLE:
+            return (TYPE_IMMEDIATE, obj)
         return obj
 
     def next(self):
@@ -391,6 +408,11 @@ class Unpacker(object):
         except OutOfData:
             raise StopIteration
     __next__ = next
+
+    def next_marker(self, write_bytes=None):
+        ret = self._fb_unpack(EX_CONSTRUCT_SIMPLE, write_bytes)
+        self._fb_consume()
+        return ret
 
     def skip(self, write_bytes=None):
         self._fb_unpack(EX_SKIP, write_bytes)
