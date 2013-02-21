@@ -57,6 +57,7 @@ TYPE_IMMEDIATE          = 0
 TYPE_ARRAY              = 1
 TYPE_MAP                = 2
 TYPE_RAW                = 3
+TYPE_RESERVED           = 4
 
 DEFAULT_RECURSE_LIMIT=511
 
@@ -267,8 +268,10 @@ class Unpacker(object):
             write_bytes(ret)
         return ret
 
-    def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
+    def _read_header(self, execute=EX_CONSTRUCT, write_bytes=None):
         typ = TYPE_IMMEDIATE
+        n = 0
+        obj = None
         c = self._fb_read(1, write_bytes)
         b = ord(c)
         if   b & 0b10000000 == 0:
@@ -332,7 +335,14 @@ class Unpacker(object):
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             typ = TYPE_MAP
         else:
-            raise UnpackValueError("Unknown header: 0x%x" % b)
+            typ = TYPE_RESERVED
+        return typ, n, obj
+
+    def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
+        typ = TYPE_RESERVED
+        while typ == TYPE_RESERVED:
+            typ, n, obj = self._read_header(self, execute, write_bytes)
+
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
                 raise UnpackValueError("Expected array")
