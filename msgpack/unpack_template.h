@@ -60,10 +60,10 @@ msgpack_unpack_struct_decl(_context) {
 	unsigned int trail;
 	unsigned int top;
 	/*
-	msgpack_unpack_struct(_stack)* stack;
-	unsigned int stack_size;
-	msgpack_unpack_struct(_stack) embed_stack[MSGPACK_EMBED_STACK_SIZE];
-	*/
+	   msgpack_unpack_struct(_stack)* stack;
+	   unsigned int stack_size;
+	   msgpack_unpack_struct(_stack) embed_stack[MSGPACK_EMBED_STACK_SIZE];
+	   */
 	msgpack_unpack_struct(_stack) stack[MSGPACK_EMBED_STACK_SIZE];
 };
 
@@ -74,20 +74,20 @@ msgpack_unpack_func(void, _init)(msgpack_unpack_struct(_context)* ctx)
 	ctx->trail = 0;
 	ctx->top = 0;
 	/*
-	ctx->stack = ctx->embed_stack;
-	ctx->stack_size = MSGPACK_EMBED_STACK_SIZE;
-	*/
+	   ctx->stack = ctx->embed_stack;
+	   ctx->stack_size = MSGPACK_EMBED_STACK_SIZE;
+	   */
 	ctx->stack[0].obj = msgpack_unpack_callback(_root)(&ctx->user);
 }
 
 /*
-msgpack_unpack_func(void, _destroy)(msgpack_unpack_struct(_context)* ctx)
-{
-	if(ctx->stack_size != MSGPACK_EMBED_STACK_SIZE) {
-		free(ctx->stack);
-	}
-}
-*/
+   msgpack_unpack_func(void, _destroy)(msgpack_unpack_struct(_context)* ctx)
+   {
+   if(ctx->stack_size != MSGPACK_EMBED_STACK_SIZE) {
+   free(ctx->stack);
+   }
+   }
+   */
 
 msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context)* ctx)
 {
@@ -109,8 +109,8 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	unsigned int top = ctx->top;
 	msgpack_unpack_struct(_stack)* stack = ctx->stack;
 	/*
-	unsigned int stack_size = ctx->stack_size;
-	*/
+	   unsigned int stack_size = ctx->stack_size;
+	   */
 	msgpack_unpack_user* user = &ctx->user;
 
 	msgpack_unpack_object obj;
@@ -119,7 +119,7 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	int ret;
 
 #define construct_cb(name) \
-    construct && msgpack_unpack_callback(name)
+	construct && msgpack_unpack_callback(name)
 
 #define push_simple_value(func) \
 	if(construct_cb(func)(user, &obj) < 0) { goto _failed; } \
@@ -129,7 +129,7 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	goto _push
 #define push_variable_value(func, base, pos, len) \
 	if(construct_cb(func)(user, \
-		(const char*)base, (const char*)pos, len, &obj) < 0) { goto _failed; } \
+				(const char*)base, (const char*)pos, len, &obj) < 0) { goto _failed; } \
 	goto _push
 
 #define again_fixed_trail(_cs, trail_len) \
@@ -155,24 +155,24 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	/*printf("container %d count %d stack %d\n",stack[top].obj,count_,top);*/ \
 	/*printf("stack push %d\n", top);*/ \
 	/* FIXME \
-	if(top >= stack_size) { \
-		if(stack_size == MSGPACK_EMBED_STACK_SIZE) { \
-			size_t csize = sizeof(msgpack_unpack_struct(_stack)) * MSGPACK_EMBED_STACK_SIZE; \
-			size_t nsize = csize * 2; \
-			msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)malloc(nsize); \
-			if(tmp == NULL) { goto _failed; } \
-			memcpy(tmp, ctx->stack, csize); \
-			ctx->stack = stack = tmp; \
-			ctx->stack_size = stack_size = MSGPACK_EMBED_STACK_SIZE * 2; \
-		} else { \
-			size_t nsize = sizeof(msgpack_unpack_struct(_stack)) * ctx->stack_size * 2; \
-			msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)realloc(ctx->stack, nsize); \
-			if(tmp == NULL) { goto _failed; } \
-			ctx->stack = stack = tmp; \
-			ctx->stack_size = stack_size = stack_size * 2; \
-		} \
-	} \
-	*/ \
+	   if(top >= stack_size) { \
+	   if(stack_size == MSGPACK_EMBED_STACK_SIZE) { \
+	   size_t csize = sizeof(msgpack_unpack_struct(_stack)) * MSGPACK_EMBED_STACK_SIZE; \
+	   size_t nsize = csize * 2; \
+	   msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)malloc(nsize); \
+	   if(tmp == NULL) { goto _failed; } \
+	   memcpy(tmp, ctx->stack, csize); \
+	   ctx->stack = stack = tmp; \
+	   ctx->stack_size = stack_size = MSGPACK_EMBED_STACK_SIZE * 2; \
+	   } else { \
+	   size_t nsize = sizeof(msgpack_unpack_struct(_stack)) * ctx->stack_size * 2; \
+	   msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)realloc(ctx->stack, nsize); \
+	   if(tmp == NULL) { goto _failed; } \
+	   ctx->stack = stack = tmp; \
+	   ctx->stack_size = stack_size = stack_size * 2; \
+	   } \
+	   } \
+	   */ \
 	goto _header_again
 
 #define NEXT_CS(p) \
@@ -195,7 +195,7 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 		switch(cs) {
 		case CS_HEADER:
 			SWITCH_RANGE_BEGIN
-			SWITCH_RANGE(0x00, 0x7f)  // Positive Fixnum
+				SWITCH_RANGE(0x00, 0x7f)  // Positive Fixnum
 				push_fixed_value(_uint8, *(uint8_t*)p);
 			SWITCH_RANGE(0xe0, 0xff)  // Negative Fixnum
 				push_fixed_value(_int8, *(int8_t*)p);
@@ -203,18 +203,24 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 				switch(*p) {
 				case 0xc0:  // nil
 					push_simple_value(_nil);
-				//case 0xc1:  // string
-				//	again_terminal_trail(NEXT_CS(p), p+1);
+					// reserved.
+				case 0xc1:  // string
+					fprintf(stderr, "skipping %x\n", (int)*p);
+					goto _header_again;
+					//	again_terminal_trail(NEXT_CS(p), p+1);
 				case 0xc2:  // false
 					push_simple_value(_false);
 				case 0xc3:  // true
 					push_simple_value(_true);
-				//case 0xc4:
-				//case 0xc5:
-				//case 0xc6:
-				//case 0xc7:
-				//case 0xc8:
-				//case 0xc9:
+					// reserved.
+				case 0xc4:
+				case 0xc5:
+				case 0xc6:
+				case 0xc7:
+				case 0xc8:
+				case 0xc9:
+					fprintf(stderr, "skipping %x\n", (int)*p);
+					goto _header_again;
 				case 0xca:  // float
 				case 0xcb:  // double
 				case 0xcc:  // unsigned int  8
@@ -226,12 +232,15 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 				case 0xd2:  // signed int 32
 				case 0xd3:  // signed int 64
 					again_fixed_trail(NEXT_CS(p), 1 << (((unsigned int)*p) & 0x03));
-				//case 0xd4:
-				//case 0xd5:
-				//case 0xd6:  // big integer 16
-				//case 0xd7:  // big integer 32
-				//case 0xd8:  // big float 16
-				//case 0xd9:  // big float 32
+					// reserved.
+				case 0xd4:
+				case 0xd5:
+				case 0xd6:  // big integer 16
+				case 0xd7:  // big integer 32
+				case 0xd8:  // big float 16
+				case 0xd9:  // big float 32
+					fprintf(stderr, "skipping %x\n", (int)*p);
+					goto _header_again;
 				case 0xda:  // raw 16
 				case 0xdb:  // raw 32
 				case 0xdc:  // array 16
@@ -240,6 +249,7 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 				case 0xdf:  // map 32
 					again_fixed_trail(NEXT_CS(p), 2 << (((unsigned int)*p) & 0x01));
 				default:
+					fprintf(stderr, "failed %x\n", (int)*p);
 					goto _failed;
 				}
 			SWITCH_RANGE(0xa0, 0xbf)  // FixRaw
@@ -250,128 +260,129 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 				start_container(_map, ((unsigned int)*p) & 0x0f, CT_MAP_KEY);
 
 			SWITCH_RANGE_DEFAULT
-				goto _failed;
+				fprintf(stderr, "failed2 %x\n", (int)*p);
+			goto _failed;
 			SWITCH_RANGE_END
-			// end CS_HEADER
+				// end CS_HEADER
 
 
-		_fixed_trail_again:
-			++p;
+				_fixed_trail_again:
+				++p;
 
 		default:
 			if((size_t)(pe - p) < trail) { goto _out; }
 			n = p;  p += trail - 1;
 			switch(cs) {
-			//case CS_
-			//case CS_
+				//case CS_
+				//case CS_
 			case CS_FLOAT: {
-					union { uint32_t i; float f; } mem;
-					mem.i = _msgpack_load32(uint32_t,n);
-					push_fixed_value(_float, mem.f); }
+							   union { uint32_t i; float f; } mem;
+							   mem.i = _msgpack_load32(uint32_t,n);
+							   push_fixed_value(_float, mem.f); }
 			case CS_DOUBLE: {
-					union { uint64_t i; double f; } mem;
-					mem.i = _msgpack_load64(uint64_t,n);
+								union { uint64_t i; double f; } mem;
+								mem.i = _msgpack_load64(uint64_t,n);
 #if defined(__arm__) && !(__ARM_EABI__) // arm-oabi
-                    // https://github.com/msgpack/msgpack-perl/pull/1
-                    mem.i = (mem.i & 0xFFFFFFFFUL) << 32UL | (mem.i >> 32UL);
+								// https://github.com/msgpack/msgpack-perl/pull/1
+								mem.i = (mem.i & 0xFFFFFFFFUL) << 32UL | (mem.i >> 32UL);
 #endif
-					push_fixed_value(_double, mem.f); }
+								push_fixed_value(_double, mem.f); }
 			case CS_UINT_8:
-				push_fixed_value(_uint8, *(uint8_t*)n);
+							push_fixed_value(_uint8, *(uint8_t*)n);
 			case CS_UINT_16:
-				push_fixed_value(_uint16, _msgpack_load16(uint16_t,n));
+							push_fixed_value(_uint16, _msgpack_load16(uint16_t,n));
 			case CS_UINT_32:
-				push_fixed_value(_uint32, _msgpack_load32(uint32_t,n));
+							push_fixed_value(_uint32, _msgpack_load32(uint32_t,n));
 			case CS_UINT_64:
-				push_fixed_value(_uint64, _msgpack_load64(uint64_t,n));
+							push_fixed_value(_uint64, _msgpack_load64(uint64_t,n));
 
 			case CS_INT_8:
-				push_fixed_value(_int8, *(int8_t*)n);
+							push_fixed_value(_int8, *(int8_t*)n);
 			case CS_INT_16:
-				push_fixed_value(_int16, _msgpack_load16(int16_t,n));
+							push_fixed_value(_int16, _msgpack_load16(int16_t,n));
 			case CS_INT_32:
-				push_fixed_value(_int32, _msgpack_load32(int32_t,n));
+							push_fixed_value(_int32, _msgpack_load32(int32_t,n));
 			case CS_INT_64:
-				push_fixed_value(_int64, _msgpack_load64(int64_t,n));
+							push_fixed_value(_int64, _msgpack_load64(int64_t,n));
 
-			//case CS_
-			//case CS_
-			//case CS_BIG_INT_16:
-			//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load16(uint16_t,n), _big_int_zero);
-			//case CS_BIG_INT_32:
-			//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load32(uint32_t,n), _big_int_zero);
-			//case ACS_BIG_INT_VALUE:
-			//_big_int_zero:
-			//	// FIXME
-			//	push_variable_value(_big_int, data, n, trail);
+							//case CS_
+							//case CS_
+							//case CS_BIG_INT_16:
+							//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load16(uint16_t,n), _big_int_zero);
+							//case CS_BIG_INT_32:
+							//	again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load32(uint32_t,n), _big_int_zero);
+							//case ACS_BIG_INT_VALUE:
+							//_big_int_zero:
+							//	// FIXME
+							//	push_variable_value(_big_int, data, n, trail);
 
-			//case CS_BIG_FLOAT_16:
-			//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load16(uint16_t,n), _big_float_zero);
-			//case CS_BIG_FLOAT_32:
-			//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load32(uint32_t,n), _big_float_zero);
-			//case ACS_BIG_FLOAT_VALUE:
-			//_big_float_zero:
-			//	// FIXME
-			//	push_variable_value(_big_float, data, n, trail);
+							//case CS_BIG_FLOAT_16:
+							//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load16(uint16_t,n), _big_float_zero);
+							//case CS_BIG_FLOAT_32:
+							//	again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load32(uint32_t,n), _big_float_zero);
+							//case ACS_BIG_FLOAT_VALUE:
+							//_big_float_zero:
+							//	// FIXME
+							//	push_variable_value(_big_float, data, n, trail);
 
 			case CS_RAW_16:
-				again_fixed_trail_if_zero(ACS_RAW_VALUE, _msgpack_load16(uint16_t,n), _raw_zero);
+							again_fixed_trail_if_zero(ACS_RAW_VALUE, _msgpack_load16(uint16_t,n), _raw_zero);
 			case CS_RAW_32:
-				again_fixed_trail_if_zero(ACS_RAW_VALUE, _msgpack_load32(uint32_t,n), _raw_zero);
+							again_fixed_trail_if_zero(ACS_RAW_VALUE, _msgpack_load32(uint32_t,n), _raw_zero);
 			case ACS_RAW_VALUE:
-			_raw_zero:
-				push_variable_value(_raw, data, n, trail);
+_raw_zero:
+							push_variable_value(_raw, data, n, trail);
 
 			case CS_ARRAY_16:
-				start_container(_array, _msgpack_load16(uint16_t,n), CT_ARRAY_ITEM);
+							start_container(_array, _msgpack_load16(uint16_t,n), CT_ARRAY_ITEM);
 			case CS_ARRAY_32:
-				/* FIXME security guard */
-				start_container(_array, _msgpack_load32(uint32_t,n), CT_ARRAY_ITEM);
+							/* FIXME security guard */
+							start_container(_array, _msgpack_load32(uint32_t,n), CT_ARRAY_ITEM);
 
 			case CS_MAP_16:
-				start_container(_map, _msgpack_load16(uint16_t,n), CT_MAP_KEY);
+							start_container(_map, _msgpack_load16(uint16_t,n), CT_MAP_KEY);
 			case CS_MAP_32:
-				/* FIXME security guard */
-				start_container(_map, _msgpack_load32(uint32_t,n), CT_MAP_KEY);
+							/* FIXME security guard */
+							start_container(_map, _msgpack_load32(uint32_t,n), CT_MAP_KEY);
 
 			default:
-				goto _failed;
+							goto _failed;
 			}
 		}
 
 _push:
-	if(top == 0) { goto _finish; }
-	c = &stack[top-1];
-	switch(c->ct) {
-	case CT_ARRAY_ITEM:
-		if(construct_cb(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
-		if(++c->count == c->size) {
-			obj = c->obj;
-			if (construct_cb(_array_end)(user, &obj) < 0) { goto _failed; }
-			--top;
-			/*printf("stack pop %d\n", top);*/
-			goto _push;
-		}
-		goto _header_again;
-	case CT_MAP_KEY:
-		c->map_key = obj;
-		c->ct = CT_MAP_VALUE;
-		goto _header_again;
-	case CT_MAP_VALUE:
-		if(construct_cb(_map_item)(user, c->count, &c->obj, c->map_key, obj) < 0) { goto _failed; }
-		if(++c->count == c->size) {
-			obj = c->obj;
-			if (construct_cb(_map_end)(user, &obj) < 0) { goto _failed; }
-			--top;
-			/*printf("stack pop %d\n", top);*/
-			goto _push;
-		}
-		c->ct = CT_MAP_KEY;
-		goto _header_again;
+		if(top == 0) { goto _finish; }
+		c = &stack[top-1];
+		switch(c->ct) {
+		case CT_ARRAY_ITEM:
+			if(construct_cb(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
+			if(++c->count == c->size) {
+				obj = c->obj;
+				if (construct_cb(_array_end)(user, &obj) < 0) { goto _failed; }
+				--top;
+				/*printf("stack pop %d\n", top);*/
+				goto _push;
+			}
+			goto _header_again;
+		case CT_MAP_KEY:
+			c->map_key = obj;
+			c->ct = CT_MAP_VALUE;
+			goto _header_again;
+		case CT_MAP_VALUE:
+			if(construct_cb(_map_item)(user, c->count, &c->obj, c->map_key, obj) < 0) { goto _failed; }
+			if(++c->count == c->size) {
+				obj = c->obj;
+				if (construct_cb(_map_end)(user, &obj) < 0) { goto _failed; }
+				--top;
+				/*printf("stack pop %d\n", top);*/
+				goto _push;
+			}
+			c->ct = CT_MAP_KEY;
+			goto _header_again;
 
-	default:
-		goto _failed;
-	}
+		default:
+			goto _failed;
+		}
 
 _header_again:
 		cs = CS_HEADER;
@@ -431,7 +442,7 @@ msgpack_unpack_func(int, _container_header)(msgpack_unpack_struct(_context)* ctx
 
 #define inc_offset(inc) \
 		if (len - *off < inc) \
-			return 0; \
+		return 0; \
 		*off += inc;
 
 		switch (*p) {
@@ -466,8 +477,25 @@ msgpack_unpack_func(int, _container_header)(msgpack_unpack_struct(_context)* ctx
 			++*off;
 			size = ((unsigned int)*p) & 0x0f;
 			break;
-		default:
+			// reserved:
+		case 0xc1:
+		case 0xc4:
+		case 0xc5:
+		case 0xc6:
+		case 0xc7:
+		case 0xc8:
+		case 0xc9:
+		case 0xd4:
+		case 0xd5:
+		case 0xd6:  // big integer 16
+		case 0xd7:  // big integer 32
+		case 0xd8:  // big float 16
+		case 0xd9:  // big float 32
+			++*off;
 			continue;
+		default:
+			PyErr_SetString(PyExc_ValueError, "Unexpected type header on stream");
+			return -1;
 		}
 		msgpack_unpack_callback(_uint32)(&ctx->user, size, &ctx->stack[0].obj);
 		return 1;
