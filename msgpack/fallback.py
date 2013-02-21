@@ -341,7 +341,7 @@ class Unpacker(object):
     def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
         typ = TYPE_RESERVED
         while typ == TYPE_RESERVED:
-            typ, n, obj = self._read_header(self, execute, write_bytes)
+            typ, n, obj = self._read_header(execute, write_bytes)
 
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
