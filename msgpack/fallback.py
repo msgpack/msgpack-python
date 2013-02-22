@@ -102,7 +102,10 @@ def unpackb(packed, object_hook=None, list_hook=None, use_list=True,
                         encoding=encoding, unicode_errors=unicode_errors,
                         object_pairs_hook=object_pairs_hook)
     unpacker.feed(packed)
-    ret = unpacker._fb_unpack()
+    try:
+        ret = unpacker._fb_unpack()
+    except OutOfData:
+        raise UnpackValueError("Data is not enough.")
     if unpacker._fb_got_extradata():
         raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret

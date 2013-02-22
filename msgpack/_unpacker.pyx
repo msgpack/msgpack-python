@@ -113,10 +113,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if off < buf_len:
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
-    elif ret < 0:
-        raise ValueError("Unpack failed: error = %d" % (ret,))
     else:
-        raise UnpackValueError
+        raise UnpackValueError("Unpack failed: error = %d" % (ret,))
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
