@@ -22,6 +22,7 @@ else:
 if hasattr(sys, 'pypy_version_info'):
     # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
     # StringBuilder is fastest.
+    from __pypy__ import newlist_hint
     from __pypy__.builders import StringBuilder
     USING_STRINGBUILDER = True
     class StringIO(object):
@@ -38,6 +39,7 @@ if hasattr(sys, 'pypy_version_info'):
 else:
     USING_STRINGBUILDER = False
     from io import BytesIO as StringIO
+    newlist_hint = lambda size: []
 
 from msgpack.exceptions import (
         BufferFull,
@@ -100,7 +102,10 @@ def unpackb(packed, object_hook=None, list_hook=None, use_list=True,
                         encoding=encoding, unicode_errors=unicode_errors,
                         object_pairs_hook=object_pairs_hook)
     unpacker.feed(packed)
-    ret = unpacker._fb_unpack()
+    try:
+        ret = unpacker._fb_unpack()
+    except OutOfData:
+        raise UnpackValueError("Data is not enough.")
     if unpacker._fb_got_extradata():
         raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret
@@ -266,8 +271,10 @@ class Unpacker(object):
             write_bytes(ret)
         return ret
 
-    def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
+    def _read_header(self, execute=EX_CONSTRUCT, write_bytes=None):
         typ = TYPE_IMMEDIATE
+        n = 0
+        obj = None
         c = self._fb_read(1, write_bytes)
         b = ord(c)
         if   b & 0b10000000 == 0:
@@ -341,6 +348,11 @@ class Unpacker(object):
             typ = TYPE_MAP
         else:
             raise UnpackValueError("Unknown header: 0x%x" % b)
+        return typ, n, obj
+
+    def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
+        typ, n, obj = self._read_header(execute, write_bytes)
+
         if execute == EX_CONSTRUCT_SIMPLE:
             if typ in (TYPE_ARRAY, TYPE_MAP):
                 return (typ, n)
@@ -359,7 +371,7 @@ class Unpacker(object):
                     # TODO check whether we need to call `list_hook`
                     self._fb_unpack(EX_SKIP, write_bytes)
                 return
-            ret = []
+            ret = newlist_hint(n)
             for i in xrange(n):
                 ret.append(self._fb_unpack(EX_CONSTRUCT, write_bytes))
             if self._list_hook is not None:
