@@ -10,3 +10,4 @@ python3:
 
 test:
 	py.test test
+	MSGPACK_PUREPYTHON=x py.test test
