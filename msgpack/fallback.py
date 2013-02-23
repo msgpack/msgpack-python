@@ -48,7 +48,7 @@ from msgpack.exceptions import (
         PackValueError,
         ExtraData)
 
-EX_SKIP                 = 0 
+EX_SKIP                 = 0
 EX_CONSTRUCT            = 1
 EX_READ_ARRAY_HEADER    = 2
 EX_READ_MAP_HEADER      = 3
@@ -57,7 +57,6 @@ TYPE_IMMEDIATE          = 0
 TYPE_ARRAY              = 1
 TYPE_MAP                = 2
 TYPE_RAW                = 3
-TYPE_RESERVED           = 4
 
 DEFAULT_RECURSE_LIMIT=511
 
@@ -338,13 +337,11 @@ class Unpacker(object):
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             typ = TYPE_MAP
         else:
-            typ = TYPE_RESERVED
+            raise UnpackValueError("Unknown header: 0x%x" % b)
         return typ, n, obj
 
     def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
-        typ = TYPE_RESERVED
-        while typ == TYPE_RESERVED:
-            typ, n, obj = self._read_header(execute, write_bytes)
+        typ, n, obj = self._read_header(execute, write_bytes)
 
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
