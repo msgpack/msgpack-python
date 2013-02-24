@@ -1,6 +1,6 @@
-===========================
-MessagePack Python Binding
-===========================
+=======================
+MessagePack for Python
+=======================
 
 :author: INADA Naoki
 :version: 0.3.0
@@ -9,19 +9,42 @@ MessagePack Python Binding
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
 
-WHAT IT IS
-----------
+What's this
+------------
 
 `MessagePack <http://msgpack.org/>`_ is a fast, compact binary serialization format, suitable for
 similar data to JSON. This package provides CPython bindings for reading and
 writing MessagePack data.
 
-NOTE for msgpack 0.2.x users
+Install
+---------
+You can use ``pip`` or ``easy_install`` to install msgpack::
+
+   $ easy_install msgpack-python
+     or
+   $ pip install msgpack-python
+
+PyPy
+^^^^^
+
+msgpack-python provides pure python implementation.
+PyPy can use this.
+
+Windows
+^^^^^^^
+
+When you can't use binary distribution, you need to install Visual Studio
+or Windows SDK on Windows. (NOTE: Visual C++ Express 2010 doesn't support
+amd64. Windows SDK is recommanded way to build amd64 msgpack without any fee.)
+
+Without extension, using pure python implementation on CPython runs slowly.
+
+Note for msgpack 0.2.x users
 ----------------------------
 
 The msgpack 0.3 have some incompatible changes.
 
-The default value of ``use_list`` keyword argument is ``True`` from 0.3.x.
+The default value of ``use_list`` keyword argument is ``True`` from 0.3.
 You should pass the argument explicitly for backward compatibility.
 
 `Unpacker.unpack()` and some unpack methods now raises `OutOfData`
@@ -29,10 +52,10 @@ instead of `StopIteration`.
 `StopIteration` is used for iterator protocol only.
 
 
-HOW TO USE
+How to use
 -----------
 
-one-shot pack & unpack
+One-shot pack & unpack
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Use ``packb`` for packing and ``unpackb`` for unpacking.
@@ -60,7 +83,7 @@ You should always pass the ``use_list`` keyword argument. See performance issues
 Read the docstring for other options.
 
 
-streaming unpacking
+Streaming unpacking
 ^^^^^^^^^^^^^^^^^^^
 
 ``Unpacker`` is a "streaming unpacker". It unpacks multiple objects from one
@@ -82,7 +105,7 @@ stream (or from bytes provided through its ``feed`` method).
        print unpacked
 
 
-packing/unpacking of custom data type
+Packing/unpacking of custom data type
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 It is also possible to pack/unpack custom data types. Here is an example for
@@ -118,7 +141,7 @@ It is also possible to pack/unpack custom data types. Here is an example for
 key-value pairs.
 
 
-advanced unpacking control
+Advanced unpacking control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 As an alternative to iteration, ``Unpacker`` objects provide ``unpack``,
@@ -150,27 +173,8 @@ callback function:
             unpacker.skip(bytestream.write)
             worker.send(bytestream.getvalue())
 
-INSTALL
----------
-You can use ``pip`` or ``easy_install`` to install msgpack::
-
-   $ easy_install msgpack-python
-     or
-   $ pip install msgpack-python
-
-
-Windows
-^^^^^^^
-msgpack provides some binary distribution for Windows.
-You can install msgpack without compiler with them.
-
-When you can't use binary distribution, you need to install Visual Studio
-or Windows SDK on Windows. (NOTE: Visual C++ Express 2010 doesn't support
-amd64. Windows SDK is recommanded way to build amd64 msgpack without any fee.)
-
-
-PERFORMANCE NOTE
------------------
+Note about performance
+------------------------
 
 GC
 ^^
@@ -179,8 +183,8 @@ CPython's GC starts when growing allocated object.
 This means unpacking may cause useless GC.
 You can use ``gc.disable()`` when unpacking large message.
 
-use_list
-^^^^^^^^^
+`use_list` option
+^^^^^^^^^^^^^^^^^^
 List is the default sequence type of Python.
 But tuple is lighter than list.
 You can use ``use_list=False`` while unpacking when performance is important.
@@ -190,13 +194,12 @@ Python's dict can't use list as key and MessagePack allows array for key of mapp
 Another way to unpacking such object is using ``object_pairs_hook``.
 
 
-TEST
+Test
 ----
 MessagePack uses `pytest` for testing.
 Run test with following command:
 
     $ py.test
-
 
 ..
     vim: filetype=rst
