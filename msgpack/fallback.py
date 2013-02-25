@@ -60,46 +60,44 @@ TYPE_RAW                = 3
 
 DEFAULT_RECURSE_LIMIT=511
 
-def pack(o, stream, default=None, encoding='utf-8', unicode_errors='strict'):
-    """ Pack object `o` and write it to `stream` """
-    packer = Packer(default=default, encoding=encoding,
-                    unicode_errors=unicode_errors)
+def pack(o, stream, **kwargs):
+    """
+    Pack object `o` and write it to `stream`
+
+    See :class:`Packer` for options.
+    """
+    packer = Packer(**kwargs)
     stream.write(packer.pack(o))
 
-def packb(o, default=None, encoding='utf-8', unicode_errors='struct',
-          use_single_float=False):
-    """ Pack object `o` and return packed bytes """
-    packer = Packer(default=default,
-                    encoding=encoding,
-                    unicode_errors=unicode_errors,
-                    use_single_float=use_single_float)
-    return packer.pack(o)
+def packb(o, **kwargs):
+    """
+    Pack object `o` and return packed bytes
 
-def unpack(stream, object_hook=None, list_hook=None, use_list=True,
-           encoding=None, unicode_errors='strict',
-           object_pairs_hook=None):
-    """ Unpack an object from `stream`.
+    See :class:`Packer` for options.
+    """
+    return Packer(**kwargs).pack(o)
 
-    Raises `ExtraData` when `stream` has extra bytes. """
-    unpacker = Unpacker(stream, object_hook=object_hook, list_hook=list_hook,
-                        use_list=use_list,
-                        encoding=encoding, unicode_errors=unicode_errors,
-                        object_pairs_hook=object_pairs_hook)
+def unpack(stream, **kwargs):
+    """
+    Unpack an object from `stream`.
+
+    Raises `ExtraData` when `packed` contains extra bytes.
+    See :class:`Unpacker` for options.
+    """
+    unpacker = Unpacker(stream, **kwargs)
     ret = unpacker._fb_unpack()
     if unpacker._fb_got_extradata():
         raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret
 
-def unpackb(packed, object_hook=None, list_hook=None, use_list=True,
-            encoding=None, unicode_errors='strict',
-            object_pairs_hook=None):
-    """ Unpack an object from `packed`.
+def unpackb(packed, **kwargs):
+    """
+    Unpack an object from `packed`.
 
-    Raises `ExtraData` when `packed` contains extra bytes. """
-    unpacker = Unpacker(None, object_hook=object_hook, list_hook=list_hook,
-                        use_list=use_list,
-                        encoding=encoding, unicode_errors=unicode_errors,
-                        object_pairs_hook=object_pairs_hook)
+    Raises `ExtraData` when `packed` contains extra bytes.
+    See :class:`Unpacker` for options.
+    """
+    unpacker = Unpacker(None, **kwargs)
     unpacker.feed(packed)
     try:
         ret = unpacker._fb_unpack()
