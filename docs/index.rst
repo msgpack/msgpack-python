@@ -7,5 +7,4 @@ language data exchange.
 .. toctree::
    :maxdepth: 1
 
-   ../README
    api
