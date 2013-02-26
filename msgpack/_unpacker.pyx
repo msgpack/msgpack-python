@@ -239,15 +239,17 @@ cdef class Unpacker(object):
 
         if encoding is not None:
             if isinstance(encoding, unicode):
-                encoding = encoding.encode('ascii')
-            self.encoding = encoding
-            cenc = PyBytes_AsString(encoding)
+                self.encoding = encoding.encode('ascii')
+            else:
+                self.encoding = encoding
+            cenc = PyBytes_AsString(self.encoding)
 
         if unicode_errors is not None:
             if isinstance(unicode_errors, unicode):
-                unicode_errors = unicode_errors.encode('ascii')
-            self.unicode_errors = unicode_errors
-            cerr = PyBytes_AsString(unicode_errors)
+                self.unicode_errors = unicode_errors.encode('ascii')
+            else:
+                self.unicode_errors = unicode_errors
+            cerr = PyBytes_AsString(self.unicode_errors)
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
 
