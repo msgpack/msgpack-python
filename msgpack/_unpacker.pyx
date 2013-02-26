@@ -81,9 +81,12 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=1, encoding=None, unicode_errors="strict",
             object_pairs_hook=None,
             ):
-    """Unpack packed_bytes to object. Returns an unpacked object.
+    """
+    Unpack packed_bytes to object. Returns an unpacked object.
 
     Raises `ValueError` when `packed` contains extra bytes.
+
+    See :class:`Unpacker` for options.
     """
     cdef template_context ctx
     cdef size_t off = 0
@@ -121,9 +124,12 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
            bint use_list=1, encoding=None, unicode_errors="strict",
            object_pairs_hook=None,
            ):
-    """Unpack an object from `stream`.
+    """
+    Unpack an object from `stream`.
 
     Raises `ValueError` when `stream` has extra bytes.
+
+    See :class:`Unpacker` for options.
     """
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, object_pairs_hook=object_pairs_hook, list_hook=list_hook,
@@ -135,48 +141,58 @@ cdef class Unpacker(object):
     """
     Streaming unpacker.
 
-    `file_like` is a file-like object having `.read(n)` method.
-    When `Unpacker` initialized with `file_like`, unpacker reads serialized data
-    from it and `.feed()` method is not usable.
+    arguments:
 
-    `read_size` is used as `file_like.read(read_size)`.
-    (default: min(1024**2, max_buffer_size))
+    :param file_like:
+        File-like object having `.read(n)` method.
+        If specified, unpacker reads serialized data from it and :meth:`feed()` is not usable.
 
-    If `use_list` is true (default), msgpack list is deserialized to Python list.
-    Otherwise, it is deserialized to Python tuple.
+    :param int read_size:
+        Used as `file_like.read(read_size)`. (default: `min(1024**2, max_buffer_size)`)
 
-    `object_hook` is same to simplejson. If it is not None, it should be callable
-    and Unpacker calls it with a dict argument after deserializing a map.
+    :param bool use_list:
+        If true, unpack msgpack array to Python list.
+        Otherwise, unpack to Python tuple. (default: True)
 
-    `object_pairs_hook` is same to simplejson. If it is not None, it should be callable
-    and Unpacker calls it with a list of key-value pairs after deserializing a map.
+    :param callable object_hook:
+        When specified, it should be callable.
+        Unpacker calls it with a dict argument after unpacking msgpack map.
+        (See also simplejson)
 
-    `encoding` is encoding used for decoding msgpack bytes. If it is None (default),
-    msgpack bytes is deserialized to Python bytes.
+    :param callable object_pairs_hook:
+        When specified, it should be callable.
+        Unpacker calls it with a list of key-value pairs after unpacking msgpack map.
+        (See also simplejson)
 
-    `unicode_errors` is used for decoding bytes.
+    :param str encoding:
+        Encoding used for decoding msgpack raw.
+        If it is None (default), msgpack raw is deserialized to Python bytes.
 
-    `max_buffer_size` limits size of data waiting unpacked.
-    0 means system's INT_MAX (default).
-    Raises `BufferFull` exception when it is insufficient.
-    You shoud set this parameter when unpacking data from untrasted source.
+    :param str unicode_errors:
+        Used for decoding msgpack raw with *encoding*.
+        (default: `'strict'`)
+
+    :param int max_buffer_size:
+        Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
+        Raises `BufferFull` exception when it is insufficient.
+        You shoud set this parameter when unpacking data from untrasted source.
 
     example of streaming deserialize from file-like object::
 
         unpacker = Unpacker(file_like)
         for o in unpacker:
-            do_something(o)
+            process(o)
 
     example of streaming deserialize from socket::
 
         unpacker = Unpacker()
-        while 1:
+        while True:
             buf = sock.recv(1024**2)
             if not buf:
                 break
             unpacker.feed(buf)
             for o in unpacker:
-                do_something(o)
+                process(o)
     """
     cdef template_context ctx
     cdef char* buf
@@ -197,7 +213,7 @@ cdef class Unpacker(object):
 
     def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
-                 encoding=None, unicode_errors='strict', int max_buffer_size=0,
+                 str encoding=None, str unicode_errors='strict', int max_buffer_size=0,
                  ):
         cdef char *cenc=NULL, *cerr=NULL
 
@@ -223,15 +239,17 @@ cdef class Unpacker(object):
 
         if encoding is not None:
             if isinstance(encoding, unicode):
-                encoding = encoding.encode('ascii')
-            self.encoding = encoding
-            cenc = PyBytes_AsString(encoding)
+                self.encoding = encoding.encode('ascii')
+            else:
+                self.encoding = encoding
+            cenc = PyBytes_AsString(self.encoding)
 
         if unicode_errors is not None:
             if isinstance(unicode_errors, unicode):
-                unicode_errors = unicode_errors.encode('ascii')
-            self.unicode_errors = unicode_errors
-            cerr = PyBytes_AsString(unicode_errors)
+                self.unicode_errors = unicode_errors.encode('ascii')
+            else:
+                self.unicode_errors = unicode_errors
+            cerr = PyBytes_AsString(self.unicode_errors)
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
 

@@ -1,12 +1,19 @@
 .PHONY: test all python3
 
-all:
+all: cython
 	python setup.py build_ext -i -f
-	python setup.py build sdist
 
-python3:
+doc-serve: all
+	cd docs && make serve
+
+doc:
+	cd docs && make zip
+
+cython:
+	cython msgpack/*.pyx
+
+python3: cython
 	python3 setup.py build_ext -i -f
-	python3 setup.py build sdist
 
 test:
 	py.test test
