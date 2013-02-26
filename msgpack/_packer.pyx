@@ -39,9 +39,10 @@ cdef int DEFAULT_RECURSE_LIMIT=511
 
 
 cdef class Packer(object):
-    """MessagePack Packer
+    """
+    MessagePack Packer
 
-    usage:
+    usage::
 
         packer = Packer()
         astream.write(packer.pack(a))
@@ -49,13 +50,18 @@ cdef class Packer(object):
 
     Packer's constructor has some keyword arguments:
 
-    * *defaut* - Convert user type to builtin type that Packer supports.
-      See also simplejson's document.
-    * *encoding* - Convert unicode to bytes with this encoding. (default: 'utf-8')
-    * *unicode_erros* - Error handler for encoding unicode. (default: 'strict')
-    * *use_single_float* - Use single precision float type for float. (default: False)
-    * *autoreset* - Reset buffer after each pack and return it's content as `bytes`. (default: True).
-      If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
+    :param callable default:
+        Convert user type to builtin type that Packer supports.
+        See also simplejson's document.
+    :param str encoding:
+        Convert unicode to bytes with this encoding. (default: 'utf-8')
+    :param str unicode_erros:
+        Error handler for encoding unicode. (default: 'strict')
+    :param bool use_single_float:
+        Use single precision float type for float. (default: False)
+    :param bool autoreset:
+        Reset buffer after each pack and return it's content as `bytes`. (default: True).
+        If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -75,6 +81,8 @@ cdef class Packer(object):
         self.pk.length = 0
 
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False, bint autoreset=1):
+        """
+        """
         self.use_float = use_single_float
         self.autoreset = autoreset
         if default is not None:
@@ -218,7 +226,7 @@ cdef class Packer(object):
         Pack *pairs* as msgpack map type.
 
         *pairs* should sequence of pair.
-        (`len(pairs)` and `for k, v in *pairs*:` should be supported.)
+        (`len(pairs)` and `for k, v in pairs:` should be supported.)
         """
         cdef int ret = msgpack_pack_map(&self.pk, len(pairs))
         if ret == 0:
@@ -245,15 +253,21 @@ cdef class Packer(object):
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
 
 
-def pack(object o, object stream, default=None, encoding='utf-8', unicode_errors='strict'):
+def pack(object o, object stream, default=None, str encoding='utf-8', str unicode_errors='strict'):
     """
-    pack an object `o` and write it to stream)."""
+    pack an object `o` and write it to stream)
+
+    See :class:`Packer` for options.
+    """
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
     stream.write(packer.pack(o))
 
-def packb(object o, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False):
+def packb(object o, default=None, encoding='utf-8', str unicode_errors='strict', bint use_single_float=False):
     """
-    pack o and return packed bytes."""
+    pack o and return packed bytes
+
+    See :class:`Packer` for options.
+    """
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors,
                     use_single_float=use_single_float)
     return packer.pack(o)

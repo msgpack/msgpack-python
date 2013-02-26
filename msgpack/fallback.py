@@ -423,6 +423,30 @@ class Unpacker(object):
 
 
 class Packer(object):
+    """
+    MessagePack Packer
+
+    usage:
+
+        packer = Packer()
+        astream.write(packer.pack(a))
+        astream.write(packer.pack(b))
+
+    Packer's constructor has some keyword arguments:
+
+    :param callable default:
+        Convert user type to builtin type that Packer supports.
+        See also simplejson's document.
+    :param str encoding:
+            Convert unicode to bytes with this encoding. (default: 'utf-8')
+    :param str unicode_erros:
+        Error handler for encoding unicode. (default: 'strict')
+    :param bool use_single_float:
+        Use single precision float type for float. (default: False)
+    :param bool autoreset:
+        Reset buffer after each pack and return it's content as `bytes`. (default: True).
+        If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
+    """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, autoreset=True):
         self._use_float = use_single_float

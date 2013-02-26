@@ -36,3 +36,8 @@ These exceptions are accessible via `msgpack` package.
     :undoc-members:
     :show-inheritance:
 
+.. automodule:: msgpack.fallback
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
