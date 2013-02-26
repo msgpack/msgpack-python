@@ -154,3 +154,6 @@ doctest:
 
 serve: html
 	cd _build/html && python3.3 -m http.server
+
+zip: html
+	cd _build/html && zip -r ../../../msgpack-doc.zip .

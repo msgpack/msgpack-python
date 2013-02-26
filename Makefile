@@ -6,6 +6,9 @@ all: cython
 doc-serve: all
 	cd docs && make serve
 
+doc:
+	cd docs && make zip
+
 cython:
 	cython msgpack/*.pyx
 
