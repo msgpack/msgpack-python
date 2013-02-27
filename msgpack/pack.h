@@ -90,14 +90,6 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
     return 0;
 }
 
-#define msgpack_pack_inline_func(name) \
-	static inline int msgpack_pack ## name
-
-#define msgpack_pack_inline_func_cint(name) \
-	static inline int msgpack_pack ## name
-
-#define msgpack_pack_user msgpack_packer*
-
 #define msgpack_pack_append_buffer(user, buf, len) \
         return msgpack_pack_write(user, (const char*)buf, len)
 

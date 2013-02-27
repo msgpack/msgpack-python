@@ -28,14 +28,6 @@
 #define TAKE8_64(d) ((uint8_t*)&d)[7]
 #endif
 
-#ifndef msgpack_pack_inline_func
-#error msgpack_pack_inline_func template is not defined
-#endif
-
-#ifndef msgpack_pack_user
-#error msgpack_pack_user type is not defined
-#endif
-
 #ifndef msgpack_pack_append_buffer
 #error msgpack_pack_append_buffer callback is not defined
 #endif
@@ -272,102 +264,42 @@ do { \
 } while(0)
 
 
-#ifdef msgpack_pack_inline_func_fixint
-
-msgpack_pack_inline_func_fixint(_uint8)(msgpack_pack_user x, uint8_t d)
-{
-	unsigned char buf[2] = {0xcc, TAKE8_8(d)};
-	msgpack_pack_append_buffer(x, buf, 2);
-}
-
-msgpack_pack_inline_func_fixint(_uint16)(msgpack_pack_user x, uint16_t d)
-{
-	unsigned char buf[3];
-	buf[0] = 0xcd; _msgpack_store16(&buf[1], d);
-	msgpack_pack_append_buffer(x, buf, 3);
-}
-
-msgpack_pack_inline_func_fixint(_uint32)(msgpack_pack_user x, uint32_t d)
-{
-	unsigned char buf[5];
-	buf[0] = 0xce; _msgpack_store32(&buf[1], d);
-	msgpack_pack_append_buffer(x, buf, 5);
-}
-
-msgpack_pack_inline_func_fixint(_uint64)(msgpack_pack_user x, uint64_t d)
-{
-	unsigned char buf[9];
-	buf[0] = 0xcf; _msgpack_store64(&buf[1], d);
-	msgpack_pack_append_buffer(x, buf, 9);
-}
-
-msgpack_pack_inline_func_fixint(_int8)(msgpack_pack_user x, int8_t d)
-{
-	unsigned char buf[2] = {0xd0, TAKE8_8(d)};
-	msgpack_pack_append_buffer(x, buf, 2);
-}
-
-msgpack_pack_inline_func_fixint(_int16)(msgpack_pack_user x, int16_t d)
-{
-	unsigned char buf[3];
-	buf[0] = 0xd1; _msgpack_store16(&buf[1], d);
-	msgpack_pack_append_buffer(x, buf, 3);
-}
-
-msgpack_pack_inline_func_fixint(_int32)(msgpack_pack_user x, int32_t d)
-{
-	unsigned char buf[5];
-	buf[0] = 0xd2; _msgpack_store32(&buf[1], d);
-	msgpack_pack_append_buffer(x, buf, 5);
-}
-
-msgpack_pack_inline_func_fixint(_int64)(msgpack_pack_user x, int64_t d)
-{
-	unsigned char buf[9];
-	buf[0] = 0xd3; _msgpack_store64(&buf[1], d);
-	msgpack_pack_append_buffer(x, buf, 9);
-}
-
-#undef msgpack_pack_inline_func_fixint
-#endif
-
-
-msgpack_pack_inline_func(_uint8)(msgpack_pack_user x, uint8_t d)
+static inline int msgpack_pack_uint8(msgpack_packer* x, uint8_t d)
 {
 	msgpack_pack_real_uint8(x, d);
 }
 
-msgpack_pack_inline_func(_uint16)(msgpack_pack_user x, uint16_t d)
+static inline int msgpack_pack_uint16(msgpack_packer* x, uint16_t d)
 {
 	msgpack_pack_real_uint16(x, d);
 }
 
-msgpack_pack_inline_func(_uint32)(msgpack_pack_user x, uint32_t d)
+static inline int msgpack_pack_uint32(msgpack_packer* x, uint32_t d)
 {
 	msgpack_pack_real_uint32(x, d);
 }
 
-msgpack_pack_inline_func(_uint64)(msgpack_pack_user x, uint64_t d)
+static inline int msgpack_pack_uint64(msgpack_packer* x, uint64_t d)
 {
 	msgpack_pack_real_uint64(x, d);
 }
 
-msgpack_pack_inline_func(_int8)(msgpack_pack_user x, int8_t d)
+static inline int msgpack_pack_int8(msgpack_packer* x, int8_t d)
 {
 	msgpack_pack_real_int8(x, d);
 }
 
-msgpack_pack_inline_func(_int16)(msgpack_pack_user x, int16_t d)
+static inline int msgpack_pack_int16(msgpack_packer* x, int16_t d)
 {
 	msgpack_pack_real_int16(x, d);
 }
 
-msgpack_pack_inline_func(_int32)(msgpack_pack_user x, int32_t d)
+static inline int msgpack_pack_int32(msgpack_packer* x, int32_t d)
 {
 	msgpack_pack_real_int32(x, d);
 }
 
-msgpack_pack_inline_func(_int64)(msgpack_pack_user x, int64_t d)
+static inline int msgpack_pack_int64(msgpack_packer* x, int64_t d)
 {
 	msgpack_pack_real_int64(x, d);
 }
@@ -375,7 +307,7 @@ msgpack_pack_inline_func(_int64)(msgpack_pack_user x, int64_t d)
 
 #ifdef msgpack_pack_inline_func_cint
 
-msgpack_pack_inline_func_cint(_short)(msgpack_pack_user x, short d)
+static inline int msgpack_pack_short(msgpack_packer* x, short d)
 {
 #if defined(SIZEOF_SHORT)
 #if SIZEOF_SHORT == 2
@@ -406,7 +338,7 @@ if(sizeof(short) == 2) {
 #endif
 }
 
-msgpack_pack_inline_func_cint(_int)(msgpack_pack_user x, int d)
+static inline int msgpack_pack_int(msgpack_packer* x, int d)
 {
 #if defined(SIZEOF_INT)
 #if SIZEOF_INT == 2
@@ -437,7 +369,7 @@ if(sizeof(int) == 2) {
 #endif
 }
 
-msgpack_pack_inline_func_cint(_long)(msgpack_pack_user x, long d)
+static inline int msgpack_pack_long(msgpack_packer* x, long d)
 {
 #if defined(SIZEOF_LONG)
 #if SIZEOF_LONG == 2
@@ -468,7 +400,7 @@ if(sizeof(long) == 2) {
 #endif
 }
 
-msgpack_pack_inline_func_cint(_long_long)(msgpack_pack_user x, long long d)
+static inline int msgpack_pack_long_long(msgpack_packer* x, long long d)
 {
 #if defined(SIZEOF_LONG_LONG)
 #if SIZEOF_LONG_LONG == 2
@@ -499,7 +431,7 @@ if(sizeof(long long) == 2) {
 #endif
 }
 
-msgpack_pack_inline_func_cint(_unsigned_short)(msgpack_pack_user x, unsigned short d)
+static inline int msgpack_pack_unsigned_short(msgpack_packer* x, unsigned short d)
 {
 #if defined(SIZEOF_SHORT)
 #if SIZEOF_SHORT == 2
@@ -530,7 +462,7 @@ if(sizeof(unsigned short) == 2) {
 #endif
 }
 
-msgpack_pack_inline_func_cint(_unsigned_int)(msgpack_pack_user x, unsigned int d)
+static inline int msgpack_pack_unsigned_int(msgpack_packer* x, unsigned int d)
 {
 #if defined(SIZEOF_INT)
 #if SIZEOF_INT == 2
@@ -561,7 +493,7 @@ if(sizeof(unsigned int) == 2) {
 #endif
 }
 
-msgpack_pack_inline_func_cint(_unsigned_long)(msgpack_pack_user x, unsigned long d)
+static inline int msgpack_pack_unsigned_long(msgpack_packer* x, unsigned long d)
 {
 #if defined(SIZEOF_LONG)
 #if SIZEOF_LONG == 2
@@ -592,7 +524,7 @@ if(sizeof(unsigned long) == 2) {
 #endif
 }
 
-msgpack_pack_inline_func_cint(_unsigned_long_long)(msgpack_pack_user x, unsigned long long d)
+static inline int msgpack_pack_unsigned_long_long(msgpack_packer* x, unsigned long long d)
 {
 #if defined(SIZEOF_LONG_LONG)
 #if SIZEOF_LONG_LONG == 2
@@ -632,7 +564,7 @@ if(sizeof(unsigned long long) == 2) {
  * Float
  */
 
-msgpack_pack_inline_func(_float)(msgpack_pack_user x, float d)
+static inline int msgpack_pack_float(msgpack_packer* x, float d)
 {
 	union { float f; uint32_t i; } mem;
 	mem.f = d;
@@ -641,7 +573,7 @@ msgpack_pack_inline_func(_float)(msgpack_pack_user x, float d)
 	msgpack_pack_append_buffer(x, buf, 5);
 }
 
-msgpack_pack_inline_func(_double)(msgpack_pack_user x, double d)
+static inline int msgpack_pack_double(msgpack_packer* x, double d)
 {
 	union { double f; uint64_t i; } mem;
 	mem.f = d;
@@ -660,7 +592,7 @@ msgpack_pack_inline_func(_double)(msgpack_pack_user x, double d)
  * Nil
  */
 
-msgpack_pack_inline_func(_nil)(msgpack_pack_user x)
+static inline int msgpack_pack_nil(msgpack_packer* x)
 {
 	static const unsigned char d = 0xc0;
 	msgpack_pack_append_buffer(x, &d, 1);
@@ -671,13 +603,13 @@ msgpack_pack_inline_func(_nil)(msgpack_pack_user x)
  * Boolean
  */
 
-msgpack_pack_inline_func(_true)(msgpack_pack_user x)
+static inline int msgpack_pack_true(msgpack_packer* x)
 {
 	static const unsigned char d = 0xc3;
 	msgpack_pack_append_buffer(x, &d, 1);
 }
 
-msgpack_pack_inline_func(_false)(msgpack_pack_user x)
+static inline int msgpack_pack_false(msgpack_packer* x)
 {
 	static const unsigned char d = 0xc2;
 	msgpack_pack_append_buffer(x, &d, 1);
@@ -688,7 +620,7 @@ msgpack_pack_inline_func(_false)(msgpack_pack_user x)
  * Array
  */
 
-msgpack_pack_inline_func(_array)(msgpack_pack_user x, unsigned int n)
+static inline int msgpack_pack_array(msgpack_packer* x, unsigned int n)
 {
 	if(n < 16) {
 		unsigned char d = 0x90 | n;
@@ -709,7 +641,7 @@ msgpack_pack_inline_func(_array)(msgpack_pack_user x, unsigned int n)
  * Map
  */
 
-msgpack_pack_inline_func(_map)(msgpack_pack_user x, unsigned int n)
+static inline int msgpack_pack_map(msgpack_packer* x, unsigned int n)
 {
 	if(n < 16) {
 		unsigned char d = 0x80 | n;
@@ -730,7 +662,7 @@ msgpack_pack_inline_func(_map)(msgpack_pack_user x, unsigned int n)
  * Raw
  */
 
-msgpack_pack_inline_func(_raw)(msgpack_pack_user x, size_t l)
+static inline int msgpack_pack_raw(msgpack_packer* x, size_t l)
 {
 	if(l < 32) {
 		unsigned char d = 0xa0 | (uint8_t)l;
@@ -746,13 +678,11 @@ msgpack_pack_inline_func(_raw)(msgpack_pack_user x, size_t l)
 	}
 }
 
-msgpack_pack_inline_func(_raw_body)(msgpack_pack_user x, const void* b, size_t l)
+static inline int msgpack_pack_raw_body(msgpack_packer* x, const void* b, size_t l)
 {
 	msgpack_pack_append_buffer(x, (const unsigned char*)b, l);
 }
 
-#undef msgpack_pack_inline_func
-#undef msgpack_pack_user
 #undef msgpack_pack_append_buffer
 
 #undef TAKE8_8
