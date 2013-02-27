@@ -16,59 +16,35 @@
  *    limitations under the License.
  */
 
-#ifndef msgpack_unpack_func
-#error msgpack_unpack_func template is not defined
-#endif
-
-#ifndef msgpack_unpack_callback
-#error msgpack_unpack_callback template is not defined
-#endif
-
-#ifndef msgpack_unpack_struct
-#error msgpack_unpack_struct template is not defined
-#endif
-
-#ifndef msgpack_unpack_struct_decl
-#define msgpack_unpack_struct_decl(name) msgpack_unpack_struct(name)
-#endif
-
-#ifndef msgpack_unpack_object
-#error msgpack_unpack_object type is not defined
-#endif
-
-#ifndef msgpack_unpack_user
-#error msgpack_unpack_user type is not defined
-#endif
-
 #ifndef USE_CASE_RANGE
 #if !defined(_MSC_VER)
 #define USE_CASE_RANGE
 #endif
 #endif
 
-msgpack_unpack_struct_decl(_stack) {
-	msgpack_unpack_object obj;
+typedef struct unpack_stack {
+	PyObject* obj;
 	size_t size;
 	size_t count;
 	unsigned int ct;
-	msgpack_unpack_object map_key;
-};
+	PyObject* map_key;
+} unpack_stack;
 
-msgpack_unpack_struct_decl(_context) {
-	msgpack_unpack_user user;
+struct unpack_context {
+	unpack_user user;
 	unsigned int cs;
 	unsigned int trail;
 	unsigned int top;
 	/*
-	msgpack_unpack_struct(_stack)* stack;
+	unpack_stack* stack;
 	unsigned int stack_size;
-	msgpack_unpack_struct(_stack) embed_stack[MSGPACK_EMBED_STACK_SIZE];
+	unpack_stack embed_stack[MSGPACK_EMBED_STACK_SIZE];
 	*/
-	msgpack_unpack_struct(_stack) stack[MSGPACK_EMBED_STACK_SIZE];
+	unpack_stack stack[MSGPACK_EMBED_STACK_SIZE];
 };
 
 
-msgpack_unpack_func(void, _init)(msgpack_unpack_struct(_context)* ctx)
+static inline void unpack_init(unpack_context* ctx)
 {
 	ctx->cs = CS_HEADER;
 	ctx->trail = 0;
@@ -77,11 +53,11 @@ msgpack_unpack_func(void, _init)(msgpack_unpack_struct(_context)* ctx)
 	ctx->stack = ctx->embed_stack;
 	ctx->stack_size = MSGPACK_EMBED_STACK_SIZE;
 	*/
-	ctx->stack[0].obj = msgpack_unpack_callback(_root)(&ctx->user);
+	ctx->stack[0].obj = unpack_callback_root(&ctx->user);
 }
 
 /*
-msgpack_unpack_func(void, _destroy)(msgpack_unpack_struct(_context)* ctx)
+static inline void unpack_destroy(unpack_context* ctx)
 {
 	if(ctx->stack_size != MSGPACK_EMBED_STACK_SIZE) {
 		free(ctx->stack);
@@ -89,14 +65,14 @@ msgpack_unpack_func(void, _destroy)(msgpack_unpack_struct(_context)* ctx)
 }
 */
 
-msgpack_unpack_func(msgpack_unpack_object, _data)(msgpack_unpack_struct(_context)* ctx)
+static inline PyObject* unpack_data(unpack_context* ctx)
 {
 	return (ctx)->stack[0].obj;
 }
 
 
 template <bool construct>
-msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off)
+static inline int unpack_execute(unpack_context* ctx, const char* data, size_t len, size_t* off)
 {
 	assert(len >= *off);
 
@@ -107,19 +83,19 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	unsigned int trail = ctx->trail;
 	unsigned int cs = ctx->cs;
 	unsigned int top = ctx->top;
-	msgpack_unpack_struct(_stack)* stack = ctx->stack;
+	unpack_stack* stack = ctx->stack;
 	/*
 	unsigned int stack_size = ctx->stack_size;
 	*/
-	msgpack_unpack_user* user = &ctx->user;
+	unpack_user* user = &ctx->user;
 
-	msgpack_unpack_object obj;
-	msgpack_unpack_struct(_stack)* c = NULL;
+	PyObject* obj;
+	unpack_stack* c = NULL;
 
 	int ret;
 
 #define construct_cb(name) \
-    construct && msgpack_unpack_callback(name)
+    construct && unpack_callback ## name
 
 #define push_simple_value(func) \
 	if(construct_cb(func)(user, &obj) < 0) { goto _failed; } \
@@ -157,16 +133,16 @@ msgpack_unpack_func(int, _execute)(msgpack_unpack_struct(_context)* ctx, const c
 	/* FIXME \
 	if(top >= stack_size) { \
 		if(stack_size == MSGPACK_EMBED_STACK_SIZE) { \
-			size_t csize = sizeof(msgpack_unpack_struct(_stack)) * MSGPACK_EMBED_STACK_SIZE; \
+			size_t csize = sizeof(unpack_stack) * MSGPACK_EMBED_STACK_SIZE; \
 			size_t nsize = csize * 2; \
-			msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)malloc(nsize); \
+			unpack_stack* tmp = (unpack_stack*)malloc(nsize); \
 			if(tmp == NULL) { goto _failed; } \
 			memcpy(tmp, ctx->stack, csize); \
 			ctx->stack = stack = tmp; \
 			ctx->stack_size = stack_size = MSGPACK_EMBED_STACK_SIZE * 2; \
 		} else { \
-			size_t nsize = sizeof(msgpack_unpack_struct(_stack)) * ctx->stack_size * 2; \
-			msgpack_unpack_struct(_stack)* tmp = (msgpack_unpack_struct(_stack)*)realloc(ctx->stack, nsize); \
+			size_t nsize = sizeof(unpack_stack) * ctx->stack_size * 2; \
+			unpack_stack* tmp = (unpack_stack*)realloc(ctx->stack, nsize); \
 			if(tmp == NULL) { goto _failed; } \
 			ctx->stack = stack = tmp; \
 			ctx->stack_size = stack_size = stack_size * 2; \
@@ -382,7 +358,7 @@ _header_again:
 
 _finish:
 	if (!construct)
-		msgpack_unpack_callback(_nil)(user, &obj);
+		unpack_callback_nil(user, &obj);
 	stack[0].obj = obj;
 	++p;
 	ret = 1;
@@ -420,7 +396,7 @@ _end:
 #undef start_container
 
 template <unsigned int fixed_offset, unsigned int var_offset>
-msgpack_unpack_func(int, _container_header)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off)
+static inline int unpack_container_header(unpack_context* ctx, const char* data, size_t len, size_t* off)
 {
 	assert(len >= *off);
 	uint32_t size;
@@ -467,7 +443,7 @@ msgpack_unpack_func(int, _container_header)(msgpack_unpack_struct(_context)* ctx
 		PyErr_SetString(PyExc_ValueError, "Unexpected type header on stream");
 		return -1;
     }
-	msgpack_unpack_callback(_uint32)(&ctx->user, size, &ctx->stack[0].obj);
+	unpack_callback_uint32(&ctx->user, size, &ctx->stack[0].obj);
 	return 1;
 }
 
@@ -476,16 +452,10 @@ msgpack_unpack_func(int, _container_header)(msgpack_unpack_struct(_context)* ctx
 #undef SWITCH_RANGE_DEFAULT
 #undef SWITCH_RANGE_END
 
-static const execute_fn template_construct = &template_execute<true>;
-static const execute_fn template_skip = &template_execute<false>;
-static const execute_fn read_array_header = &template_container_header<0x90, 0xdc>;
-static const execute_fn read_map_header = &template_container_header<0x80, 0xde>;
-
-#undef msgpack_unpack_func
-#undef msgpack_unpack_callback
-#undef msgpack_unpack_struct
-#undef msgpack_unpack_object
-#undef msgpack_unpack_user
+static const execute_fn unpack_construct = &unpack_execute<true>;
+static const execute_fn unpack_skip = &unpack_execute<false>;
+static const execute_fn read_array_header = &unpack_container_header<0x90, 0xdc>;
+static const execute_fn read_map_header = &unpack_container_header<0x80, 0xde>;
 
 #undef NEXT_CS
 
