@@ -7,6 +7,8 @@ Inconpatible Changes
 
 * Default value of ``use_list`` is ``True`` for now. (It was ``False`` for 0.2.x)
   You should pass it explicitly for compatibility to 0.2.x.
+* `Unpacker.unpack()` and some unpack methods now raise `OutOfData` instead of
+  `StopIteration`. `StopIteration` is used for iterator protocol only.
 
 Changes
 -------
