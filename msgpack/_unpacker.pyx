@@ -30,26 +30,26 @@ cdef extern from "unpack.h":
         char *encoding
         char *unicode_errors
 
-    ctypedef struct template_context:
+    ctypedef struct unpack_context:
         msgpack_user user
         PyObject* obj
         size_t count
         unsigned int ct
         PyObject* key
 
-    ctypedef int (*execute_fn)(template_context* ctx, const_char_ptr data,
+    ctypedef int (*execute_fn)(unpack_context* ctx, const_char_ptr data,
                                size_t len, size_t* off) except? -1
-    execute_fn template_construct
-    execute_fn template_skip
+    execute_fn unpack_construct
+    execute_fn unpack_skip
     execute_fn read_array_header
     execute_fn read_map_header
-    void template_init(template_context* ctx)
-    object template_data(template_context* ctx)
+    void unpack_init(unpack_context* ctx)
+    object unpack_data(unpack_context* ctx)
 
-cdef inline init_ctx(template_context *ctx,
+cdef inline init_ctx(unpack_context *ctx,
                      object object_hook, object object_pairs_hook, object list_hook,
                      bint use_list, char* encoding, char* unicode_errors):
-    template_init(ctx)
+    unpack_init(ctx)
     ctx.user.use_list = use_list
     ctx.user.object_hook = ctx.user.list_hook = <PyObject*>NULL
 
@@ -88,7 +88,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
     See :class:`Unpacker` for options.
     """
-    cdef template_context ctx
+    cdef unpack_context ctx
     cdef size_t off = 0
     cdef int ret
 
@@ -110,9 +110,9 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         cerr = PyBytes_AsString(unicode_errors)
 
     init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
-    ret = template_construct(&ctx, buf, buf_len, &off)
+    ret = unpack_construct(&ctx, buf, buf_len, &off)
     if ret == 1:
-        obj = template_data(&ctx)
+        obj = unpack_data(&ctx)
         if off < buf_len:
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
@@ -194,7 +194,7 @@ cdef class Unpacker(object):
             for o in unpacker:
                 process(o)
     """
-    cdef template_context ctx
+    cdef unpack_context ctx
     cdef char* buf
     cdef size_t buf_size, buf_head, buf_tail
     cdef object file_like
@@ -324,8 +324,8 @@ cdef class Unpacker(object):
                 write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
 
             if ret == 1:
-                obj = template_data(&self.ctx)
-                template_init(&self.ctx)
+                obj = unpack_data(&self.ctx)
+                unpack_init(&self.ctx)
                 return obj
             elif ret == 0:
                 if self.file_like is not None:
@@ -357,7 +357,7 @@ cdef class Unpacker(object):
 
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(template_construct, write_bytes)
+        return self._unpack(unpack_construct, write_bytes)
 
     def skip(self, object write_bytes=None):
         """
@@ -368,7 +368,7 @@ cdef class Unpacker(object):
 
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(template_skip, write_bytes)
+        return self._unpack(unpack_skip, write_bytes)
 
     def read_array_header(self, object write_bytes=None):
         """assuming the next object is an array, return its size n, such that
@@ -390,7 +390,7 @@ cdef class Unpacker(object):
         return self
 
     def __next__(self):
-        return self._unpack(template_construct, None, 1)
+        return self._unpack(unpack_construct, None, 1)
 
     # for debug.
     #def _buf(self):

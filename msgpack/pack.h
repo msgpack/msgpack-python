@@ -45,7 +45,7 @@ static inline int msgpack_pack_long_long(msgpack_packer* pk, long long d);
 static inline int msgpack_pack_unsigned_short(msgpack_packer* pk, unsigned short d);
 static inline int msgpack_pack_unsigned_int(msgpack_packer* pk, unsigned int d);
 static inline int msgpack_pack_unsigned_long(msgpack_packer* pk, unsigned long d);
-static inline int msgpack_pack_unsigned_long_long(msgpack_packer* pk, unsigned long long d);
+//static inline int msgpack_pack_unsigned_long_long(msgpack_packer* pk, unsigned long long d);
 
 static inline int msgpack_pack_uint8(msgpack_packer* pk, uint8_t d);
 static inline int msgpack_pack_uint16(msgpack_packer* pk, uint16_t d);
