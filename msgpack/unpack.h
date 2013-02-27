@@ -28,31 +28,17 @@ typedef struct unpack_user {
     const char *unicode_errors;
 } unpack_user;
 
+typedef PyObject* msgpack_unpack_object;
+struct unpack_context;
+typedef struct unpack_context unpack_context;
+typedef int (*execute_fn)(unpack_context *ctx, const char* data, size_t len, size_t* off);
 
-#define msgpack_unpack_struct(name) \
-	struct template ## name
-
-#define msgpack_unpack_func(ret, name) \
-	static inline ret template ## name
-
-#define msgpack_unpack_callback(name) \
-	template_callback ## name
-
-#define msgpack_unpack_object PyObject*
-
-#define msgpack_unpack_user unpack_user
-
-typedef int (*execute_fn)(msgpack_unpack_struct(_context)* ctx, const char* data, size_t len, size_t* off);
-
-struct template_context;
-typedef struct template_context template_context;
-
-static inline msgpack_unpack_object template_callback_root(unpack_user* u)
+static inline msgpack_unpack_object unpack_callback_root(unpack_user* u)
 {
     return NULL;
 }
 
-static inline int template_callback_uint16(unpack_user* u, uint16_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_uint16(unpack_user* u, uint16_t d, msgpack_unpack_object* o)
 {
     PyObject *p = PyInt_FromLong((long)d);
     if (!p)
@@ -60,13 +46,13 @@ static inline int template_callback_uint16(unpack_user* u, uint16_t d, msgpack_u
     *o = p;
     return 0;
 }
-static inline int template_callback_uint8(unpack_user* u, uint8_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_uint8(unpack_user* u, uint8_t d, msgpack_unpack_object* o)
 {
-    return template_callback_uint16(u, d, o);
+    return unpack_callback_uint16(u, d, o);
 }
 
 
-static inline int template_callback_uint32(unpack_user* u, uint32_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_uint32(unpack_user* u, uint32_t d, msgpack_unpack_object* o)
 {
     PyObject *p;
     if (d > LONG_MAX) {
@@ -80,7 +66,7 @@ static inline int template_callback_uint32(unpack_user* u, uint32_t d, msgpack_u
     return 0;
 }
 
-static inline int template_callback_uint64(unpack_user* u, uint64_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_uint64(unpack_user* u, uint64_t d, msgpack_unpack_object* o)
 {
     PyObject *p = PyLong_FromUnsignedLongLong(d);
     if (!p)
@@ -89,7 +75,7 @@ static inline int template_callback_uint64(unpack_user* u, uint64_t d, msgpack_u
     return 0;
 }
 
-static inline int template_callback_int32(unpack_user* u, int32_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_int32(unpack_user* u, int32_t d, msgpack_unpack_object* o)
 {
     PyObject *p = PyInt_FromLong(d);
     if (!p)
@@ -98,17 +84,17 @@ static inline int template_callback_int32(unpack_user* u, int32_t d, msgpack_unp
     return 0;
 }
 
-static inline int template_callback_int16(unpack_user* u, int16_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_int16(unpack_user* u, int16_t d, msgpack_unpack_object* o)
 {
-    return template_callback_int32(u, d, o);
+    return unpack_callback_int32(u, d, o);
 }
 
-static inline int template_callback_int8(unpack_user* u, int8_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_int8(unpack_user* u, int8_t d, msgpack_unpack_object* o)
 {
-    return template_callback_int32(u, d, o);
+    return unpack_callback_int32(u, d, o);
 }
 
-static inline int template_callback_int64(unpack_user* u, int64_t d, msgpack_unpack_object* o)
+static inline int unpack_callback_int64(unpack_user* u, int64_t d, msgpack_unpack_object* o)
 {
     PyObject *p = PyLong_FromLongLong(d);
     if (!p)
@@ -117,7 +103,7 @@ static inline int template_callback_int64(unpack_user* u, int64_t d, msgpack_unp
     return 0;
 }
 
-static inline int template_callback_double(unpack_user* u, double d, msgpack_unpack_object* o)
+static inline int unpack_callback_double(unpack_user* u, double d, msgpack_unpack_object* o)
 {
     PyObject *p = PyFloat_FromDouble(d);
     if (!p)
@@ -126,21 +112,21 @@ static inline int template_callback_double(unpack_user* u, double d, msgpack_unp
     return 0;
 }
 
-static inline int template_callback_float(unpack_user* u, float d, msgpack_unpack_object* o)
+static inline int unpack_callback_float(unpack_user* u, float d, msgpack_unpack_object* o)
 {
-    return template_callback_double(u, d, o);
+    return unpack_callback_double(u, d, o);
 }
 
-static inline int template_callback_nil(unpack_user* u, msgpack_unpack_object* o)
+static inline int unpack_callback_nil(unpack_user* u, msgpack_unpack_object* o)
 { Py_INCREF(Py_None); *o = Py_None; return 0; }
 
-static inline int template_callback_true(unpack_user* u, msgpack_unpack_object* o)
+static inline int unpack_callback_true(unpack_user* u, msgpack_unpack_object* o)
 { Py_INCREF(Py_True); *o = Py_True; return 0; }
 
-static inline int template_callback_false(unpack_user* u, msgpack_unpack_object* o)
+static inline int unpack_callback_false(unpack_user* u, msgpack_unpack_object* o)
 { Py_INCREF(Py_False); *o = Py_False; return 0; }
 
-static inline int template_callback_array(unpack_user* u, unsigned int n, msgpack_unpack_object* o)
+static inline int unpack_callback_array(unpack_user* u, unsigned int n, msgpack_unpack_object* o)
 {
     PyObject *p = u->use_list ? PyList_New(n) : PyTuple_New(n);
 
@@ -150,7 +136,7 @@ static inline int template_callback_array(unpack_user* u, unsigned int n, msgpac
     return 0;
 }
 
-static inline int template_callback_array_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object o)
+static inline int unpack_callback_array_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object o)
 {
     if (u->use_list)
         PyList_SET_ITEM(*c, current, o);
@@ -159,7 +145,7 @@ static inline int template_callback_array_item(unpack_user* u, unsigned int curr
     return 0;
 }
 
-static inline int template_callback_array_end(unpack_user* u, msgpack_unpack_object* c)
+static inline int unpack_callback_array_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->list_hook) {
         PyObject *new_c = PyEval_CallFunction(u->list_hook, "(O)", *c);
@@ -171,7 +157,7 @@ static inline int template_callback_array_end(unpack_user* u, msgpack_unpack_obj
     return 0;
 }
 
-static inline int template_callback_map(unpack_user* u, unsigned int n, msgpack_unpack_object* o)
+static inline int unpack_callback_map(unpack_user* u, unsigned int n, msgpack_unpack_object* o)
 {
     PyObject *p;
     if (u->has_pairs_hook) {
@@ -186,7 +172,7 @@ static inline int template_callback_map(unpack_user* u, unsigned int n, msgpack_
     return 0;
 }
 
-static inline int template_callback_map_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object k, msgpack_unpack_object v)
+static inline int unpack_callback_map_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object k, msgpack_unpack_object v)
 {
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);
@@ -205,7 +191,7 @@ static inline int template_callback_map_item(unpack_user* u, unsigned int curren
     return -1;
 }
 
-static inline int template_callback_map_end(unpack_user* u, msgpack_unpack_object* c)
+static inline int unpack_callback_map_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->object_hook) {
         PyObject *new_c = PyEval_CallFunction(u->object_hook, "(O)", *c);
@@ -218,7 +204,7 @@ static inline int template_callback_map_end(unpack_user* u, msgpack_unpack_objec
     return 0;
 }
 
-static inline int template_callback_raw(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
+static inline int unpack_callback_raw(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
 {
     PyObject *py;
     if(u->encoding) {
