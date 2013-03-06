@@ -525,41 +525,29 @@ class Packer(object):
             return self._pack(self._default(obj), nest_limit - 1)
         raise TypeError("Cannot serialize %r" % obj)
 
-    def pack(self, obj):
-        self._pack(obj)
+    def _get_buffer(self):
         ret = self._buffer.getvalue()
         if self._autoreset:
             self._buffer = StringIO()
         elif USING_STRINGBUILDER:
             self._buffer = StringIO(ret)
         return ret
+
+    def pack(self, obj):
+        self._pack(obj)
+        return self._get_buffer()
 
     def pack_map_pairs(self, pairs):
         self._fb_pack_map_pairs(len(pairs), pairs)
-        ret = self._buffer.getvalue()
-        if self._autoreset:
-            self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+        return self._get_buffer()
 
     def pack_array_header(self, n):
         self._fb_pack_array_header(n)
-        ret = self._buffer.getvalue()
-        if self._autoreset:
-            self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+        return self._get_buffer()
 
     def pack_map_header(self, n):
         self._fb_pack_map_header(n)
-        ret = self._buffer.getvalue()
-        if self._autoreset:
-            self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+        return self._get_buffer()
 
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
