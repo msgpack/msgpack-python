@@ -130,6 +130,18 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
     for size in sizes:
         assert unpacker.unpack() == dict((i, i * 2) for i in range(size))
 
+def testRawSize(sizes=[0, 5, 20, 50, 1000]):
+    bio = six.BytesIO()
+    packer = Packer()
+    for size in sizes:
+        bio.write(packer.pack_raw_header(size))
+        bio.write('!' * size)
+
+    bio.seek(0)
+    unpacker = Unpacker(bio)
+    for size in sizes:
+        assert unpacker.unpack() == '!' * size
+
 
 class odict(dict):
     '''Reimplement OrderedDict to run test on Python 2.6'''

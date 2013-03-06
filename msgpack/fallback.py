@@ -497,17 +497,8 @@ class Packer(object):
                             "Can't encode unicode string: "
                             "no encoding is specified")
                 obj = obj.encode(self._encoding, self._unicode_errors)
-            n = len(obj)
-            if n <= 0x1f:
-                self._buffer.write(struct.pack('B', 0xa0 + n))
-                return self._buffer.write(obj)
-            if n <= 0xffff:
-                self._buffer.write(struct.pack(">BH", 0xda, n))
-                return self._buffer.write(obj)
-            if n <= 0xffffffff:
-                self._buffer.write(struct.pack(">BI", 0xdb, n))
-                return self._buffer.write(obj)
-            raise PackValueError("String is too large")
+            self._fb_pack_raw_header(len(obj))
+            return self._buffer.write(obj)
         if isinstance(obj, float):
             if self._use_float:
                 return self._buffer.write(struct.pack(">Bf", 0xca, obj))
@@ -549,6 +540,10 @@ class Packer(object):
         self._fb_pack_map_header(n)
         return self._get_buffer()
 
+    def pack_raw_header(self, n):
+        self._fb_pack_raw_header(n)
+        return self._get_buffer()
+
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
             return self._buffer.write(struct.pack('B', 0x90 + n))
@@ -566,6 +561,15 @@ class Packer(object):
         if n <= 0xffffffff:
             return self._buffer.write(struct.pack(">BI", 0xdf, n))
         raise PackValueError("Dict is too large")
+
+    def _fb_pack_raw_header(self, n):
+        if n <= 0x1f:
+            return self._buffer.write(struct.pack('B', 0xa0 + n))
+        if n <= 0xffff:
+            return self._buffer.write(struct.pack(">BH", 0xda, n))
+        if n <= 0xffffffff:
+            return self._buffer.write(struct.pack(">BI", 0xdb, n))
+        raise PackValueError("Raw is too large")
 
     def _fb_pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
         self._fb_pack_map_header(n)
