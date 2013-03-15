@@ -43,6 +43,7 @@ cdef extern from "unpack.h":
     execute_fn unpack_skip
     execute_fn read_array_header
     execute_fn read_map_header
+    execute_fn read_raw_header
     void unpack_init(unpack_context* ctx)
     object unpack_data(unpack_context* ctx)
 
@@ -374,7 +375,8 @@ cdef class Unpacker(object):
         """assuming the next object is an array, return its size n, such that
         the next n unpack() calls will iterate over its contents.
 
-        Raises `OutOfData` when there are no more bytes to unpack.
+        Raises `OutOfData` when there are no more bytes to unpack, and
+        ValueError if the next object is not an array.
         """
         return self._unpack(read_array_header, write_bytes)
 
@@ -382,9 +384,19 @@ cdef class Unpacker(object):
         """assuming the next object is a map, return its size n, such that the
         next n * 2 unpack() calls will iterate over its key-value pairs.
 
-        Raises `OutOfData` when there are no more bytes to unpack.
+        Raises `OutOfData` when there are no more bytes to unpack, and
+        ValueError if the next object is not a map.
         """
         return self._unpack(read_map_header, write_bytes)
+
+    def read_raw_header(self, object write_bytes=None):
+        """assuming the next object is a raw byte string, return its size n,
+        such that raw_bytes(n) will return the string.
+
+        Raises `OutOfData` when there are no more bytes to unpack, and
+        ValueError if the next object is not a raw.
+        """
+        return self._unpack(read_raw_header, write_bytes)
 
     def __iter__(self):
         return self
@@ -398,3 +410,4 @@ cdef class Unpacker(object):
 
     #def _off(self):
     #    return self.buf_head
+

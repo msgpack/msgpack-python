@@ -52,6 +52,7 @@ EX_SKIP                 = 0
 EX_CONSTRUCT            = 1
 EX_READ_ARRAY_HEADER    = 2
 EX_READ_MAP_HEADER      = 3
+EX_READ_RAW_HEADER      = 4
 
 TYPE_IMMEDIATE          = 0
 TYPE_ARRAY              = 1
@@ -280,7 +281,6 @@ class Unpacker(object):
             obj = struct.unpack("b", c)[0]
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
-            obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
@@ -316,11 +316,9 @@ class Unpacker(object):
             obj = struct.unpack(">q", self._fb_read(8, write_bytes))[0]
         elif b == 0xda:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
-            obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b == 0xdb:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
-            obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
         elif b == 0xdc:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
@@ -345,9 +343,13 @@ class Unpacker(object):
             if typ != TYPE_ARRAY:
                 raise UnpackValueError("Expected array")
             return n
-        if execute == EX_READ_MAP_HEADER:
+        elif execute == EX_READ_MAP_HEADER:
             if typ != TYPE_MAP:
                 raise UnpackValueError("Expected map")
+            return n
+        elif execute == EX_READ_RAW_HEADER:
+            if typ != TYPE_RAW:
+                raise UnpackValueError("Expected raw")
             return n
         # TODO should we eliminate the recursion?
         if typ == TYPE_ARRAY:
@@ -387,6 +389,7 @@ class Unpacker(object):
         if execute == EX_SKIP:
             return
         if typ == TYPE_RAW:
+            obj = self._fb_read(n, write_bytes)
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
             return obj
@@ -418,6 +421,11 @@ class Unpacker(object):
 
     def read_map_header(self, write_bytes=None):
         ret = self._fb_unpack(EX_READ_MAP_HEADER, write_bytes)
+        self._fb_consume()
+        return ret
+
+    def read_raw_header(self, write_bytes=None):
+        ret = self._fb_unpack(EX_READ_RAW_HEADER, write_bytes)
         self._fb_consume()
         return ret
 
@@ -497,17 +505,8 @@ class Packer(object):
                             "Can't encode unicode string: "
                             "no encoding is specified")
                 obj = obj.encode(self._encoding, self._unicode_errors)
-            n = len(obj)
-            if n <= 0x1f:
-                self._buffer.write(struct.pack('B', 0xa0 + n))
-                return self._buffer.write(obj)
-            if n <= 0xffff:
-                self._buffer.write(struct.pack(">BH", 0xda, n))
-                return self._buffer.write(obj)
-            if n <= 0xffffffff:
-                self._buffer.write(struct.pack(">BI", 0xdb, n))
-                return self._buffer.write(obj)
-            raise PackValueError("String is too large")
+            self._fb_pack_raw_header(len(obj))
+            return self._buffer.write(obj)
         if isinstance(obj, float):
             if self._use_float:
                 return self._buffer.write(struct.pack(">Bf", 0xca, obj))
@@ -525,41 +524,33 @@ class Packer(object):
             return self._pack(self._default(obj), nest_limit - 1)
         raise TypeError("Cannot serialize %r" % obj)
 
-    def pack(self, obj):
-        self._pack(obj)
+    def _get_buffer(self):
         ret = self._buffer.getvalue()
         if self._autoreset:
             self._buffer = StringIO()
         elif USING_STRINGBUILDER:
             self._buffer = StringIO(ret)
         return ret
+
+    def pack(self, obj):
+        self._pack(obj)
+        return self._get_buffer()
 
     def pack_map_pairs(self, pairs):
         self._fb_pack_map_pairs(len(pairs), pairs)
-        ret = self._buffer.getvalue()
-        if self._autoreset:
-            self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+        return self._get_buffer()
 
     def pack_array_header(self, n):
         self._fb_pack_array_header(n)
-        ret = self._buffer.getvalue()
-        if self._autoreset:
-            self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+        return self._get_buffer()
 
     def pack_map_header(self, n):
         self._fb_pack_map_header(n)
-        ret = self._buffer.getvalue()
-        if self._autoreset:
-            self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+        return self._get_buffer()
+
+    def pack_raw_header(self, n):
+        self._fb_pack_raw_header(n)
+        return self._get_buffer()
 
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
@@ -578,6 +569,15 @@ class Packer(object):
         if n <= 0xffffffff:
             return self._buffer.write(struct.pack(">BI", 0xdf, n))
         raise PackValueError("Dict is too large")
+
+    def _fb_pack_raw_header(self, n):
+        if n <= 0x1f:
+            return self._buffer.write(struct.pack('B', 0xa0 + n))
+        if n <= 0xffff:
+            return self._buffer.write(struct.pack(">BH", 0xda, n))
+        if n <= 0xffffffff:
+            return self._buffer.write(struct.pack(">BI", 0xdb, n))
+        raise PackValueError("Raw is too large")
 
     def _fb_pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
         self._fb_pack_map_header(n)

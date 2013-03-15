@@ -395,7 +395,7 @@ _end:
 #undef again_fixed_trail_if_zero
 #undef start_container
 
-template <unsigned int fixed_offset, unsigned int var_offset>
+template <unsigned int fixed_offset, unsigned int var_offset, bool fixed32>
 static inline int unpack_container_header(unpack_context* ctx, const char* data, size_t len, size_t* off)
 {
     assert(len >= *off);
@@ -440,8 +440,14 @@ static inline int unpack_container_header(unpack_context* ctx, const char* data,
         size = ((unsigned int)*p) & 0x0f;
         break;
     default:
-        PyErr_SetString(PyExc_ValueError, "Unexpected type header on stream");
-        return -1;
+        if (fixed32 && *p >= fixed_offset + 0x10 && *p <= fixed_offset + 0x1f) {
+            // Additional 16 cases for raw
+            ++*off;
+            size = ((unsigned int)*p) & 0x1f;
+        } else {
+            PyErr_SetString(PyExc_ValueError, "Unexpected type header on stream");
+            return -1;
+        }
     }
     unpack_callback_uint32(&ctx->user, size, &ctx->stack[0].obj);
     return 1;
@@ -454,8 +460,9 @@ static inline int unpack_container_header(unpack_context* ctx, const char* data,
 
 static const execute_fn unpack_construct = &unpack_execute<true>;
 static const execute_fn unpack_skip = &unpack_execute<false>;
-static const execute_fn read_array_header = &unpack_container_header<0x90, 0xdc>;
-static const execute_fn read_map_header = &unpack_container_header<0x80, 0xde>;
+static const execute_fn read_array_header = &unpack_container_header<0x90, 0xdc, false>;
+static const execute_fn read_map_header = &unpack_container_header<0x80, 0xde, false>;
+static const execute_fn read_raw_header = &unpack_container_header<0xa0, 0xda, true>;
 
 #undef NEXT_CS
 

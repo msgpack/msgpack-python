@@ -221,6 +221,17 @@ cdef class Packer(object):
             self.pk.length = 0
             return buf
 
+    def pack_raw_header(self, size_t size):
+        cdef int ret = msgpack_pack_raw(&self.pk, size)
+        if ret == -1:
+            raise MemoryError
+        elif ret:  # should not happen
+            raise TypeError
+        if self.autoreset:
+            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            self.pk.length = 0
+            return buf
+
     def pack_map_pairs(self, object pairs):
         """
         Pack *pairs* as msgpack map type.
