@@ -2,12 +2,6 @@
 #cython: embedsignature=True
 
 from cpython cimport *
-cdef extern from "Python.h":
-    ctypedef char* const_char_ptr "const char*"
-    ctypedef char* const_void_ptr "const void*"
-    ctypedef struct PyObject
-    cdef int PyObject_AsReadBuffer(object o, const_void_ptr* buff, Py_ssize_t* buf_len) except -1
-
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *

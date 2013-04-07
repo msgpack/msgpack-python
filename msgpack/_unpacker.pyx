@@ -3,7 +3,6 @@
 
 from cpython cimport *
 cdef extern from "Python.h":
-    ctypedef char* const_char_ptr "const char*"
     ctypedef char* const_void_ptr "const void*"
     ctypedef struct PyObject
     cdef int PyObject_AsReadBuffer(object o, const_void_ptr* buff, Py_ssize_t* buf_len) except -1
@@ -37,7 +36,7 @@ cdef extern from "unpack.h":
         unsigned int ct
         PyObject* key
 
-    ctypedef int (*execute_fn)(unpack_context* ctx, const_char_ptr data,
+    ctypedef int (*execute_fn)(unpack_context* ctx, const char* data,
                                size_t len, size_t* off) except? -1
     execute_fn unpack_construct
     execute_fn unpack_skip
