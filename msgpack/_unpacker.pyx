@@ -2,10 +2,6 @@
 #cython: embedsignature=True
 
 from cpython cimport *
-cdef extern from "Python.h":
-    ctypedef char* const_void_ptr "const void*"
-    ctypedef struct PyObject
-    cdef int PyObject_AsReadBuffer(object o, const_void_ptr* buff, Py_ssize_t* buf_len) except -1
 
 from libc.stdlib cimport *
 from libc.string cimport *
@@ -19,8 +15,8 @@ from msgpack.exceptions import (
         )
 
 
-
 cdef extern from "unpack.h":
+    ctypedef struct PyObject
     ctypedef struct msgpack_user:
         bint use_list
         PyObject* object_hook
@@ -91,32 +87,33 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef size_t off = 0
     cdef int ret
 
-    cdef char* buf
-    cdef Py_ssize_t buf_len
+    cdef Py_buffer buff
     cdef char* cenc = NULL
     cdef char* cerr = NULL
 
-    PyObject_AsReadBuffer(packed, <const_void_ptr*>&buf, &buf_len)
+    PyObject_GetBuffer(packed, &buff, PyBUF_SIMPLE)
+    try:
+        if encoding is not None:
+            if isinstance(encoding, unicode):
+                encoding = encoding.encode('ascii')
+            cenc = PyBytes_AsString(encoding)
 
-    if encoding is not None:
-        if isinstance(encoding, unicode):
-            encoding = encoding.encode('ascii')
-        cenc = PyBytes_AsString(encoding)
+        if unicode_errors is not None:
+            if isinstance(unicode_errors, unicode):
+                unicode_errors = unicode_errors.encode('ascii')
+            cerr = PyBytes_AsString(unicode_errors)
 
-    if unicode_errors is not None:
-        if isinstance(unicode_errors, unicode):
-            unicode_errors = unicode_errors.encode('ascii')
-        cerr = PyBytes_AsString(unicode_errors)
-
-    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
-    ret = unpack_construct(&ctx, buf, buf_len, &off)
-    if ret == 1:
-        obj = unpack_data(&ctx)
-        if off < buf_len:
-            raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
-        return obj
-    else:
-        raise UnpackValueError("Unpack failed: error = %d" % (ret,))
+        init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
+        ret = unpack_construct(&ctx, <char*>buff.buf, buff.len, &off)
+        if ret == 1:
+            obj = unpack_data(&ctx)
+            if off < buff.len:
+                raise ExtraData(obj, PyBytes_FromStringAndSize(<char*>(buff)+off, buff.len-off))
+            return obj
+        else:
+            raise UnpackValueError("Unpack failed: error = %d" % (ret,))
+    finally:
+        PyBuffer_Release(&buff)
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
