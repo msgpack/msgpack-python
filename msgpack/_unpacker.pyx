@@ -254,13 +254,15 @@ cdef class Unpacker(object):
 
     def feed(self, object next_bytes):
         """Append `next_bytes` to internal buffer."""
-        cdef char* buf
-        cdef Py_ssize_t buf_len
+        cdef Py_buffer pybuff
         if self.file_like is not None:
             raise AssertionError(
                     "unpacker.feed() is not be able to use with `file_like`.")
-        PyObject_AsReadBuffer(next_bytes, <const_void_ptr*>&buf, &buf_len)
-        self.append_buffer(buf, buf_len)
+        PyObject_GetBuffer(next_bytes, &pybuff, PyBUF_SIMPLE)
+        try:
+            self.append_buffer(<char*>pybuff.buf, pybuff.len)
+        finally:
+            PyBuffer_Release(&pybuff)
 
     cdef append_buffer(self, void* _buf, Py_ssize_t _buf_len):
         cdef:
