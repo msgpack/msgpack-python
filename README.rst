@@ -151,9 +151,6 @@ the result, or ignoring it. The latter two methods return the number of elements
 in the upcoming container, so that each element in an array, or key-value pair
 in a map, can be unpacked or skipped individually.
 
-Warning: these methods raise ``StopIteration`` when called at the end of the
-stream. Unless caught, this may silently break an iteration.
-
 Each of these methods may optionally write the packed data it reads to a
 callback function:
 
