@@ -147,7 +147,7 @@ class Unpacker(object):
 
     example of streaming deserialization from socket::
 
-        unpacker = Unapcker()
+        unpacker = Unpacker()
         while 1:
             buf = sock.recv(1024*2)
             if not buf:
