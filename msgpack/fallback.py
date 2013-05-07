@@ -439,7 +439,7 @@ class Packer(object):
         See also simplejson's document.
     :param str encoding:
             Convert unicode to bytes with this encoding. (default: 'utf-8')
-    :param str unicode_erros:
+    :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
