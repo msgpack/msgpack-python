@@ -108,7 +108,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if ret == 1:
             obj = unpack_data(&ctx)
             if off < buff.len:
-                raise ExtraData(obj, PyBytes_FromStringAndSize(<char*>(buff)+off, buff.len-off))
+                raise ExtraData(obj, PyBytes_FromStringAndSize(<char*>buff.buf+off, buff.len-off))
             return obj
         else:
             raise UnpackValueError("Unpack failed: error = %d" % (ret,))
