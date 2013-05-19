@@ -10,7 +10,7 @@ doc:
 	cd docs && make zip
 
 cython:
-	cython msgpack/*.pyx
+	cython --cplus msgpack/*.pyx
 
 python3: cython
 	python3 setup.py build_ext -i -f
