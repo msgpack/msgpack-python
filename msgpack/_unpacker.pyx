@@ -3,9 +3,8 @@
 
 from cpython cimport *
 cdef extern from "Python.h":
-    ctypedef char* const_void_ptr "const void*"
     ctypedef struct PyObject
-    cdef int PyObject_AsReadBuffer(object o, const_void_ptr* buff, Py_ssize_t* buf_len) except -1
+    cdef int PyObject_AsReadBuffer(object o, const void* buff, Py_ssize_t* buf_len) except -1
 
 from libc.stdlib cimport *
 from libc.string cimport *
@@ -96,7 +95,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef char* cenc = NULL
     cdef char* cerr = NULL
 
-    PyObject_AsReadBuffer(packed, <const_void_ptr*>&buf, &buf_len)
+    PyObject_AsReadBuffer(packed, <const void*>&buf, &buf_len)
 
     if encoding is not None:
         if isinstance(encoding, unicode):
