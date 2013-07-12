@@ -160,7 +160,7 @@ cdef class Packer(object):
                     if ret != 0: break
                     ret = self._pack(v, nest_limit-1)
                     if ret != 0: break
-        elif PyDict_Check(o):
+        elif PyDict_Check(o) or PyMapping_Check(o):
             ret = msgpack_pack_map(&self.pk, len(o))
             if ret == 0:
                 for k, v in o.items():
