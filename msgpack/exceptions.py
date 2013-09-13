@@ -20,7 +20,7 @@ class ExtraData(ValueError):
         self.extra = extra
 
     def __str__(self):
-        return "unpack(b) recieved extra data."
+        return "unpack(b) received extra data."
 
 class PackException(Exception):
     pass
