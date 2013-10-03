@@ -20,6 +20,7 @@ def testPack():
             -1, -32, -33, -128, -129, -32768, -32769, -4294967296, -4294967297,
             1.0,
         b"", b"a", b"a"*31, b"a"*32,
+        "", "a", "a"*31, "a"*32,
         None, True, False,
         (), ((),), ((), None,),
         {None: 0},
@@ -62,16 +63,16 @@ def testPackBytes():
         check(td)
 
 def testIgnoreUnicodeErrors():
-    re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
-    assert re == "abcdef"
+    re = unpackb(packb(six.u('PyCCкий TEKCT')), encoding='ascii', unicode_errors='ignore', use_list=1)
+    assert re == "PyCC TEKCT"
 
 def testStrictUnicodeUnpack():
     with raises(UnicodeDecodeError):
-        unpackb(packb(b'abc\xeddef'), encoding='utf-8', use_list=1)
+        unpackb(packb(six.u('Русский текст')), encoding='ascii', use_list=1)
 
 def testStrictUnicodePack():
     with raises(UnicodeEncodeError):
-        packb(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
+        packb(six.u("Русский текст"), encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():
     re = unpackb(packb(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8', use_list=1)
@@ -82,7 +83,7 @@ def testNoEncoding():
         packb(six.u("abc"), encoding=None)
 
 def testDecodeBinary():
-    re = unpackb(packb("abc"), encoding=None, use_list=1)
+    re = unpackb(packb(b"abc"), use_list=1)
     assert re == b"abc"
 
 def testPackFloat():
