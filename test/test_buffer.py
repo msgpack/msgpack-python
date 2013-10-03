@@ -9,5 +9,5 @@ def test_unpack_buffer():
     buf = array('b')
     buf.fromstring(packb(('foo', 'bar')))
     obj = unpackb(buf, use_list=1)
-    assert [b'foo', b'bar'] == obj
+    assert ['foo', 'bar'] == obj
 
