@@ -20,9 +20,9 @@ def testFixArray():
           ((),((None,),),),
           )
 
-def testFixRaw():
+def testFixStr():
     check(b"\x94\xa0\xa1a\xa2bc\xa3def",
-          (b"", b"a", b"bc", b"def",),
+          ("", "a", "bc", "def",),
           )
 
 def testFixMap():
@@ -45,10 +45,15 @@ def testSignedInt():
           b"\xd2\xff\xff\xff\xff",
           (0, -128, -1, 0, -32768, -1, 0, -2147483648, -1,))
 
-def testRaw():
+def testStr():
     check(b"\x96\xda\x00\x00\xda\x00\x01a\xda\x00\x02ab\xdb\x00\x00"
         b"\x00\x00\xdb\x00\x00\x00\x01a\xdb\x00\x00\x00\x02ab",
-        (b"", b"a", b"ab", b"", b"a", b"ab"))
+        ("", "a", "ab", "", "a", "ab"))
+
+def testBin():
+    check(b"\x94\xc4\x00\xc4\x01a\xc4\x02bc\xc4\x03def",
+          (b"", b"a", b"bc", b"def",),
+          )
 
 def testArray():
     check(b"\x96\xdc\x00\x00\xdc\x00\x01\xc0\xdc\x00\x02\xc2\xc3\xdd\x00"
