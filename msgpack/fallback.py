@@ -11,12 +11,14 @@ if sys.version_info[0] == 3:
     xrange = range
     def dict_iteritems(d):
         return d.items()
+    Bytes = (bytes, bytearray)
 else:
     PY3 = False
     int_types = (int, long)
     Unicode = unicode
     def dict_iteritems(d):
         return d.iteritems()
+    Bytes = str
 
 
 if hasattr(sys, 'pypy_version_info'):
@@ -41,6 +43,46 @@ else:
     from io import BytesIO as StringIO
     newlist_hint = lambda size: []
 
+class BaseExtData(object):
+    @classmethod
+    def _mpext_new(cls, typ, raw, from_packer=None):
+        if typ is None:
+            try:
+                if isinstance(self._mpext_typ, NotImplemented):
+                    raise NotImplementedError
+            except AttributeError:
+                raise
+        
+        self._mpext_typ = typ
+        self._mpext_raw = raw
+        self._mpext_from_packer = from_packer
+
+class SupportExtData(BaseExtData):
+    _mpext_typ = NotImplemented
+
+class ExtData(BaseExtData):
+    @classmethod
+    def build_extdata(cls, obj):
+        if not isinstance(obj, BaseExtData):
+            raise TypeError("obj is must BaseExtData subclass")
+        return cls._mpext_new(
+            obj._mpext_typ,
+            obj._mpext_raw,
+            obj._mpext_from_packer,
+        )
+    
+    @property
+    def typ(self):
+        return self._mpext_typ
+        
+    @property
+    def raw(self):
+        return self._mpext_raw
+        
+    @property
+    def from_packer(self):
+        return self._mpext_from_packer
+
 from msgpack.exceptions import (
         BufferFull,
         OutOfData,
@@ -56,7 +98,8 @@ EX_READ_MAP_HEADER      = 3
 TYPE_IMMEDIATE          = 0
 TYPE_ARRAY              = 1
 TYPE_MAP                = 2
-TYPE_RAW                = 3
+TYPE_STR                = 3
+TYPE_EXT                = 4
 
 DEFAULT_RECURSE_LIMIT=511
 
@@ -134,6 +177,14 @@ class Unpacker(object):
     `unicode_errors` is used for decoding bytes.
 
     `max_buffer_size` limits the buffer size.  0 means INT_MAX (default).
+    
+    `ext_hook` is the hook when unpacker try parse ext type object. If it is
+    not None, it should be callable and Unpacker call that with ExtData object.
+    If that return anything, it will becaome that thing.
+    
+    `ext_errors` is the boolean. If it is not None, and ext_hook is None. then
+    Unpacker will trhow error, otherwise. Unpacker return ExtData object or
+    other thing from ext_hook. (when ext_hook is not None)
 
     Raises `BufferFull` exception when it is unsufficient.
 
@@ -159,7 +210,8 @@ class Unpacker(object):
 
     def __init__(self, file_like=None, read_size=0, use_list=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
-                 encoding=None, unicode_errors='strict', max_buffer_size=0):
+                 encoding="utf-8", unicode_errors='strict', max_buffer_size=0,
+                 ext_hook=None, ext_errors=True):
         if file_like is None:
             self._fb_feeding = True
         else:
@@ -183,6 +235,8 @@ class Unpacker(object):
         self._list_hook = list_hook
         self._object_hook = object_hook
         self._object_pairs_hook = object_pairs_hook
+        self._ext_hook = ext_hook
+        self._ext_errors = ext_errors
 
         if list_hook is not None and not callable(list_hook):
             raise ValueError('`list_hook` is not callable')
@@ -193,6 +247,8 @@ class Unpacker(object):
         if object_hook is not None and object_pairs_hook is not None:
             raise ValueError("object_pairs_hook and object_hook are mutually "
                              "exclusive")
+        if ext_hook is not None and not callable(ext_hook):
+            raise ValueError("`ext_hook` is not callable")
 
     def feed(self, next_bytes):
         if isinstance(next_bytes, array.array):
@@ -281,7 +337,7 @@ class Unpacker(object):
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
             obj = self._fb_read(n, write_bytes)
-            typ = TYPE_RAW
+            typ = TYPE_STR
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
             typ = TYPE_ARRAY
@@ -294,6 +350,33 @@ class Unpacker(object):
             obj = False
         elif b == 0xc3:
             obj = True
+        elif b == 0xc4:
+            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+        elif b == 0xc5:
+            n = struct.unpack("B", self._fb_read(2, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+        elif b == 0xc6:
+            n = struct.unpack("B", self._fb_read(4, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+        elif b == 0xc7:
+            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(n, write_bytes)
+            obj = dtyp, draw
+            typ == TYPE_EXT
+        elif b == 0xc8:
+            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(n, write_bytes)
+            obj = dtyp, draw
+            typ == TYPE_EXT
+        elif b == 0xc9:
+            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(n, write_bytes)
+            obj = dtyp, draw
+            typ == TYPE_EXT
         elif b == 0xca:
             obj = struct.unpack(">f", self._fb_read(4, write_bytes))[0]
         elif b == 0xcb:
@@ -314,14 +397,43 @@ class Unpacker(object):
             obj = struct.unpack(">i", self._fb_read(4, write_bytes))[0]
         elif b == 0xd3:
             obj = struct.unpack(">q", self._fb_read(8, write_bytes))[0]
+        elif b == 0xd4:
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(1, write_bytes)
+            obj = dtyp, draw
+            typ = TYPE_EXT
+        elif b == 0xd5:
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(2, write_bytes)
+            obj = dtyp, draw
+            typ = TYPE_EXT
+        elif b == 0xd6:
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(4, write_bytes)
+            obj = dtyp, draw
+            typ = TYPE_EXT
+        elif b == 0xd7:
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(8, write_bytes)
+            obj = dtyp, draw
+            typ = TYPE_EXT
+        elif b == 0xd8:
+            dtyp = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            draw = self._fb_read(16, write_bytes)
+            obj = dtyp, draw
+            typ = TYPE_EXT
+        elif b == 0xd9:
+            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+            typ = TYPE_STR
         elif b == 0xda:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             obj = self._fb_read(n, write_bytes)
-            typ = TYPE_RAW
+            typ = TYPE_STR
         elif b == 0xdb:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             obj = self._fb_read(n, write_bytes)
-            typ = TYPE_RAW
+            typ = TYPE_STR
         elif b == 0xdc:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             typ = TYPE_ARRAY
@@ -386,9 +498,17 @@ class Unpacker(object):
             return ret
         if execute == EX_SKIP:
             return
-        if typ == TYPE_RAW:
+        if typ == TYPE_STR:
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
+            return obj
+        if typ == TYPE_EXT:
+            dtyp, draw = obj
+            obj = ExtData(dtyp, draw, from_packer=self)
+            if self._ext_hook:
+                obj = self._ext_hook(obj)
+            elif self._ext_errors:
+                raise UnpackValueError("Unpacker are not support ext (ext_errors is True)")
             return obj
         assert typ == TYPE_IMMEDIATE
         return obj
@@ -464,6 +584,30 @@ class Packer(object):
             raise PackValueError("recursion limit exceeded")
         if obj is None:
             return self._buffer.write(b"\xc0")
+        if isinstance(obj, BaseExtData):
+            obj = ExtData.build_extdata(obj)
+            if not isinstance(obj.raw, Bytes):
+                raise PackValueError("ExtData must have binary raw data.")
+
+            if n == 1:
+                self._buffer.write(struct.pack('B', 0xd4))
+            elif n == 2:
+                self._buffer.write(struct.pack("B", 0xd5))
+            elif n == 4:
+                self._buffer.write(struct.pack("B", 0xd6))
+            elif n == 8:
+                self._buffer.write(struct.pack("B", 0xd7))
+            elif n == 16:
+                self._buffer.write(struct.pack("B", 0xd8))
+            elif n <= 0xff:
+                self._buffer.write(struct.pack('>BB', 0xc7, n))
+            elif n <= 0xffff:
+                self._buffer.write(struct.pack(">BH", 0xc8, n))
+            elif n <= 0xffffffff:
+                self._buffer.write(struct.pack(">BI", 0xc9, n))
+
+            self._buffer.write(struct.pack("b", obj.typ))
+            return self._buffer.write(obj.raw)
         if isinstance(obj, bool):
             if obj:
                 return self._buffer.write(b"\xc3")
@@ -490,13 +634,12 @@ class Packer(object):
             if -0x8000000000000000 <= obj < -0x80000000:
                 return self._buffer.write(struct.pack(">Bq", 0xd3, obj))
             raise PackValueError("Integer value out of range")
-        if isinstance(obj, (Unicode, bytes)):
-            if isinstance(obj, Unicode):
-                if self._encoding is None:
-                    raise TypeError(
-                            "Can't encode unicode string: "
-                            "no encoding is specified")
-                obj = obj.encode(self._encoding, self._unicode_errors)
+        if isinstance(obj, Unicode):
+            if self._encoding is None:
+                raise TypeError(
+                        "Can't encode unicode string: "
+                        "no encoding is specified")
+            obj = obj.encode(self._encoding, self._unicode_errors)
             n = len(obj)
             if n <= 0x1f:
                 self._buffer.write(struct.pack('B', 0xa0 + n))
@@ -508,6 +651,18 @@ class Packer(object):
                 self._buffer.write(struct.pack(">BI", 0xdb, n))
                 return self._buffer.write(obj)
             raise PackValueError("String is too large")
+        elif isinstance(obj, Bytes):
+            n = len(obj)
+            if n <= 0xff:
+                self._buffer.write(struct.pack('>BB', 0xc4, n))
+                return self._buffer.write(obj)
+            if n <= 0xffff:
+                self._buffer.write(struct.pack(">BH", 0xc5, n))
+                return self._buffer.write(obj)
+            if n <= 0xffffffff:
+                self._buffer.write(struct.pack(">BI", 0xc6, n))
+                return self._buffer.write(obj)
+            raise PackValueError("Binary is too large")
         if isinstance(obj, float):
             if self._use_float:
                 return self._buffer.write(struct.pack(">Bf", 0xca, obj))
@@ -560,6 +715,9 @@ class Packer(object):
         elif USING_STRINGBUILDER:
             self._buffer = StringIO(ret)
         return ret
+
+    def pack_ext(self, typ, raw):
+        return self.pack(ExtData(typ, raw))
 
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:
