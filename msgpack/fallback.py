@@ -58,54 +58,9 @@ TYPE_ARRAY              = 1
 TYPE_MAP                = 2
 TYPE_RAW                = 3
 
+EXTENDED_TYPE          = 1000
+
 DEFAULT_RECURSE_LIMIT=511
-
-def pack(o, stream, **kwargs):
-    """
-    Pack object `o` and write it to `stream`
-
-    See :class:`Packer` for options.
-    """
-    packer = Packer(**kwargs)
-    stream.write(packer.pack(o))
-
-def packb(o, **kwargs):
-    """
-    Pack object `o` and return packed bytes
-
-    See :class:`Packer` for options.
-    """
-    return Packer(**kwargs).pack(o)
-
-def unpack(stream, **kwargs):
-    """
-    Unpack an object from `stream`.
-
-    Raises `ExtraData` when `packed` contains extra bytes.
-    See :class:`Unpacker` for options.
-    """
-    unpacker = Unpacker(stream, **kwargs)
-    ret = unpacker._fb_unpack()
-    if unpacker._fb_got_extradata():
-        raise ExtraData(ret, unpacker._fb_get_extradata())
-    return ret
-
-def unpackb(packed, **kwargs):
-    """
-    Unpack an object from `packed`.
-
-    Raises `ExtraData` when `packed` contains extra bytes.
-    See :class:`Unpacker` for options.
-    """
-    unpacker = Unpacker(None, **kwargs)
-    unpacker.feed(packed)
-    try:
-        ret = unpacker._fb_unpack()
-    except OutOfData:
-        raise UnpackValueError("Data is not enough.")
-    if unpacker._fb_got_extradata():
-        raise ExtraData(ret, unpacker._fb_get_extradata())
-    return ret
 
 class Unpacker(object):
     """
@@ -334,6 +289,9 @@ class Unpacker(object):
         elif b == 0xdf:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             typ = TYPE_MAP
+        elif b == 0xc9:
+            n, typ = struct.unpack(">Ib", self._fb_read(5, write_bytes))
+            typ += EXTENDED_TYPE
         else:
             raise UnpackValueError("Unknown header: 0x%x" % b)
         return typ, n, obj
@@ -390,6 +348,10 @@ class Unpacker(object):
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
             return obj
+        if typ >= EXTENDED_TYPE:
+            typ -= EXTENDED_TYPE
+            data = self._fb_read(n, write_bytes)
+            return self.handle_extended_type(typ, data)
         assert typ == TYPE_IMMEDIATE
         return obj
 
@@ -410,6 +372,9 @@ class Unpacker(object):
         ret = self._fb_unpack(EX_CONSTRUCT, write_bytes)
         self._fb_consume()
         return ret
+
+    def handle_extended_type(self, typecode, data):
+        raise NotImplementedError("Cannot decode extended type with typecode=%d" % typecode)
 
     def read_array_header(self, write_bytes=None):
         ret = self._fb_unpack(EX_READ_ARRAY_HEADER, write_bytes)
@@ -521,9 +486,32 @@ class Packer(object):
         if isinstance(obj, dict):
             return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
                                            nest_limit - 1)
+        if self.pack_extended_type(obj):
+            # it means that obj was succesfully handled by
+            # handle_extended_type, so we are done
+            return
         if self._default is not None:
             return self._pack(self._default(obj), nest_limit - 1)
         raise TypeError("Cannot serialize %r" % obj)
+
+    def pack_extended_type(self, obj):
+        res = self.handle_extended_type(obj)
+        if res is None:
+            return False
+        fmt, typecode, data = res
+        # for now we support only this. We should add support for the other
+        # fixext/ext formats
+        assert fmt == "ext 32"
+        assert 0 <= typecode <= 127
+        N = len(data)
+        self._buffer.write(struct.pack('>BIB', 0xc9, N, typecode))
+        self._buffer.write(data)
+        return True
+
+    def handle_extended_type(self, obj):
+        # by default we don't support any extended type. This can be
+        # overridden by subclasses
+        return None
 
     def pack(self, obj):
         self._pack(obj)
@@ -590,3 +578,52 @@ class Packer(object):
 
     def reset(self):
         self._buffer = StringIO()
+
+
+def pack(o, stream, Packer=Packer, **kwargs):
+    """
+    Pack object `o` and write it to `stream`
+
+    See :class:`Packer` for options.
+    """
+    packer = Packer(**kwargs)
+    stream.write(packer.pack(o))
+
+def packb(o, Packer=Packer, **kwargs):
+    """
+    Pack object `o` and return packed bytes
+
+    See :class:`Packer` for options.
+    """
+    return Packer(**kwargs).pack(o)
+
+def unpack(stream, Unpacker=Unpacker, **kwargs):
+    """
+    Unpack an object from `stream`.
+
+    Raises `ExtraData` when `packed` contains extra bytes.
+    See :class:`Unpacker` for options.
+    """
+    unpacker = Unpacker(stream, **kwargs)
+    ret = unpacker._fb_unpack()
+    if unpacker._fb_got_extradata():
+        raise ExtraData(ret, unpacker._fb_get_extradata())
+    return ret
+
+def unpackb(packed, Unpacker=Unpacker, **kwargs):
+    """
+    Unpack an object from `packed`.
+
+    Raises `ExtraData` when `packed` contains extra bytes.
+    See :class:`Unpacker` for options.
+    """
+    unpacker = Unpacker(None, **kwargs)
+    unpacker.feed(packed)
+    try:
+        ret = unpacker._fb_unpack()
+    except OutOfData:
+        raise UnpackValueError("Data is not enough.")
+    if unpacker._fb_got_extradata():
+        raise ExtraData(ret, unpacker._fb_get_extradata())
+    return ret
+
