@@ -34,11 +34,11 @@ typedef struct msgpack_packer {
     char *buf;
     size_t length;
     size_t buf_size;
+    bool use_bin_type;
 } msgpack_packer;
 
 typedef struct Packer Packer;
 
-static inline int msgpack_pack_short(msgpack_packer* pk, short d);
 static inline int msgpack_pack_int(msgpack_packer* pk, int d);
 static inline int msgpack_pack_long(msgpack_packer* pk, long d);
 static inline int msgpack_pack_long_long(msgpack_packer* pk, long long d);
@@ -68,6 +68,7 @@ static inline int msgpack_pack_array(msgpack_packer* pk, unsigned int n);
 static inline int msgpack_pack_map(msgpack_packer* pk, unsigned int n);
 
 static inline int msgpack_pack_raw(msgpack_packer* pk, size_t l);
+static inline int msgpack_pack_bin(msgpack_packer* pk, size_t l);
 static inline int msgpack_pack_raw_body(msgpack_packer* pk, const void* b, size_t l);
 
 static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_t l)

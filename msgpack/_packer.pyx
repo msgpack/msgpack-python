@@ -26,6 +26,7 @@ cdef extern from "pack.h":
     int msgpack_pack_array(msgpack_packer* pk, size_t l)
     int msgpack_pack_map(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw(msgpack_packer* pk, size_t l)
+    int msgpack_pack_bin(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
@@ -56,6 +57,9 @@ cdef class Packer(object):
     :param bool autoreset:
         Reset buffer after each pack and return it's content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
+    :param bool use_bin_type:
+        Use bin type introduced in msgpack spec 2.0 for bytes.
+        It also enable str8 type for unicode.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -64,6 +68,7 @@ cdef class Packer(object):
     cdef char *encoding
     cdef char *unicode_errors
     cdef bool use_float
+    cdef bool use_bin_type
     cdef bint autoreset
 
     def __cinit__(self):
@@ -74,11 +79,13 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict', use_single_float=False, bint autoreset=1):
+    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
+                 use_single_float=False, bint autoreset=1, bint use_bin_type=0):
         """
         """
         self.use_float = use_single_float
         self.autoreset = autoreset
+        self.pk.use_bin_type = use_bin_type
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
@@ -110,6 +117,7 @@ cdef class Packer(object):
         cdef char* rawval
         cdef int ret
         cdef dict d
+        cdef size_t L
 
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded.")
@@ -140,9 +148,10 @@ cdef class Packer(object):
                ret = msgpack_pack_double(&self.pk, dval)
         elif PyBytes_Check(o):
             rawval = o
-            ret = msgpack_pack_raw(&self.pk, len(o))
+            L = len(o)
+            ret = msgpack_pack_bin(&self.pk, L)
             if ret == 0:
-                ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
+                ret = msgpack_pack_raw_body(&self.pk, rawval, L)
         elif PyUnicode_Check(o):
             if not self.encoding:
                 raise TypeError("Can't encode unicode string: no encoding is specified")
@@ -247,21 +256,26 @@ cdef class Packer(object):
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
 
 
-def pack(object o, object stream, default=None, str encoding='utf-8', str unicode_errors='strict'):
+def pack(object o, object stream,
+         default=None, str encoding='utf-8', str unicode_errors='strict',
+         bint use_single_float=False, bint use_bin_type=False):
     """
     pack an object `o` and write it to stream)
 
     See :class:`Packer` for options.
     """
-    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors)
+    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors,
+                    use_single_float=use_single_float, use_bin_type=use_bin_type)
     stream.write(packer.pack(o))
 
-def packb(object o, default=None, encoding='utf-8', str unicode_errors='strict', bint use_single_float=False):
+def packb(object o,
+          default=None, str encoding='utf-8', str unicode_errors='strict',
+          bint use_single_float=False, bint use_bin_type=False):
     """
     pack o and return packed bytes
 
     See :class:`Packer` for options.
     """
     packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors,
-                    use_single_float=use_single_float)
+                    use_single_float=use_single_float, use_bin_type=use_bin_type)
     return packer.pack(o)
