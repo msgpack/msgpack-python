@@ -664,7 +664,7 @@ static inline int msgpack_pack_map(msgpack_packer* x, unsigned int n)
 
 static inline int msgpack_pack_raw(msgpack_packer* x, size_t l)
 {
-    if(l < 32) {
+    if (l < 32) {
         unsigned char d = 0xa0 | (uint8_t)l;
         msgpack_pack_append_buffer(x, &TAKE8_8(d), 1);
     } else if (x->use_bin_type && l < 256) {  // str8 is new format introduced with bin.
