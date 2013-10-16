@@ -13,6 +13,7 @@ cdef extern from "pack.h":
         char* buf
         size_t length
         size_t buf_size
+        bint use_bin_type
 
     int msgpack_pack_int(msgpack_packer* pk, int d)
     int msgpack_pack_nil(msgpack_packer* pk)
@@ -68,7 +69,6 @@ cdef class Packer(object):
     cdef char *encoding
     cdef char *unicode_errors
     cdef bool use_float
-    cdef bool use_bin_type
     cdef bint autoreset
 
     def __cinit__(self):
@@ -254,28 +254,3 @@ cdef class Packer(object):
     def bytes(self):
         """Return buffer content."""
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-
-
-def pack(object o, object stream,
-         default=None, str encoding='utf-8', str unicode_errors='strict',
-         bint use_single_float=False, bint use_bin_type=False):
-    """
-    pack an object `o` and write it to stream)
-
-    See :class:`Packer` for options.
-    """
-    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors,
-                    use_single_float=use_single_float, use_bin_type=use_bin_type)
-    stream.write(packer.pack(o))
-
-def packb(object o,
-          default=None, str encoding='utf-8', str unicode_errors='strict',
-          bint use_single_float=False, bint use_bin_type=False):
-    """
-    pack o and return packed bytes
-
-    See :class:`Packer` for options.
-    """
-    packer = Packer(default=default, encoding=encoding, unicode_errors=unicode_errors,
-                    use_single_float=use_single_float, use_bin_type=use_bin_type)
-    return packer.pack(o)
