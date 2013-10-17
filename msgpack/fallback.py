@@ -57,6 +57,7 @@ TYPE_IMMEDIATE          = 0
 TYPE_ARRAY              = 1
 TYPE_MAP                = 2
 TYPE_RAW                = 3
+TYPE_BIN                = 4
 
 DEFAULT_RECURSE_LIMIT=511
 
@@ -297,6 +298,10 @@ class Unpacker(object):
             obj = struct.unpack(">i", self._fb_read(4, write_bytes))[0]
         elif b == 0xd3:
             obj = struct.unpack(">q", self._fb_read(8, write_bytes))[0]
+        elif b == 0xd9:
+            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+            typ = TYPE_RAW
         elif b == 0xda:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             obj = self._fb_read(n, write_bytes)
@@ -305,6 +310,18 @@ class Unpacker(object):
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
+        elif b == 0xc4:
+            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+            typ = TYPE_BIN
+        elif b == 0xc5:
+            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+            typ = TYPE_BIN
+        elif b == 0xc6:
+            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+            typ = TYPE_BIN
         elif b == 0xdc:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             typ = TYPE_ARRAY
@@ -372,6 +389,8 @@ class Unpacker(object):
         if typ == TYPE_RAW:
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
+            return obj
+        if typ == TYPE_BIN:
             return obj
         assert typ == TYPE_IMMEDIATE
         return obj

@@ -10,7 +10,7 @@ else:
         from msgpack._packer import Packer
         from msgpack._unpacker import unpack, unpackb, Unpacker
     except ImportError:
-        from msgpack.fallback import pack, packb, Packer, unpack, unpackb, Unpacker
+        from msgpack.fallback import Packer, unpack, unpackb, Unpacker
 
 
 def pack(o, stream, **kwargs):
