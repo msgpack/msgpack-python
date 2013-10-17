@@ -48,6 +48,9 @@ from msgpack.exceptions import (
         PackValueError,
         ExtraData)
 
+from msgpack import ExtType
+
+
 EX_SKIP                 = 0
 EX_CONSTRUCT            = 1
 EX_READ_ARRAY_HEADER    = 2
@@ -58,8 +61,9 @@ TYPE_ARRAY              = 1
 TYPE_MAP                = 2
 TYPE_RAW                = 3
 TYPE_BIN                = 4
+TYPE_EXT                = 5
 
-DEFAULT_RECURSE_LIMIT=511
+DEFAULT_RECURSE_LIMIT = 511
 
 def unpack(stream, **kwargs):
     """
@@ -112,6 +116,9 @@ class Unpacker(object):
     should be callable and Unpacker calls it with a list of key-value pairs
     after deserializing a map.
 
+    `ext_hook` is callback for ext (User defined) type. It called with two
+    arguments: (code, bytes). default: `msgpack.ExtType`
+
     `encoding` is the encoding used for decoding msgpack bytes.  If it is
     None (default), msgpack bytes are deserialized to Python bytes.
 
@@ -143,7 +150,8 @@ class Unpacker(object):
 
     def __init__(self, file_like=None, read_size=0, use_list=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
-                 encoding=None, unicode_errors='strict', max_buffer_size=0):
+                 encoding=None, unicode_errors='strict', max_buffer_size=0,
+                 ext_hook=ExtType):
         if file_like is None:
             self._fb_feeding = True
         else:
@@ -167,6 +175,7 @@ class Unpacker(object):
         self._list_hook = list_hook
         self._object_hook = object_hook
         self._object_pairs_hook = object_pairs_hook
+        self._ext_hook = ext_hook
 
         if list_hook is not None and not callable(list_hook):
             raise ValueError('`list_hook` is not callable')
@@ -177,6 +186,8 @@ class Unpacker(object):
         if object_hook is not None and object_pairs_hook is not None:
             raise ValueError("object_pairs_hook and object_hook are mutually "
                              "exclusive")
+        if not callable(ext_hook):
+            raise ValueError("`ext_hook` is not callable")
 
     def feed(self, next_bytes):
         if isinstance(next_bytes, array.array):
@@ -278,6 +289,30 @@ class Unpacker(object):
             obj = False
         elif b == 0xc3:
             obj = True
+        elif b == 0xc4:
+            typ = TYPE_BIN
+            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+        elif b == 0xc5:
+            typ = TYPE_BIN
+            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+        elif b == 0xc6:
+            typ = TYPE_BIN
+            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            obj = self._fb_read(n, write_bytes)
+        elif b == 0xc7:  # ext 8
+            typ = TYPE_EXT
+            L, n = struct.unpack('Bb', self._fb_read(2, write_bytes))
+            obj = self._fb_read(L, write_bytes)
+        elif b == 0xc8:  # ext 16
+            typ = TYPE_EXT
+            L, n = struct.unpack('>Hb', self._fb_read(3, write_bytes))
+            obj = self._fb_read(L, write_bytes)
+        elif b == 0xc9:  # ext 32
+            typ = TYPE_EXT
+            L, n = struct.unpack('>Ib', self._fb_read(5, write_bytes))
+            obj = self._fb_read(L, write_bytes)
         elif b == 0xca:
             obj = struct.unpack(">f", self._fb_read(4, write_bytes))[0]
         elif b == 0xcb:
@@ -298,30 +333,33 @@ class Unpacker(object):
             obj = struct.unpack(">i", self._fb_read(4, write_bytes))[0]
         elif b == 0xd3:
             obj = struct.unpack(">q", self._fb_read(8, write_bytes))[0]
+        elif b == 0xd4:  # fixext 1
+            typ = TYPE_EXT
+            n, obj = struct.unpack('b1s', self._fb_read(2, write_bytes))
+        elif b == 0xd5:  # fixext 2
+            typ = TYPE_EXT
+            n, obj = struct.unpack('b2s', self._fb_read(3, write_bytes))
+        elif b == 0xd6:  # fixext 4
+            typ = TYPE_EXT
+            n, obj = struct.unpack('b4s', self._fb_read(5, write_bytes))
+        elif b == 0xd7:  # fixext 8
+            typ = TYPE_EXT
+            n, obj = struct.unpack('b8s', self._fb_read(9, write_bytes))
+        elif b == 0xd8:  # fixext 16
+            typ = TYPE_EXT
+            n, obj = struct.unpack('b16s', self._fb_read(17, write_bytes))
         elif b == 0xd9:
+            typ = TYPE_RAW
             n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
             obj = self._fb_read(n, write_bytes)
-            typ = TYPE_RAW
         elif b == 0xda:
+            typ = TYPE_RAW
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             obj = self._fb_read(n, write_bytes)
-            typ = TYPE_RAW
         elif b == 0xdb:
-            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
-            obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
-        elif b == 0xc4:
-            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
-            obj = self._fb_read(n, write_bytes)
-            typ = TYPE_BIN
-        elif b == 0xc5:
-            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
-            obj = self._fb_read(n, write_bytes)
-            typ = TYPE_BIN
-        elif b == 0xc6:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             obj = self._fb_read(n, write_bytes)
-            typ = TYPE_BIN
         elif b == 0xdc:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             typ = TYPE_ARRAY
@@ -390,6 +428,8 @@ class Unpacker(object):
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
             return obj
+        if typ == TYPE_EXT:
+            return self._ext_hook(n, obj)
         if typ == TYPE_BIN:
             return obj
         assert typ == TYPE_IMMEDIATE

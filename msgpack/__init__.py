@@ -2,6 +2,10 @@
 from msgpack._version import version
 from msgpack.exceptions import *
 
+from collections import namedtuple
+
+ExtType = namedtuple('ExtType', 'code data')
+
 import os
 if os.environ.get('MSGPACK_PUREPYTHON'):
     from msgpack.fallback import Packer, unpack, unpackb, Unpacker
