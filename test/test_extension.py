@@ -1,14 +1,28 @@
 import array
+import struct
 import msgpack
+
+def test_pack_extended_type():
+    def p(s):
+        packer = msgpack.Packer()
+        packer.pack_extended_type(0x42, s)
+        return packer._buffer.getvalue()
+    assert p('A')        == '\xd4\x42A'          # fixext 1
+    assert p('AB')       == '\xd5\x42AB'         # fixext 2
+    assert p('ABCD')     == '\xd6\x42ABCD'       # fixext 4
+    assert p('ABCDEFGH') == '\xd7\x42ABCDEFGH'   # fixext 8
+    assert p('A'*16)     == '\xd8\x42' + 'A'*16  # fixext 16
+    assert p('ABC')      == '\xc7\x03\x42ABC'        # ext 8
+    assert p('A'*0x0123)        == '\xc8\x01\x23\x42' + 'A'*0x0123 # ext 16
+    assert p('A'*0x00012345)    == '\xc9\x00\x01\x23\x45\x42' + 'A'*0x00012345 # ext 32
 
 def test_extension_type():
     class MyPacker(msgpack.Packer):
         def handle_unknown_type(self, obj):
             if isinstance(obj, array.array):
-                fmt = "ext 32"
                 typecode = 123 # application specific typecode
                 data = obj.tostring()
-                self.pack_extended_type(fmt, typecode, data)
+                self.pack_extended_type(typecode, data)
                 return True
 
     class MyUnpacker(msgpack.Unpacker):

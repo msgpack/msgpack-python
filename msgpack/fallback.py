@@ -545,13 +545,29 @@ class Packer(object):
         # overridden by subclasses
         return None
 
-    def pack_extended_type(self, fmt, typecode, data):
-        # for now we support only this. We should add support for the other
-        # fixext/ext formats
-        assert fmt == "ext 32"
+    def pack_extended_type(self, typecode, data):
         assert 0 <= typecode <= 127
-        N = len(data)
-        self._buffer.write(struct.pack('>BIB', 0xc9, N, typecode))
+        n = len(data)
+        if n == 1:
+            header = struct.pack(">BB", 0xd4, typecode) # fixext 1
+        elif n == 2:
+            header = struct.pack(">BB", 0xd5, typecode) # fixext 2
+        elif n == 4:
+            header = struct.pack(">BB", 0xd6, typecode) # fixext 4
+        elif n == 8:
+            header = struct.pack(">BB", 0xd7, typecode) # fixext 8
+        elif n == 16:
+            header = struct.pack(">BB", 0xd8, typecode) # fixext 16
+        elif n <= 2**8-1:
+            header = struct.pack(">BBB", 0xc7, n, typecode) # ext 8
+        elif n <= 2**16-1:
+            header = struct.pack(">BHB", 0xc8, n, typecode) # ext 16
+        elif n <= 2**32-1:
+            header = struct.pack(">BIB", 0xc9, n, typecode) # ext 32
+        else:
+            raise PackValueError("ext data too large")            
+        #
+        self._buffer.write(header)
         self._buffer.write(data)
 
     def pack(self, obj):
