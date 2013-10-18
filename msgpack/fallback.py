@@ -398,7 +398,7 @@ class Unpacker(object):
         if typ >= EXTENDED_TYPE:
             typ -= EXTENDED_TYPE
             data = self._fb_read(n, write_bytes)
-            return self.handle_extended_type(typ, data)
+            return self.read_extended_type(typ, data)
         assert typ == TYPE_IMMEDIATE
         return obj
 
@@ -420,7 +420,7 @@ class Unpacker(object):
         self._fb_consume()
         return ret
 
-    def handle_extended_type(self, typecode, data):
+    def read_extended_type(self, typecode, data):
         raise NotImplementedError("Cannot decode extended type with typecode=%d" % typecode)
 
     def read_array_header(self, write_bytes=None):
@@ -533,19 +533,19 @@ class Packer(object):
         if isinstance(obj, dict):
             return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
                                            nest_limit - 1)
-        if self.pack_extended_type(obj):
-            # it means that obj was succesfully handled by
-            # handle_extended_type, so we are done
+        if self.handle_unknown_type(obj):
+            # it means that obj was succesfully packed, so we are done
             return
         if self._default is not None:
             return self._pack(self._default(obj), nest_limit - 1)
         raise TypeError("Cannot serialize %r" % obj)
 
-    def pack_extended_type(self, obj):
-        res = self.handle_extended_type(obj)
-        if res is None:
-            return False
-        fmt, typecode, data = res
+    def handle_unknown_type(self, obj):
+        # by default we don't support any extended type. This can be
+        # overridden by subclasses
+        return None
+
+    def pack_extended_type(self, fmt, typecode, data):
         # for now we support only this. We should add support for the other
         # fixext/ext formats
         assert fmt == "ext 32"
@@ -553,12 +553,6 @@ class Packer(object):
         N = len(data)
         self._buffer.write(struct.pack('>BIB', 0xc9, N, typecode))
         self._buffer.write(data)
-        return True
-
-    def handle_extended_type(self, obj):
-        # by default we don't support any extended type. This can be
-        # overridden by subclasses
-        return None
 
     def pack(self, obj):
         self._pack(obj)
