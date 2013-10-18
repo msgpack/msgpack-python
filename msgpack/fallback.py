@@ -62,6 +62,44 @@ EXTENDED_TYPE          = 1000
 
 DEFAULT_RECURSE_LIMIT=511
 
+def pack(o, stream, **kwargs):
+    """
+    Pack object `o` and write it to `stream`
+
+    See :class:`Packer` for options.
+    """
+    packer = Packer(**kwargs)
+    stream.write(packer.pack(o))
+
+def packb(o, **kwargs):
+    """
+    Pack object `o` and return packed bytes
+
+    See :class:`Packer` for options.
+    """
+    return Packer(**kwargs).pack(o)
+
+def unpack(stream, **kwargs):
+    """
+    Unpack an object from `stream`.
+
+    Raises `ExtraData` when `packed` contains extra bytes.
+    See :class:`Unpacker` for options.
+    """
+    unpacker = Unpacker(stream, **kwargs)
+    return unpacker.unpack_one()
+
+def unpackb(packed, **kwargs):
+    """
+    Unpack an object from `packed`.
+
+    Raises `ExtraData` when `packed` contains extra bytes.
+    See :class:`Unpacker` for options.
+    """
+    unpacker = Unpacker(None, **kwargs)
+    unpacker.feed(packed)
+    return unpacker.unpack_one()
+
 class Unpacker(object):
     """
     Streaming unpacker.
@@ -148,6 +186,15 @@ class Unpacker(object):
         if object_hook is not None and object_pairs_hook is not None:
             raise ValueError("object_pairs_hook and object_hook are mutually "
                              "exclusive")
+
+    def unpack_one(self):
+        try:
+            ret = self._fb_unpack()
+        except OutOfData:
+            raise UnpackValueError("Data is not enough.")
+        if self._fb_got_extradata():
+            raise ExtraData(ret, self._fb_get_extradata())
+        return ret
 
     def feed(self, next_bytes):
         if isinstance(next_bytes, array.array):
@@ -578,52 +625,4 @@ class Packer(object):
 
     def reset(self):
         self._buffer = StringIO()
-
-
-def pack(o, stream, Packer=Packer, **kwargs):
-    """
-    Pack object `o` and write it to `stream`
-
-    See :class:`Packer` for options.
-    """
-    packer = Packer(**kwargs)
-    stream.write(packer.pack(o))
-
-def packb(o, Packer=Packer, **kwargs):
-    """
-    Pack object `o` and return packed bytes
-
-    See :class:`Packer` for options.
-    """
-    return Packer(**kwargs).pack(o)
-
-def unpack(stream, Unpacker=Unpacker, **kwargs):
-    """
-    Unpack an object from `stream`.
-
-    Raises `ExtraData` when `packed` contains extra bytes.
-    See :class:`Unpacker` for options.
-    """
-    unpacker = Unpacker(stream, **kwargs)
-    ret = unpacker._fb_unpack()
-    if unpacker._fb_got_extradata():
-        raise ExtraData(ret, unpacker._fb_get_extradata())
-    return ret
-
-def unpackb(packed, Unpacker=Unpacker, **kwargs):
-    """
-    Unpack an object from `packed`.
-
-    Raises `ExtraData` when `packed` contains extra bytes.
-    See :class:`Unpacker` for options.
-    """
-    unpacker = Unpacker(None, **kwargs)
-    unpacker.feed(packed)
-    try:
-        ret = unpacker._fb_unpack()
-    except OutOfData:
-        raise UnpackValueError("Data is not enough.")
-    if unpacker._fb_got_extradata():
-        raise ExtraData(ret, unpacker._fb_get_extradata())
-    return ret
 

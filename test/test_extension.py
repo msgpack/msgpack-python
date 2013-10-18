@@ -18,7 +18,9 @@ def test_extension_type():
             return obj
 
     obj = [42, 'hello', array.array('d', [1.1, 2.2, 3.3])]
-    s = msgpack.packb(obj, MyPacker)
-    obj2 = msgpack.unpackb(s, MyUnpacker)
+    packer = MyPacker()
+    unpacker = MyUnpacker(None)
+    s = packer.pack(obj)
+    unpacker.feed(s)
+    obj2 = unpacker.unpack_one()
     assert obj == obj2
-    
