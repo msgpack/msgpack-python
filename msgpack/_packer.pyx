@@ -176,6 +176,9 @@ cdef class Packer(object):
                 for v in o:
                     ret = self._pack(v, nest_limit-1)
                     if ret != 0: break
+        elif self.handle_unknown_type(o):
+            # it means that obj was succesfully packed, so we are done
+            return 0
         elif self._default:
             o = self._default(o)
             ret = self._pack(o, nest_limit-1)
@@ -194,6 +197,9 @@ cdef class Packer(object):
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
             return buf
+
+    def handle_unknown_type(self, obj):
+        return None
 
     def pack_extended_type(self, typecode, data):
         msgpack_pack_ext(&self.pk, typecode, len(data))
