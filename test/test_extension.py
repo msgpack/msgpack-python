@@ -6,7 +6,7 @@ def test_pack_extended_type():
     def p(s):
         packer = msgpack.Packer()
         packer.pack_extended_type(0x42, s)
-        return packer._buffer.getvalue()
+        return packer.bytes()
     assert p('A')        == '\xd4\x42A'          # fixext 1
     assert p('AB')       == '\xd5\x42AB'         # fixext 2
     assert p('ABCD')     == '\xd6\x42ABCD'       # fixext 4

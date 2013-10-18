@@ -683,6 +683,66 @@ static inline int msgpack_pack_raw_body(msgpack_packer* x, const void* b, size_t
     msgpack_pack_append_buffer(x, (const unsigned char*)b, l);
 }
 
+/*
+ * Ext
+ */
+
+static inline int msgpack_pack_ext(msgpack_packer* x, int8_t typecode, size_t l)
+{
+    if (l == 1) {
+        unsigned char buf[2];
+        buf[0] = 0xd4;
+        buf[1] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 2);
+    }
+    else if(l == 2) {
+        unsigned char buf[2];
+        buf[0] = 0xd5;
+        buf[1] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 2);
+    }
+    else if(l == 4) {
+        unsigned char buf[2];
+        buf[0] = 0xd6;
+        buf[1] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 2);
+    }
+    else if(l == 8) {
+        unsigned char buf[2];
+        buf[0] = 0xd7;
+        buf[1] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 2);
+    }
+    else if(l == 16) {
+        unsigned char buf[2];
+        buf[0] = 0xd8;
+        buf[1] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 2);
+    }
+    else if(l < 256) {
+        unsigned char buf[3];
+        buf[0] = 0xc7;
+        buf[1] = l;
+        buf[2] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 3);
+    } else if(l < 65536) {
+        unsigned char buf[4];
+        buf[0] = 0xc8;
+        _msgpack_store16(&buf[1], (uint16_t)l);
+        buf[3] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 4);
+    } else {
+        unsigned char buf[6];
+        buf[0] = 0xc9;
+        _msgpack_store32(&buf[1], (uint32_t)l);
+        buf[5] = (unsigned char)typecode;
+        msgpack_pack_append_buffer(x, buf, 6);
+    }
+
+}
+
+
+
 #undef msgpack_pack_append_buffer
 
 #undef TAKE8_8
