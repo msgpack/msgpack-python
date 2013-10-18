@@ -359,6 +359,24 @@ cdef class Unpacker(object):
         """
         return self._unpack(unpack_construct, write_bytes)
 
+    def unpack_one(self, object write_bytes=None):
+        """
+        unpack one object
+
+        If write_bytes is not None, it will be called with parts of the raw
+        message as it is unpacked.
+
+        Raises `UnpackValueError` if there are no more bytes to unpack.
+        Raises ``ExtraData`` if there are still bytes left after the unpacking.
+        """
+        try:
+            result = self.unpack()
+        except OutOfData:
+            raise UnpackValueError("Data is not enough")
+        if self.buf_head < self.buf_tail:
+            raise ExtraData(result, self.buf[self.buf_head:])
+        return result
+
     def skip(self, object write_bytes=None):
         """
         read and ignore one object, returning None
