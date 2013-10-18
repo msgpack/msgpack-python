@@ -336,7 +336,33 @@ class Unpacker(object):
         elif b == 0xdf:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             typ = TYPE_MAP
-        elif b == 0xc9:
+        elif b == 0xd4: # fixext 1
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 1
+            typ += EXTENDED_TYPE
+        elif b == 0xd5: # fixext 2
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 2
+            typ += EXTENDED_TYPE
+        elif b == 0xd6: # fixext 4
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 4
+            typ += EXTENDED_TYPE
+        elif b == 0xd7: # fixext 8
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 8
+            typ += EXTENDED_TYPE
+        elif b == 0xd8: # fixext 16
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 16
+            typ += EXTENDED_TYPE
+        elif b == 0xc7: # ext 8
+            n, typ = struct.unpack(">Bb", self._fb_read(2, write_bytes))
+            typ += EXTENDED_TYPE
+        elif b == 0xc8: # ext 16
+            n, typ = struct.unpack(">Hb", self._fb_read(3, write_bytes))
+            typ += EXTENDED_TYPE
+        elif b == 0xc9: # ext 32
             n, typ = struct.unpack(">Ib", self._fb_read(5, write_bytes))
             typ += EXTENDED_TYPE
         else:
