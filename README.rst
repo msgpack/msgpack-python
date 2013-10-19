@@ -140,6 +140,14 @@ It is also possible to pack/unpack custom data types. Here is an example for
 ``object_pairs_hook`` callback may instead be used to receive a list of
 key-value pairs.
 
+Extended types
+^^^^^^^^^^^^^^^
+
+It is also possible to pack/unpack custom data types using the msgpack feature
+of "extended types". For example, msgpack-pypy uses it to provide very fast serialization of int/float lists on top of PyPy (experimental for now):
+
+https://bitbucket.org/antocuni/msgpack-pypy/src/default/msgpack_pypy.py
+
 
 Advanced unpacking control
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
