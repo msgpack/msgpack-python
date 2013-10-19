@@ -5,6 +5,7 @@ from cpython cimport *
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *
+from libc.stdint cimport int8_t
 
 from msgpack.exceptions import PackValueError
 
@@ -27,6 +28,7 @@ cdef extern from "pack.h":
     int msgpack_pack_map(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
+    int msgpack_pack_ext(msgpack_packer* pk, int8_t typecode, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
 
@@ -174,6 +176,9 @@ cdef class Packer(object):
                 for v in o:
                     ret = self._pack(v, nest_limit-1)
                     if ret != 0: break
+        elif self.handle_unknown_type(o):
+            # it means that obj was succesfully packed, so we are done
+            return 0
         elif self._default:
             o = self._default(o)
             ret = self._pack(o, nest_limit-1)
@@ -192,6 +197,13 @@ cdef class Packer(object):
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
             return buf
+
+    def handle_unknown_type(self, obj):
+        return None
+
+    def pack_extended_type(self, typecode, data):
+        msgpack_pack_ext(&self.pk, typecode, len(data))
+        msgpack_pack_raw_body(&self.pk, data, len(data))
 
     def pack_array_header(self, size_t size):
         cdef int ret = msgpack_pack_array(&self.pk, size)

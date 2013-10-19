@@ -58,6 +58,8 @@ TYPE_ARRAY              = 1
 TYPE_MAP                = 2
 TYPE_RAW                = 3
 
+EXTENDED_TYPE          = 1000
+
 DEFAULT_RECURSE_LIMIT=511
 
 def pack(o, stream, **kwargs):
@@ -85,10 +87,7 @@ def unpack(stream, **kwargs):
     See :class:`Unpacker` for options.
     """
     unpacker = Unpacker(stream, **kwargs)
-    ret = unpacker._fb_unpack()
-    if unpacker._fb_got_extradata():
-        raise ExtraData(ret, unpacker._fb_get_extradata())
-    return ret
+    return unpacker.unpack_one()
 
 def unpackb(packed, **kwargs):
     """
@@ -99,13 +98,7 @@ def unpackb(packed, **kwargs):
     """
     unpacker = Unpacker(None, **kwargs)
     unpacker.feed(packed)
-    try:
-        ret = unpacker._fb_unpack()
-    except OutOfData:
-        raise UnpackValueError("Data is not enough.")
-    if unpacker._fb_got_extradata():
-        raise ExtraData(ret, unpacker._fb_get_extradata())
-    return ret
+    return unpacker.unpack_one()
 
 class Unpacker(object):
     """
@@ -193,6 +186,15 @@ class Unpacker(object):
         if object_hook is not None and object_pairs_hook is not None:
             raise ValueError("object_pairs_hook and object_hook are mutually "
                              "exclusive")
+
+    def unpack_one(self):
+        try:
+            ret = self._fb_unpack()
+        except OutOfData:
+            raise UnpackValueError("Data is not enough.")
+        if self._fb_got_extradata():
+            raise ExtraData(ret, self._fb_get_extradata())
+        return ret
 
     def feed(self, next_bytes):
         if isinstance(next_bytes, array.array):
@@ -334,6 +336,35 @@ class Unpacker(object):
         elif b == 0xdf:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             typ = TYPE_MAP
+        elif b == 0xd4: # fixext 1
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 1
+            typ += EXTENDED_TYPE
+        elif b == 0xd5: # fixext 2
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 2
+            typ += EXTENDED_TYPE
+        elif b == 0xd6: # fixext 4
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 4
+            typ += EXTENDED_TYPE
+        elif b == 0xd7: # fixext 8
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 8
+            typ += EXTENDED_TYPE
+        elif b == 0xd8: # fixext 16
+            typ = struct.unpack(">B", self._fb_read(1, write_bytes))[0]
+            n = 16
+            typ += EXTENDED_TYPE
+        elif b == 0xc7: # ext 8
+            n, typ = struct.unpack(">Bb", self._fb_read(2, write_bytes))
+            typ += EXTENDED_TYPE
+        elif b == 0xc8: # ext 16
+            n, typ = struct.unpack(">Hb", self._fb_read(3, write_bytes))
+            typ += EXTENDED_TYPE
+        elif b == 0xc9: # ext 32
+            n, typ = struct.unpack(">Ib", self._fb_read(5, write_bytes))
+            typ += EXTENDED_TYPE
         else:
             raise UnpackValueError("Unknown header: 0x%x" % b)
         return typ, n, obj
@@ -390,6 +421,10 @@ class Unpacker(object):
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
             return obj
+        if typ >= EXTENDED_TYPE:
+            typ -= EXTENDED_TYPE
+            data = self._fb_read(n, write_bytes)
+            return self.read_extended_type(typ, data)
         assert typ == TYPE_IMMEDIATE
         return obj
 
@@ -410,6 +445,9 @@ class Unpacker(object):
         ret = self._fb_unpack(EX_CONSTRUCT, write_bytes)
         self._fb_consume()
         return ret
+
+    def read_extended_type(self, typecode, data):
+        raise NotImplementedError("Cannot decode extended type with typecode=%d" % typecode)
 
     def read_array_header(self, write_bytes=None):
         ret = self._fb_unpack(EX_READ_ARRAY_HEADER, write_bytes)
@@ -521,9 +559,42 @@ class Packer(object):
         if isinstance(obj, dict):
             return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
                                            nest_limit - 1)
+        if self.handle_unknown_type(obj):
+            # it means that obj was succesfully packed, so we are done
+            return
         if self._default is not None:
             return self._pack(self._default(obj), nest_limit - 1)
         raise TypeError("Cannot serialize %r" % obj)
+
+    def handle_unknown_type(self, obj):
+        # by default we don't support any extended type. This can be
+        # overridden by subclasses
+        return None
+
+    def pack_extended_type(self, typecode, data):
+        assert 0 <= typecode <= 127
+        n = len(data)
+        if n == 1:
+            header = struct.pack(">BB", 0xd4, typecode) # fixext 1
+        elif n == 2:
+            header = struct.pack(">BB", 0xd5, typecode) # fixext 2
+        elif n == 4:
+            header = struct.pack(">BB", 0xd6, typecode) # fixext 4
+        elif n == 8:
+            header = struct.pack(">BB", 0xd7, typecode) # fixext 8
+        elif n == 16:
+            header = struct.pack(">BB", 0xd8, typecode) # fixext 16
+        elif n <= 2**8-1:
+            header = struct.pack(">BBB", 0xc7, n, typecode) # ext 8
+        elif n <= 2**16-1:
+            header = struct.pack(">BHB", 0xc8, n, typecode) # ext 16
+        elif n <= 2**32-1:
+            header = struct.pack(">BIB", 0xc9, n, typecode) # ext 32
+        else:
+            raise PackValueError("ext data too large")            
+        #
+        self._buffer.write(header)
+        self._buffer.write(data)
 
     def pack(self, obj):
         self._pack(obj)
@@ -590,3 +661,4 @@ class Packer(object):
 
     def reset(self):
         self._buffer = StringIO()
+
