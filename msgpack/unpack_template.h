@@ -188,9 +188,12 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
                 //case 0xc4:
                 //case 0xc5:
                 //case 0xc6:
-                //case 0xc7:
-                //case 0xc8:
-                //case 0xc9:
+                case 0xc7:  // ext 8
+                    again_fixed_trail(NEXT_CS(p), 1);
+                case 0xc8:  // ext 16
+                    again_fixed_trail(NEXT_CS(p), 2);
+                case 0xc9:  // ext 32
+                    again_fixed_trail(NEXT_CS(p), 4);
                 case 0xca:  // float
                 case 0xcb:  // double
                 case 0xcc:  // unsigned int  8
@@ -242,8 +245,16 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
             if((size_t)(pe - p) < trail) { goto _out; }
             n = p;  p += trail - 1;
             switch(cs) {
-            //case CS_
-            //case CS_
+            case CS_EXT_8:
+                again_fixed_trail_if_zero(ACS_EXT_VALUE, *(uint8_t*)n+1, _ext_zero);
+            case CS_EXT_16:
+                again_fixed_trail_if_zero(ACS_EXT_VALUE,
+                                          _msgpack_load16(uint16_t,n)+1,
+                                          _ext_zero);
+            case CS_EXT_32:
+                again_fixed_trail_if_zero(ACS_EXT_VALUE,
+                                          _msgpack_load32(uint32_t,n)+1,
+                                          _ext_zero);
             case CS_FLOAT: {
                     union { uint32_t i; float f; } mem;
                     mem.i = _msgpack_load32(uint32_t,n);
