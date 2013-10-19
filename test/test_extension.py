@@ -16,6 +16,28 @@ def test_pack_extended_type():
     assert p('A'*0x0123)        == '\xc8\x01\x23\x42' + 'A'*0x0123 # ext 16
     assert p('A'*0x00012345)    == '\xc9\x00\x01\x23\x45\x42' + 'A'*0x00012345 # ext 32
 
+def test_unpack_extended_type():
+    class MyUnpacker(msgpack.Unpacker):
+        def read_extended_type(self, typecode, data):
+            return (typecode, data)
+
+    def u(s):
+        unpacker = MyUnpacker()
+        unpacker.feed(s)
+        return unpacker.unpack_one()
+
+    assert u('\xd4\x42A')         == (0x42, 'A')        # fixext 1
+    assert u('\xd5\x42AB')        == (0x42, 'AB')       # fixext 2
+    assert u('\xd6\x42ABCD')      == (0x42, 'ABCD')     # fixext 4
+    assert u('\xd7\x42ABCDEFGH')  == (0x42, 'ABCDEFGH') # fixext 8
+    assert u('\xd8\x42' + 'A'*16) == (0x42, 'A'*16)     # fixext 16
+    assert u('\xc7\x03\x42ABC')   == (0x42, 'ABC')      # ext 8
+    assert (u('\xc8\x01\x23\x42' + 'A'*0x0123) ==
+            (0x42, 'A'*0x0123))                         # ext 16
+    assert (u('\xc9\x00\x01\x23\x45\x42' + 'A'*0x00012345) ==
+            (0x42, 'A'*0x00012345))                     # ext 32
+
+
 def test_extension_type():
     class MyPacker(msgpack.Packer):
         def handle_unknown_type(self, obj):
