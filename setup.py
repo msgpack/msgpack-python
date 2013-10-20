@@ -92,7 +92,6 @@ if not hasattr(sys, 'pypy_version_info'):
                                  libraries=libraries,
                                  include_dirs=['.'],
                                  define_macros=macros,
-                                 extra_compile_args=['-O0'],
                                  ))
 del libraries, macros
 

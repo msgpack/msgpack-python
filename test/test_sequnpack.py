@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import py
 import six
 from msgpack import Unpacker, BufferFull
-from msgpack.exceptions import OutOfData, ExtraData, UnpackValueError
+from msgpack.exceptions import OutOfData
 from pytest import raises
 
 

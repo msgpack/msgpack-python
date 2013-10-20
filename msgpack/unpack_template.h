@@ -322,7 +322,7 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
             case CS_MAP_32:
                 /* FIXME security guard */
                 start_container(_map, _msgpack_load32(uint32_t,n), CT_MAP_KEY);
-            
+
             default:
                 goto _failed;
             }
