@@ -37,7 +37,6 @@ cdef extern from "pack.h":
 cdef int DEFAULT_RECURSE_LIMIT=511
 
 
-
 cdef class Packer(object):
     """
     MessagePack Packer
@@ -185,8 +184,8 @@ cdef class Packer(object):
                         if ret != 0: break
             elif isinstance(o, ExtType):
                 # This should be before Tuple because ExtType is namedtuple.
-                longval = o[0]
-                rawval = o[1]
+                longval = o.code
+                rawval = o.data
                 L = len(o[1])
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
