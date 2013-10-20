@@ -186,7 +186,7 @@ cdef class Packer(object):
                 # This should be before Tuple because ExtType is namedtuple.
                 longval = o.code
                 rawval = o.data
-                L = len(o[1])
+                L = len(o.data)
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyTuple_Check(o) or PyList_Check(o):
