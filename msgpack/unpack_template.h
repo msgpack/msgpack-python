@@ -178,15 +178,17 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
                 switch(*p) {
                 case 0xc0:  // nil
                     push_simple_value(_nil);
-                //case 0xc1:  // string
-                //    again_terminal_trail(NEXT_CS(p), p+1);
+                //case 0xc1:  // never used
                 case 0xc2:  // false
                     push_simple_value(_false);
                 case 0xc3:  // true
                     push_simple_value(_true);
-                //case 0xc4:
-                //case 0xc5:
-                //case 0xc6:
+                case 0xc4:  // bin 8
+                    again_fixed_trail(NEXT_CS(p), 1);
+                case 0xc5:  // bin 16
+                    again_fixed_trail(NEXT_CS(p), 2);
+                case 0xc6:  // bin 32
+                    again_fixed_trail(NEXT_CS(p), 4);
                 case 0xc7:  // ext 8
                     again_fixed_trail(NEXT_CS(p), 1);
                 case 0xc8:  // ext 16
@@ -213,7 +215,8 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
                                               _ext_zero);
                 case 0xd8:  // fixext 16
                     again_fixed_trail_if_zero(ACS_EXT_VALUE, 16+1, _ext_zero);
-                //case 0xd9:
+                case 0xd9:  // str 8
+                    again_fixed_trail(NEXT_CS(p), 1);
                 case 0xda:  // raw 16
                 case 0xdb:  // raw 32
                 case 0xdc:  // array 16

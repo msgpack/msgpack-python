@@ -93,4 +93,3 @@ typedef enum {
 #endif
 
 #endif /* msgpack/unpack_define.h */
-
