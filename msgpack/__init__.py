@@ -6,6 +6,7 @@ from collections import namedtuple
 
 
 class ExtType(namedtuple('ExtType', 'code data')):
+    """ExtType represents ext type in msgpack."""
     def __new__(cls, code, data):
         if not isinstance(code, int):
             raise TypeError("code must be int")

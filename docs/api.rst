@@ -25,6 +25,8 @@ API reference
 .. autoclass:: Unpacker
     :members:
 
+.. autoclass:: ExtType
+
 exceptions
 -----------
 

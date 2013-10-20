@@ -9,6 +9,9 @@ doc-serve: all
 doc:
 	cd docs && make zip
 
+upload-doc:
+	python setup.py upload_docs --upload-dir docs/_build/html
+
 cython:
 	cython --cplus msgpack/*.pyx
 
