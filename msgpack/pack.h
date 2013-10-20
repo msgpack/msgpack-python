@@ -71,6 +71,8 @@ static inline int msgpack_pack_raw(msgpack_packer* pk, size_t l);
 static inline int msgpack_pack_bin(msgpack_packer* pk, size_t l);
 static inline int msgpack_pack_raw_body(msgpack_packer* pk, const void* b, size_t l);
 
+static inline int msgpack_pack_ext(msgpack_packer* pk, int8_t typecode, size_t l);
+
 static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_t l)
 {
     char* buf = pk->buf;

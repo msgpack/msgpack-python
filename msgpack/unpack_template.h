@@ -184,9 +184,15 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
                     push_simple_value(_false);
                 case 0xc3:  // true
                     push_simple_value(_true);
-                //case 0xc7:
-                //case 0xc8:
-                //case 0xc9:
+                //case 0xc4:
+                //case 0xc5:
+                //case 0xc6:
+                case 0xc7:  // ext 8
+                    again_fixed_trail(NEXT_CS(p), 1);
+                case 0xc8:  // ext 16
+                    again_fixed_trail(NEXT_CS(p), 2);
+                case 0xc9:  // ext 32
+                    again_fixed_trail(NEXT_CS(p), 4);
                 case 0xca:  // float
                 case 0xcb:  // double
                 case 0xcc:  // unsigned int  8
@@ -198,15 +204,16 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
                 case 0xd2:  // signed int 32
                 case 0xd3:  // signed int 64
                     again_fixed_trail(NEXT_CS(p), 1 << (((unsigned int)*p) & 0x03));
-                case 0xc4:  // bin 8
-                case 0xc5:  // bin 16
-                case 0xc6:  // bin 32
-                //case 0xd4:
-                //case 0xd5:
-                //case 0xd6:  // big integer 16
-                //case 0xd7:  // big integer 32
-                //case 0xd8:  // big float 16
-                case 0xd9:  // raw 8
+                case 0xd4:  // fixext 1
+                case 0xd5:  // fixext 2
+                case 0xd6:  // fixext 4
+                case 0xd7:  // fixext 8
+                    again_fixed_trail_if_zero(ACS_EXT_VALUE, 
+                                              (1 << (((unsigned int)*p) & 0x03))+1,
+                                              _ext_zero);
+                case 0xd8:  // fixext 16
+                    again_fixed_trail_if_zero(ACS_EXT_VALUE, 16+1, _ext_zero);
+                //case 0xd9:
                 case 0xda:  // raw 16
                 case 0xdb:  // raw 32
                 case 0xdc:  // array 16
@@ -237,8 +244,16 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
             if((size_t)(pe - p) < trail) { goto _out; }
             n = p;  p += trail - 1;
             switch(cs) {
-            //case CS_
-            //case CS_
+            case CS_EXT_8:
+                again_fixed_trail_if_zero(ACS_EXT_VALUE, *(uint8_t*)n+1, _ext_zero);
+            case CS_EXT_16:
+                again_fixed_trail_if_zero(ACS_EXT_VALUE,
+                                          _msgpack_load16(uint16_t,n)+1,
+                                          _ext_zero);
+            case CS_EXT_32:
+                again_fixed_trail_if_zero(ACS_EXT_VALUE,
+                                          _msgpack_load32(uint32_t,n)+1,
+                                          _ext_zero);
             case CS_FLOAT: {
                     union { uint32_t i; float f; } mem;
                     mem.i = _msgpack_load32(uint32_t,n);
@@ -269,26 +284,6 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
             case CS_INT_64:
                 push_fixed_value(_int64, _msgpack_load64(int64_t,n));
 
-            //case CS_
-            //case CS_
-            //case CS_BIG_INT_16:
-            //    again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load16(uint16_t,n), _big_int_zero);
-            //case CS_BIG_INT_32:
-            //    again_fixed_trail_if_zero(ACS_BIG_INT_VALUE, _msgpack_load32(uint32_t,n), _big_int_zero);
-            //case ACS_BIG_INT_VALUE:
-            //_big_int_zero:
-            //    // FIXME
-            //    push_variable_value(_big_int, data, n, trail);
-
-            //case CS_BIG_FLOAT_16:
-            //    again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load16(uint16_t,n), _big_float_zero);
-            //case CS_BIG_FLOAT_32:
-            //    again_fixed_trail_if_zero(ACS_BIG_FLOAT_VALUE, _msgpack_load32(uint32_t,n), _big_float_zero);
-            //case ACS_BIG_FLOAT_VALUE:
-            //_big_float_zero:
-            //    // FIXME
-            //    push_variable_value(_big_float, data, n, trail);
-
             case CS_BIN_8:
                 again_fixed_trail_if_zero(ACS_BIN_VALUE, *(uint8_t*)n, _bin_zero);
             case CS_BIN_16:
@@ -309,6 +304,10 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
             _raw_zero:
                 push_variable_value(_raw, data, n, trail);
 
+            case ACS_EXT_VALUE:
+            _ext_zero:
+                push_variable_value(_ext, data, n, trail);
+
             case CS_ARRAY_16:
                 start_container(_array, _msgpack_load16(uint16_t,n), CT_ARRAY_ITEM);
             case CS_ARRAY_32:
@@ -320,7 +319,7 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
             case CS_MAP_32:
                 /* FIXME security guard */
                 start_container(_map, _msgpack_load32(uint32_t,n), CT_MAP_KEY);
-
+            
             default:
                 goto _failed;
             }

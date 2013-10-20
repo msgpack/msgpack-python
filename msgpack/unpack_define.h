@@ -45,10 +45,11 @@ typedef enum {
     CS_BIN_8             = 0x04,
     CS_BIN_16            = 0x05,
     CS_BIN_32            = 0x06,
-    //CS_                = 0x07,
 
-    //CS_                = 0x08,
-    //CS_                = 0x09,
+    CS_EXT_8             = 0x07,
+    CS_EXT_16            = 0x08,
+    CS_EXT_32            = 0x09,
+
     CS_FLOAT             = 0x0a,
     CS_DOUBLE            = 0x0b,
     CS_UINT_8            = 0x0c,
@@ -60,6 +61,12 @@ typedef enum {
     CS_INT_32            = 0x12,
     CS_INT_64            = 0x13,
 
+    //CS_FIXEXT1           = 0x14,
+    //CS_FIXEXT2           = 0x15,
+    //CS_FIXEXT4           = 0x16,
+    //CS_FIXEXT8           = 0x17,
+    //CS_FIXEXT16          = 0x18,
+
     CS_RAW_8             = 0x19,
     CS_RAW_16            = 0x1a,
     CS_RAW_32            = 0x1b,
@@ -70,6 +77,7 @@ typedef enum {
 
     ACS_RAW_VALUE,
     ACS_BIN_VALUE,
+    ACS_EXT_VALUE,
 } msgpack_unpack_state;
 
 
