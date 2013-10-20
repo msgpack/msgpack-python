@@ -157,7 +157,7 @@ static inline int unpack_callback_array_item(unpack_user* u, unsigned int curren
 static inline int unpack_callback_array_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->list_hook) {
-        PyObject *new_c = PyObject_CallFunction(u->list_hook, "(O)", *c);
+        PyObject *new_c = PyObject_CallFunctionObjArgs(u->list_hook, *c, NULL);
         if (!new_c)
             return -1;
         Py_DECREF(*c);
@@ -203,7 +203,7 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
 static inline int unpack_callback_map_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->object_hook) {
-        PyObject *new_c = PyObject_CallFunction(u->object_hook, "(O)", *c);
+        PyObject *new_c = PyObject_CallFunctionObjArgs(u->object_hook, *c, NULL);
         if (!new_c)
             return -1;
 

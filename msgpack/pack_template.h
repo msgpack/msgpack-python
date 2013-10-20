@@ -705,7 +705,8 @@ static inline int msgpack_pack_bin(msgpack_packer *x, size_t l)
 
 static inline int msgpack_pack_raw_body(msgpack_packer* x, const void* b, size_t l)
 {
-    msgpack_pack_append_buffer(x, (const unsigned char*)b, l);
+    if (l > 0) msgpack_pack_append_buffer(x, (const unsigned char*)b, l);
+    return 0;
 }
 
 /*
