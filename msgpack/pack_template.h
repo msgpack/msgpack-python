@@ -687,7 +687,7 @@ static inline int msgpack_pack_raw(msgpack_packer* x, size_t l)
 static inline int msgpack_pack_bin(msgpack_packer *x, size_t l)
 {
     if (!x->use_bin_type) {
-        return msgpack_pack_raw(x, l)
+        return msgpack_pack_raw(x, l);
     }
     if (l < 256) {
         unsigned char buf[2] = {0xc4, (unsigned char)l};
@@ -711,7 +711,6 @@ static inline int msgpack_pack_raw_body(msgpack_packer* x, const void* b, size_t
 /*
  * Ext
  */
-
 static inline int msgpack_pack_ext(msgpack_packer* x, int8_t typecode, size_t l)
 {
     if (l == 1) {

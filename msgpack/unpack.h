@@ -24,7 +24,7 @@ typedef struct unpack_user {
     PyObject *object_hook;
     bool has_pairs_hook;
     PyObject *list_hook;
-    PyObject *ext_type_hook;
+    PyObject *ext_hook;
     const char *encoding;
     const char *unicode_errors;
 } unpack_user;
@@ -241,12 +241,12 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
 {
     PyObject *py;
     int8_t typecode = (int8_t)*pos++;
-    if (!u->ext_type_hook) {
-        PyErr_SetString(PyExc_AssertionError, "u->ext_type_hook cannot be NULL");
+    if (!u->ext_hook) {
+        PyErr_SetString(PyExc_AssertionError, "u->ext_hook cannot be NULL");
         return -1;
     }
-    // lenght also includes the typecode, so the actual data is lenght-1
-    py = PyEval_CallFunction(u->ext_type_hook, "(is#)", typecode, pos, lenght-1);
+    // length also includes the typecode, so the actual data is lenght-1
+    py = PyEval_CallFunction(u->ext_hook, "(is#)", typecode, pos, lenght-1);
     if (!py)
         return -1;
     *o = py;

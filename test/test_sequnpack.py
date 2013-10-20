@@ -85,16 +85,3 @@ def test_readbytes():
     assert unpacker.read_bytes(3) == b'oob'
     assert unpacker.unpack() == ord(b'a')
     assert unpacker.unpack() == ord(b'r')
-
-def test_unpack_one():
-    unpacker = Unpacker()
-    unpacker.feed('\xda\x00\x03abc')
-    assert unpacker.unpack_one() == 'abc'
-    #
-    unpacker = Unpacker()
-    unpacker.feed('\xda\x00\x03abcd')
-    py.test.raises(ExtraData, "unpacker.unpack_one()")
-    #
-    unpacker = Unpacker()
-    unpacker.feed('\xda\x00\x03ab')
-    py.test.raises(UnpackValueError, "unpacker.unpack_one()")
