@@ -18,7 +18,6 @@ from msgpack.exceptions import (
         )
 
 
-
 cdef extern from "unpack.h":
     ctypedef struct msgpack_user:
         bint use_list

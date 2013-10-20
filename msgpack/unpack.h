@@ -226,4 +226,13 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
     return 0;
 }
 
+static inline int unpack_callback_bin(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
+{
+    PyObject *py = PyBytes_FromStringAndSize(p, l);
+    if (!py)
+        return -1;
+    *o = py;
+    return 0;
+}
+
 #include "unpack_template.h"
