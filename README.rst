@@ -143,10 +143,27 @@ key-value pairs.
 Extended types
 ^^^^^^^^^^^^^^^
 
-It is also possible to pack/unpack custom data types using the msgpack feature
-of "extended types". For example, msgpack-pypy uses it to provide very fast serialization of int/float lists on top of PyPy (experimental for now):
+It is also possible to pack/unpack custom data types using the msgpack 2.0 feature.
 
-https://bitbucket.org/antocuni/msgpack-pypy/src/default/msgpack_pypy.py
+    >>> import msgpack
+    >>> import array
+    >>> def default(obj):
+    ...     if isinstance(obj, array.array) and obj.typecode == 'd':
+    ...         return msgpack.ExtType(42, obj.tostring())
+    ...     raise TypeError("Unknown type: %r" % (obj,))
+    ...
+    >>> def ext_hook(code, data):
+    ...     if code == 42:
+    ...         a = array.array('d')
+    ...         a.fromstring(data)
+    ...         return a
+    ...     return ExtType(code, data)
+    ...
+    >>> data = array.array('d', [1.2, 3.4])
+    >>> packed = msgpack.packb(data, default=default)
+    >>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook)
+    >>> data == unpacked
+    True
 
 
 Advanced unpacking control
