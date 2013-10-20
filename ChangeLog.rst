@@ -1,6 +1,20 @@
+0.4.0
+=====
+:release date: 2013-10-21
+
+Inconpatible Changes
+--------------------
+
+* Raises TypeError instead of ValueError when packer receives unsupported type.
+
+Changes
+-------
+
+* Support New msgpack spec.
+
+
 0.3.0
 =====
-:release date: in development
 
 Inconpatible Changes
 --------------------
