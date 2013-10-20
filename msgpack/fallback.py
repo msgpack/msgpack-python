@@ -163,12 +163,10 @@ class Unpacker(object):
         self._fb_buf_o = 0
         self._fb_buf_i = 0
         self._fb_buf_n = 0
-        self._max_buffer_size = (2**31-1 if max_buffer_size == 0
-                                         else max_buffer_size)
-        self._read_size = (read_size if read_size != 0
-                            else min(self._max_buffer_size, 2048))
+        self._max_buffer_size = max_buffer_size or 2**31-1
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
+        self._read_size = read_size or min(self._max_buffer_size, 2048)
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
@@ -234,26 +232,26 @@ class Unpacker(object):
         return b''.join(bufs)
 
     def _fb_read(self, n, write_bytes=None):
-        if (write_bytes is None and self._fb_buf_i < len(self._fb_buffers)
-                and self._fb_buf_o + n < len(self._fb_buffers[self._fb_buf_i])):
+        buffs = self._fb_buffers
+        if (write_bytes is None and self._fb_buf_i < len(buffs) and
+                self._fb_buf_o + n < len(buffs[self._fb_buf_i])):
             self._fb_buf_o += n
-            return self._fb_buffers[self._fb_buf_i][
-                    self._fb_buf_o-n:self._fb_buf_o]
+            return buffs[self._fb_buf_i][self._fb_buf_o - n:self._fb_buf_o]
+
         ret = b''
         while len(ret) != n:
-            if self._fb_buf_i == len(self._fb_buffers):
+            if self._fb_buf_i == len(buffs):
                 if self._fb_feeding:
                     break
                 tmp = self.file_like.read(self._read_size)
                 if not tmp:
                     break
-                self._fb_buffers.append(tmp)
+                buffs.append(tmp)
                 continue
             sliced = n - len(ret)
-            ret += self._fb_buffers[self._fb_buf_i][
-                        self._fb_buf_o:self._fb_buf_o + sliced]
+            ret += buffs[self._fb_buf_i][self._fb_buf_o:self._fb_buf_o + sliced]
             self._fb_buf_o += sliced
-            if self._fb_buf_o >= len(self._fb_buffers[self._fb_buf_i]):
+            if self._fb_buf_o >= len(buffs[self._fb_buf_i]):
                 self._fb_buf_o = 0
                 self._fb_buf_i += 1
         if len(ret) != n:
@@ -410,10 +408,9 @@ class Unpacker(object):
                 return
             if self._object_pairs_hook is not None:
                 ret = self._object_pairs_hook(
-                        (self._fb_unpack(EX_CONSTRUCT, write_bytes),
-                         self._fb_unpack(EX_CONSTRUCT, write_bytes))
-                            for _ in xrange(n)
-                        )
+                    (self._fb_unpack(EX_CONSTRUCT, write_bytes),
+                     self._fb_unpack(EX_CONSTRUCT, write_bytes))
+                    for _ in xrange(n))
             else:
                 ret = {}
                 for _ in xrange(n):
