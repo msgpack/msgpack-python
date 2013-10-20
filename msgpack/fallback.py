@@ -42,11 +42,11 @@ else:
     newlist_hint = lambda size: []
 
 from msgpack.exceptions import (
-        BufferFull,
-        OutOfData,
-        UnpackValueError,
-        PackValueError,
-        ExtraData)
+    BufferFull,
+    OutOfData,
+    UnpackValueError,
+    PackValueError,
+    ExtraData)
 
 from msgpack import ExtType
 
@@ -65,6 +65,7 @@ TYPE_EXT                = 5
 
 DEFAULT_RECURSE_LIMIT = 511
 
+
 def unpack(stream, **kwargs):
     """
     Unpack an object from `stream`.
@@ -77,6 +78,7 @@ def unpack(stream, **kwargs):
     if unpacker._fb_got_extradata():
         raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret
+
 
 def unpackb(packed, **kwargs):
     """
@@ -94,6 +96,7 @@ def unpackb(packed, **kwargs):
     if unpacker._fb_got_extradata():
         raise ExtraData(ret, unpacker._fb_get_extradata())
     return ret
+
 
 class Unpacker(object):
     """
@@ -548,8 +551,8 @@ class Packer(object):
             if isinstance(obj, Unicode):
                 if self._encoding is None:
                     raise TypeError(
-                            "Can't encode unicode string: "
-                            "no encoding is specified")
+                        "Can't encode unicode string: "
+                        "no encoding is specified")
                 obj = obj.encode(self._encoding, self._unicode_errors)
             n = len(obj)
             if n <= 0x1f:
@@ -615,6 +618,35 @@ class Packer(object):
         elif USING_STRINGBUILDER:
             self._buffer = StringIO(ret)
         return ret
+
+    def pack_ext_type(self, typecode, data):
+        if not isinstance(typecode, int):
+            raise TypeError("typecode must have int type.")
+        if not 0 <= typecode <= 127:
+            raise ValueError("typecode should be 0-127")
+        if not isinstance(data, bytes):
+            raise TypeError("data must have bytes type")
+        L = len(data)
+        if L > 0xffffffff:
+            raise ValueError("Too large data")
+        if L == 1:
+            self._buffer.write(b'\xd4')
+        elif L == 2:
+            self._buffer.write(b'\xd5')
+        elif L == 4:
+            self._buffer.write(b'\xd6')
+        elif L == 8:
+            self._buffer.write(b'\xd7')
+        elif L == 16:
+            self._buffer.write(b'\xd8')
+        elif L <= 0xff:
+            self._buffer.write(b'\xc7' + struct.pack('B', L))
+        elif L <= 0xffff:
+            self._buffer.write(b'\xc8' + struct.pack('>H', L))
+        else:
+            self._buffer.write(b'\xc9' + struct.pack('>I', L))
+        self._buffer.write(struct.pack('B', typecode))
+        self._buffer.write(data)
 
     def _fb_pack_array_header(self, n):
         if n <= 0x0f:

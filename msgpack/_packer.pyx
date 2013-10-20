@@ -210,7 +210,7 @@ cdef class Packer(object):
     def handle_unknown_type(self, obj):
         return None
 
-    def pack_extended_type(self, typecode, data):
+    def pack_ext_type(self, typecode, data):
         msgpack_pack_ext(&self.pk, typecode, len(data))
         msgpack_pack_raw_body(&self.pk, data, len(data))
 

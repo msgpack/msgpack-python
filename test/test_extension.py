@@ -1,21 +1,21 @@
-import py
 import array
-import struct
 import msgpack
 
-def test_pack_extended_type():
+
+def test_pack_ext_type():
     def p(s):
         packer = msgpack.Packer()
-        packer.pack_extended_type(0x42, s)
+        packer.pack_ext_type(0x42, s)
         return packer.bytes()
-    assert p('A')        == '\xd4\x42A'          # fixext 1
-    assert p('AB')       == '\xd5\x42AB'         # fixext 2
-    assert p('ABCD')     == '\xd6\x42ABCD'       # fixext 4
-    assert p('ABCDEFGH') == '\xd7\x42ABCDEFGH'   # fixext 8
-    assert p('A'*16)     == '\xd8\x42' + 'A'*16  # fixext 16
-    assert p('ABC')      == '\xc7\x03\x42ABC'        # ext 8
-    assert p('A'*0x0123)        == '\xc8\x01\x23\x42' + 'A'*0x0123 # ext 16
-    assert p('A'*0x00012345)    == '\xc9\x00\x01\x23\x45\x42' + 'A'*0x00012345 # ext 32
+    assert p(b'A')        == b'\xd4\x42A'          # fixext 1
+    assert p(b'AB')       == b'\xd5\x42AB'         # fixext 2
+    assert p(b'ABCD')     == b'\xd6\x42ABCD'       # fixext 4
+    assert p(b'ABCDEFGH') == b'\xd7\x42ABCDEFGH'   # fixext 8
+    assert p(b'A'*16)     == b'\xd8\x42' + 'A'*16  # fixext 16
+    assert p(b'ABC')      == b'\xc7\x03\x42ABC'        # ext 8
+    assert p(b'A'*0x0123)     == b'\xc8\x01\x23\x42' + b'A'*0x0123 # ext 16
+    assert p(b'A'*0x00012345) == b'\xc9\x00\x01\x23\x45\x42' + b'A'*0x00012345 # ext 32
+
 
 def test_unpack_extended_type():
     class MyUnpacker(msgpack.Unpacker):
@@ -45,7 +45,7 @@ def test_extension_type():
             if isinstance(obj, array.array):
                 typecode = 123 # application specific typecode
                 data = obj.tostring()
-                self.pack_extended_type(typecode, data)
+                self.pack_ext_type(typecode, data)
                 return True
 
     class MyUnpacker(msgpack.Unpacker):

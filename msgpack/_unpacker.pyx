@@ -32,8 +32,6 @@ cdef extern from "unpack.h":
         msgpack_user user
         PyObject* obj
         size_t count
-        unsigned int ct
-        PyObject* key
 
     ctypedef int (*execute_fn)(unpack_context* ctx, const char* data,
                                size_t len, size_t* off) except? -1
