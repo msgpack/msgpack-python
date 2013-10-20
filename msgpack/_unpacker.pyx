@@ -16,6 +16,7 @@ from msgpack.exceptions import (
         UnpackValueError,
         ExtraData,
         )
+from msgpack import ExtType
 
 
 cdef extern from "unpack.h":
@@ -24,6 +25,7 @@ cdef extern from "unpack.h":
         PyObject* object_hook
         bint has_pairs_hook # call object_hook with k-v pairs
         PyObject* list_hook
+        PyObject* ext_hook
         char *encoding
         char *unicode_errors
 
@@ -31,8 +33,6 @@ cdef extern from "unpack.h":
         msgpack_user user
         PyObject* obj
         size_t count
-        unsigned int ct
-        PyObject* key
 
     ctypedef int (*execute_fn)(unpack_context* ctx, const char* data,
                                size_t len, size_t* off) except? -1
@@ -44,7 +44,8 @@ cdef extern from "unpack.h":
     object unpack_data(unpack_context* ctx)
 
 cdef inline init_ctx(unpack_context *ctx,
-                     object object_hook, object object_pairs_hook, object list_hook,
+                     object object_hook, object object_pairs_hook,
+                     object list_hook, object ext_hook,
                      bint use_list, char* encoding, char* unicode_errors):
     unpack_init(ctx)
     ctx.user.use_list = use_list
@@ -71,13 +72,20 @@ cdef inline init_ctx(unpack_context *ctx,
             raise TypeError("list_hook must be a callable.")
         ctx.user.list_hook = <PyObject*>list_hook
 
+    if ext_hook is not None:
+        if not PyCallable_Check(ext_hook):
+            raise TypeError("ext_hook must be a callable.")
+        ctx.user.ext_hook = <PyObject*>ext_hook
+
     ctx.user.encoding = encoding
     ctx.user.unicode_errors = unicode_errors
 
+def default_read_extended_type(typecode, data):
+    raise NotImplementedError("Cannot decode extended type with typecode=%d" % typecode)
+
 def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=1, encoding=None, unicode_errors="strict",
-            object_pairs_hook=None,
-            ):
+            object_pairs_hook=None, ext_hook=ExtType):
     """
     Unpack packed_bytes to object. Returns an unpacked object.
 
@@ -106,7 +114,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
             unicode_errors = unicode_errors.encode('ascii')
         cerr = PyBytes_AsString(unicode_errors)
 
-    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
+    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
+             use_list, cenc, cerr)
     ret = unpack_construct(&ctx, buf, buf_len, &off)
     if ret == 1:
         obj = unpack_data(&ctx)
@@ -211,7 +220,7 @@ cdef class Unpacker(object):
     def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  str encoding=None, str unicode_errors='strict', int max_buffer_size=0,
-                 ):
+                 object ext_hook=ExtType):
         cdef char *cenc=NULL, *cerr=NULL
 
         self.file_like = file_like
@@ -248,7 +257,8 @@ cdef class Unpacker(object):
                 self.unicode_errors = unicode_errors
             cerr = PyBytes_AsString(self.unicode_errors)
 
-        init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook, use_list, cenc, cerr)
+        init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
+                 ext_hook, use_list, cenc, cerr)
 
     def feed(self, object next_bytes):
         """Append `next_bytes` to internal buffer."""

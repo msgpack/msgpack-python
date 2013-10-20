@@ -84,4 +84,3 @@ def test_readbytes():
     assert unpacker.read_bytes(3) == b'oob'
     assert unpacker.unpack() == ord(b'a')
     assert unpacker.unpack() == ord(b'r')
-

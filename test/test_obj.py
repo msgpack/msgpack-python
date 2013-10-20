@@ -35,7 +35,7 @@ def test_only_one_obj_hook():
         unpackb(b'', object_hook=lambda x: x, object_pairs_hook=lambda x: x)
 
 def test_bad_hook():
-    with raises(ValueError):
+    with raises(TypeError):
         packed = packb([3, 1+2j], default=lambda o: o)
         unpacked = unpackb(packed, use_list=1)
 

@@ -5,8 +5,11 @@ from cpython cimport *
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *
+from libc.stdint cimport int8_t
 
 from msgpack.exceptions import PackValueError
+from msgpack import ExtType
+
 
 cdef extern from "pack.h":
     struct msgpack_packer:
@@ -29,9 +32,9 @@ cdef extern from "pack.h":
     int msgpack_pack_raw(msgpack_packer* pk, size_t l)
     int msgpack_pack_bin(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
+    int msgpack_pack_ext(msgpack_packer* pk, int8_t typecode, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
-
 
 
 cdef class Packer(object):
@@ -118,77 +121,87 @@ cdef class Packer(object):
         cdef int ret
         cdef dict d
         cdef size_t L
+        cdef int default_used = 0
 
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded.")
 
-        if o is None:
-            ret = msgpack_pack_nil(&self.pk)
-        elif isinstance(o, bool):
-            if o:
-                ret = msgpack_pack_true(&self.pk)
-            else:
-                ret = msgpack_pack_false(&self.pk)
-        elif PyLong_Check(o):
-            if o > 0:
-                ullval = o
-                ret = msgpack_pack_unsigned_long_long(&self.pk, ullval)
-            else:
-                llval = o
-                ret = msgpack_pack_long_long(&self.pk, llval)
-        elif PyInt_Check(o):
-            longval = o
-            ret = msgpack_pack_long(&self.pk, longval)
-        elif PyFloat_Check(o):
-            if self.use_float:
-               fval = o
-               ret = msgpack_pack_float(&self.pk, fval)
-            else:
-               dval = o
-               ret = msgpack_pack_double(&self.pk, dval)
-        elif PyBytes_Check(o):
-            rawval = o
-            L = len(o)
-            ret = msgpack_pack_bin(&self.pk, L)
-            if ret == 0:
+        while True:
+            if o is None:
+                ret = msgpack_pack_nil(&self.pk)
+            elif isinstance(o, bool):
+                if o:
+                    ret = msgpack_pack_true(&self.pk)
+                else:
+                    ret = msgpack_pack_false(&self.pk)
+            elif PyLong_Check(o):
+                if o > 0:
+                    ullval = o
+                    ret = msgpack_pack_unsigned_long_long(&self.pk, ullval)
+                else:
+                    llval = o
+                    ret = msgpack_pack_long_long(&self.pk, llval)
+            elif PyInt_Check(o):
+                longval = o
+                ret = msgpack_pack_long(&self.pk, longval)
+            elif PyFloat_Check(o):
+                if self.use_float:
+                   fval = o
+                   ret = msgpack_pack_float(&self.pk, fval)
+                else:
+                   dval = o
+                   ret = msgpack_pack_double(&self.pk, dval)
+            elif PyBytes_Check(o):
+                rawval = o
+                L = len(o)
+                ret = msgpack_pack_bin(&self.pk, L)
+                if ret == 0:
+                    ret = msgpack_pack_raw_body(&self.pk, rawval, L)
+            elif PyUnicode_Check(o):
+                if not self.encoding:
+                    raise TypeError("Can't encode unicode string: no encoding is specified")
+                o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
+                rawval = o
+                ret = msgpack_pack_raw(&self.pk, len(o))
+                if ret == 0:
+                    ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
+            elif PyDict_CheckExact(o):
+                d = <dict>o
+                ret = msgpack_pack_map(&self.pk, len(d))
+                if ret == 0:
+                    for k, v in d.iteritems():
+                        ret = self._pack(k, nest_limit-1)
+                        if ret != 0: break
+                        ret = self._pack(v, nest_limit-1)
+                        if ret != 0: break
+            elif PyDict_Check(o):
+                ret = msgpack_pack_map(&self.pk, len(o))
+                if ret == 0:
+                    for k, v in o.items():
+                        ret = self._pack(k, nest_limit-1)
+                        if ret != 0: break
+                        ret = self._pack(v, nest_limit-1)
+                        if ret != 0: break
+            elif isinstance(o, ExtType):
+                # This should be before Tuple because ExtType is namedtuple.
+                longval = o.code
+                rawval = o.data
+                L = len(o.data)
+                ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-        elif PyUnicode_Check(o):
-            if not self.encoding:
-                raise TypeError("Can't encode unicode string: no encoding is specified")
-            o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
-            rawval = o
-            ret = msgpack_pack_raw(&self.pk, len(o))
-            if ret == 0:
-                ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
-        elif PyDict_CheckExact(o):
-            d = <dict>o
-            ret = msgpack_pack_map(&self.pk, len(d))
-            if ret == 0:
-                for k, v in d.iteritems():
-                    ret = self._pack(k, nest_limit-1)
-                    if ret != 0: break
-                    ret = self._pack(v, nest_limit-1)
-                    if ret != 0: break
-        elif PyDict_Check(o):
-            ret = msgpack_pack_map(&self.pk, len(o))
-            if ret == 0:
-                for k, v in o.items():
-                    ret = self._pack(k, nest_limit-1)
-                    if ret != 0: break
-                    ret = self._pack(v, nest_limit-1)
-                    if ret != 0: break
-        elif PyTuple_Check(o) or PyList_Check(o):
-            ret = msgpack_pack_array(&self.pk, len(o))
-            if ret == 0:
-                for v in o:
-                    ret = self._pack(v, nest_limit-1)
-                    if ret != 0: break
-        elif self._default:
-            o = self._default(o)
-            ret = self._pack(o, nest_limit-1)
-        else:
-            raise TypeError("can't serialize %r" % (o,))
-        return ret
+            elif PyTuple_Check(o) or PyList_Check(o):
+                ret = msgpack_pack_array(&self.pk, len(o))
+                if ret == 0:
+                    for v in o:
+                        ret = self._pack(v, nest_limit-1)
+                        if ret != 0: break
+            elif not default_used and self._default:
+                o = self._default(o)
+                default_used = 1
+                continue
+            else:
+                raise TypeError("can't serialize %r" % (o,))
+            return ret
 
     cpdef pack(self, object obj):
         cdef int ret
@@ -201,6 +214,10 @@ cdef class Packer(object):
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
             return buf
+
+    def pack_ext_type(self, typecode, data):
+        msgpack_pack_ext(&self.pk, typecode, len(data))
+        msgpack_pack_raw_body(&self.pk, data, len(data))
 
     def pack_array_header(self, size_t size):
         cdef int ret = msgpack_pack_array(&self.pk, size)

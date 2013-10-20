@@ -3,8 +3,8 @@ MessagePack for Python
 =======================
 
 :author: INADA Naoki
-:version: 0.3.0
-:date: 2012-12-07
+:version: 0.4.0
+:date: 2013-10-21
 
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
@@ -39,8 +39,40 @@ amd64. Windows SDK is recommanded way to build amd64 msgpack without any fee.)
 
 Without extension, using pure python implementation on CPython runs slowly.
 
+Notes
+-----
+
+Note for msgpack 2.0 support
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+msgpack 2.0 adds two types: *bin* and *ext*.
+
+*raw* was bytes or string type like Python 2's ``str``.
+To distinguish string and bytes, msgpack 2.0 adds *bin*.
+It is non-string binary like Python 3's ``bytes``.
+
+To use *bin* type for packing ``bytes``, pass ``use_bin_type=True`` to
+packer argument.
+
+    >>> import msgpack
+    >>> packed = msgpack.packb([b'spam', u'egg'], use_bin_type=True)
+    >>> msgpack.unpackb(packed, encoding='utf-8')
+    ['spam', u'egg']
+
+You shoud use it carefully. When you use ``use_bin_type=True``, packed
+binary can be unpacked by unpackers supporting msgpack-2.0.
+
+To use *ext* type, pass ``msgpack.ExtType`` object to packer.
+
+    >>> import msgpack
+    >>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
+    >>> msgpack.unpackb(packed)
+    ExtType(code=42, data='xyzzy')
+
+You can use it with ``default`` and ``ext_hook``. See below.
+
 Note for msgpack 0.2.x users
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The msgpack 0.3 have some incompatible changes.
 
@@ -139,6 +171,31 @@ It is also possible to pack/unpack custom data types. Here is an example for
 ``Unpacker``'s ``object_hook`` callback receives a dict; the
 ``object_pairs_hook`` callback may instead be used to receive a list of
 key-value pairs.
+
+Extended types
+^^^^^^^^^^^^^^^
+
+It is also possible to pack/unpack custom data types using the msgpack 2.0 feature.
+
+    >>> import msgpack
+    >>> import array
+    >>> def default(obj):
+    ...     if isinstance(obj, array.array) and obj.typecode == 'd':
+    ...         return msgpack.ExtType(42, obj.tostring())
+    ...     raise TypeError("Unknown type: %r" % (obj,))
+    ...
+    >>> def ext_hook(code, data):
+    ...     if code == 42:
+    ...         a = array.array('d')
+    ...         a.fromstring(data)
+    ...         return a
+    ...     return ExtType(code, data)
+    ...
+    >>> data = array.array('d', [1.2, 3.4])
+    >>> packed = msgpack.packb(data, default=default)
+    >>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook)
+    >>> data == unpacked
+    True
 
 
 Advanced unpacking control
