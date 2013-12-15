@@ -193,6 +193,8 @@ class Unpacker(object):
     def feed(self, next_bytes):
         if isinstance(next_bytes, array.array):
             next_bytes = next_bytes.tostring()
+        elif isinstance(next_bytes, bytearray):
+            next_bytes = str(next_bytes)
         assert self._fb_feeding
         if self._fb_buf_n + len(next_bytes) > self._max_buffer_size:
             raise BufferFull
