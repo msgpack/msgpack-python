@@ -257,6 +257,9 @@ cdef class Unpacker(object):
                 self.unicode_errors = unicode_errors
             cerr = PyBytes_AsString(self.unicode_errors)
 
+        if file_like:
+            self.read_from_file()  # initialize buffer (issue #83)
+
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
                  ext_hook, use_list, cenc, cerr)
 
