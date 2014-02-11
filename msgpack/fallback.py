@@ -159,7 +159,7 @@ class Unpacker(object):
             self._fb_feeding = True
         else:
             if not callable(file_like.read):
-                raise ValueError("`file_like.read` must be callable")
+                raise TypeError("`file_like.read` must be callable")
             self.file_like = file_like
             self._fb_feeding = False
         self._fb_buffers = []
@@ -179,16 +179,16 @@ class Unpacker(object):
         self._ext_hook = ext_hook
 
         if list_hook is not None and not callable(list_hook):
-            raise ValueError('`list_hook` is not callable')
+            raise TypeError('`list_hook` is not callable')
         if object_hook is not None and not callable(object_hook):
-            raise ValueError('`object_hook` is not callable')
+            raise TypeError('`object_hook` is not callable')
         if object_pairs_hook is not None and not callable(object_pairs_hook):
-            raise ValueError('`object_pairs_hook` is not callable')
+            raise TypeError('`object_pairs_hook` is not callable')
         if object_hook is not None and object_pairs_hook is not None:
-            raise ValueError("object_pairs_hook and object_hook are mutually "
-                             "exclusive")
+            raise TypeError("object_pairs_hook and object_hook are mutually "
+                            "exclusive")
         if not callable(ext_hook):
-            raise ValueError("`ext_hook` is not callable")
+            raise TypeError("`ext_hook` is not callable")
 
     def feed(self, next_bytes):
         if isinstance(next_bytes, array.array):

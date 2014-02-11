@@ -31,7 +31,7 @@ def test_decode_pairs_hook():
     assert unpacked[1] == prod_sum
 
 def test_only_one_obj_hook():
-    with raises(ValueError):
+    with raises(TypeError):
         unpackb(b'', object_hook=lambda x: x, object_pairs_hook=lambda x: x)
 
 def test_bad_hook():
