@@ -327,8 +327,18 @@ cdef class Unpacker(object):
         cdef int ret
         cdef object obj
         cdef size_t prev_head
+
+        if self.buf_head >= self.buf_tail and self.file_like is not None:
+            self.read_from_file()
+
         while 1:
             prev_head = self.buf_head
+            if prev_head >= self.buf_tail:
+                if iter:
+                    raise StopIteration("No more data to unpack.")
+                else:
+                    raise OutOfData("No more data to unpack.")
+
             ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
             if write_bytes is not None:
                 write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
