@@ -2,6 +2,7 @@
 # coding: utf-8
 
 from msgpack import packb, unpackb
+import sys
 
 
 def test_unpack_buffer():
@@ -16,5 +17,7 @@ def test_unpack_bytearray():
     buf = bytearray(packb(('foo', 'bar')))
     obj = unpackb(buf, use_list=1)
     assert [b'foo', b'bar'] == obj
-    assert all(type(s)==str for s in obj)
+    expected_type = bytes if sys.version_info[0] == 3 else str
+    assert all(type(s)==expected_type for s in obj)
+
 
