@@ -52,7 +52,7 @@ cdef inline init_ctx(unpack_context *ctx,
     ctx.user.object_hook = ctx.user.list_hook = <PyObject*>NULL
 
     if object_hook is not None and object_pairs_hook is not None:
-        raise ValueError("object_pairs_hook and object_hook are mutually exclusive.")
+        raise TypeError("object_pairs_hook and object_hook are mutually exclusive.")
 
     if object_hook is not None:
         if not PyCallable_Check(object_hook):
@@ -228,7 +228,7 @@ cdef class Unpacker(object):
         if file_like:
             self.file_like_read = file_like.read
             if not PyCallable_Check(self.file_like_read):
-                raise ValueError("`file_like.read` must be a callable.")
+                raise TypeError("`file_like.read` must be a callable.")
         if not max_buffer_size:
             max_buffer_size = INT_MAX
         if read_size > max_buffer_size:
