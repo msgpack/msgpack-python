@@ -56,9 +56,12 @@ static inline int unpack_callback_uint8(unpack_user* u, uint8_t d, msgpack_unpac
 static inline int unpack_callback_uint32(unpack_user* u, uint32_t d, msgpack_unpack_object* o)
 {
     PyObject *p;
+#if UINT32_MAX > LONG_MAX
     if (d > LONG_MAX) {
         p = PyLong_FromUnsignedLong((unsigned long)d);
-    } else {
+    } else
+#endif
+    {
         p = PyInt_FromLong((long)d);
     }
     if (!p)
