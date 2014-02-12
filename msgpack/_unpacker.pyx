@@ -221,7 +221,8 @@ cdef class Unpacker(object):
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  str encoding=None, str unicode_errors='strict', int max_buffer_size=0,
                  object ext_hook=ExtType):
-        cdef char *cenc=NULL, *cerr=NULL
+        cdef char *cenc=NULL,
+        cdef char *cerr=NULL
 
         self.file_like = file_like
         if file_like:
