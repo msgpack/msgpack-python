@@ -206,7 +206,8 @@ cdef class Unpacker(object):
     cdef object file_like
     cdef object file_like_read
     cdef Py_ssize_t read_size
-    cdef object object_hook
+    # To maintain refcnt.
+    cdef object object_hook, object_pairs_hook, list_hook
     cdef object encoding, unicode_errors
     cdef size_t max_buffer_size
 
@@ -223,6 +224,10 @@ cdef class Unpacker(object):
                  object ext_hook=ExtType):
         cdef char *cenc=NULL,
         cdef char *cerr=NULL
+
+        self.object_hook = object_hook
+        self.object_pairs_hook = object_pairs_hook
+        self.list_hook = list_hook
 
         self.file_like = file_like
         if file_like:
