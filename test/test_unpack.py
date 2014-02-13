@@ -27,7 +27,7 @@ def test_unpacker_hook_refcnt():
 
     basecnt = sys.getrefcount(hook)
 
-    up = Unpacker(object_pairs_hook=hook, list_hook=hook)
+    up = Unpacker(object_hook=hook, list_hook=hook)
 
     assert sys.getrefcount(hook) >= basecnt + 2
 
@@ -35,7 +35,7 @@ def test_unpacker_hook_refcnt():
     up.feed(packb([{}]))
     assert up.unpack() == [{}]
     assert up.unpack() == [{}]
-    assert result == [[{}], [{}]]
+    assert result == [{}, [{}], {}, [{}]]
 
     del up
 
