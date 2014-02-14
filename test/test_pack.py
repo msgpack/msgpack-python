@@ -12,7 +12,6 @@ from io import BytesIO
 def check(data, use_list=False):
     re = unpackb(packb(data), use_list=use_list)
     assert re == data
-    assert type(re) == type(data)
 
 def testPack():
     test_data = [
