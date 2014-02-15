@@ -2,14 +2,8 @@ language: python
 python:
     - 2.7
 
-env:
-    - PIP_USE_MIRRORS=true
-
 install:
-    - sudo apt-get update -qq
-    - sudo apt-get install -q python3.3-dev
-    - pip install --use-mirrors tox cython
-    - cython --cplus msgpack/_packer.pyx
-    - cython --cplus msgpack/_unpacker.pyx
+    - pip install tox cython
+    - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
 
 script: "tox && MSGPACK_PUREPYTHON=x tox"
