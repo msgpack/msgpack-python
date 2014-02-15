@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
+from __future__ import absolute_import, division, print_function, unicode_literals
 
-import six
 import struct
 from pytest import raises, xfail
 
@@ -28,24 +28,22 @@ def testPack():
         check(td)
 
 def testPackUnicode():
-    test_data = [
-        six.u(""), six.u("abcd"), [six.u("defgh")], six.u("Русский текст"),
-        ]
+    test_data = ["", "abcd", ["defgh"], "Русский текст"]
     for td in test_data:
         re = unpackb(packb(td, encoding='utf-8'), use_list=1, encoding='utf-8')
         assert re == td
         packer = Packer(encoding='utf-8')
         data = packer.pack(td)
-        re = Unpacker(BytesIO(data), encoding='utf-8', use_list=1).unpack()
+        re = Unpacker(BytesIO(data), encoding=str('utf-8'), use_list=1).unpack()
         assert re == td
 
 def testPackUTF32():
     try:
         test_data = [
-            six.u(""),
-            six.u("abcd"),
-            [six.u("defgh")],
-            six.u("Русский текст"),
+            "",
+            "abcd",
+            ["defgh"],
+            "Русский текст",
             ]
         for td in test_data:
             re = unpackb(packb(td, encoding='utf-32'), use_list=1, encoding='utf-32')
@@ -70,23 +68,23 @@ def testStrictUnicodeUnpack():
 
 def testStrictUnicodePack():
     with raises(UnicodeEncodeError):
-        packb(six.u("abc\xeddef"), encoding='ascii', unicode_errors='strict')
+        packb("abc\xeddef", encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():
-    re = unpackb(packb(six.u("abcФФФdef"), encoding='ascii', unicode_errors='ignore'), encoding='utf-8', use_list=1)
-    assert re == six.u("abcdef")
+    re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), encoding='utf-8', use_list=1)
+    assert re == "abcdef"
 
 def testNoEncoding():
     with raises(TypeError):
-        packb(six.u("abc"), encoding=None)
+        packb("abc", encoding=None)
 
 def testDecodeBinary():
-    re = unpackb(packb("abc"), encoding=None, use_list=1)
+    re = unpackb(packb(b"abc"), encoding=None, use_list=1)
     assert re == b"abc"
 
 def testPackFloat():
-    assert packb(1.0, use_single_float=True)  == b'\xca' + struct.pack('>f', 1.0)
-    assert packb(1.0, use_single_float=False) == b'\xcb' + struct.pack('>d', 1.0)
+    assert packb(1.0, use_single_float=True)  == b'\xca' + struct.pack(str('>f'), 1.0)
+    assert packb(1.0, use_single_float=False) == b'\xcb' + struct.pack(str('>d'), 1.0)
 
 def testArraySize(sizes=[0, 5, 50, 1000]):
     bio = BytesIO()
