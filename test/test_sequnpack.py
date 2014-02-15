@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import six
+import io
 from msgpack import Unpacker, BufferFull
 from msgpack.exceptions import OutOfData
 from pytest import raises
@@ -79,7 +79,7 @@ def test_readbytes():
     assert unpacker.unpack() == ord(b'r')
 
     # Test buffer refill
-    unpacker = Unpacker(six.BytesIO(b'foobar'), read_size=3)
+    unpacker = Unpacker(io.BytesIO(b'foobar'), read_size=3)
     assert unpacker.unpack() == ord(b'f')
     assert unpacker.read_bytes(3) == b'oob'
     assert unpacker.unpack() == ord(b'a')

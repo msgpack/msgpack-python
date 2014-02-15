@@ -89,7 +89,7 @@ def testPackFloat():
     assert packb(1.0, use_single_float=False) == b'\xcb' + struct.pack('>d', 1.0)
 
 def testArraySize(sizes=[0, 5, 50, 1000]):
-    bio = six.BytesIO()
+    bio = BytesIO()
     packer = Packer()
     for size in sizes:
         bio.write(packer.pack_array_header(size))
@@ -108,7 +108,7 @@ def test_manualreset(sizes=[0, 5, 50, 1000]):
         for i in range(size):
             packer.pack(i)
 
-    bio = six.BytesIO(packer.bytes())
+    bio = BytesIO(packer.bytes())
     unpacker = Unpacker(bio, use_list=1)
     for size in sizes:
         assert unpacker.unpack() == list(range(size))
@@ -117,7 +117,7 @@ def test_manualreset(sizes=[0, 5, 50, 1000]):
     assert packer.bytes() == b''
 
 def testMapSize(sizes=[0, 5, 50, 1000]):
-    bio = six.BytesIO()
+    bio = BytesIO()
     packer = Packer()
     for size in sizes:
         bio.write(packer.pack_map_header(size))
