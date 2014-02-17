@@ -2,7 +2,6 @@
 # coding: utf-8
 
 from msgpack import packb, unpackb
-import sys
 
 
 def test_unpack_buffer():
