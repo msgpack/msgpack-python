@@ -1,3 +1,21 @@
+0.4.1
+=====
+:release date: 2014-02-17
+
+Inconpatible Changes
+--------------------
+
+Changes
+-------
+
+* fallback.Unpacker.feed() supports bytearray.
+
+Bugs fixed
+----------
+
+* Unpacker doesn't increment refcount of hooks. Hooks may be GCed while unpacking.
+* Unpacker may read unfilled internal buffer.
+
 0.4.0
 =====
 :release date: 2013-10-21
