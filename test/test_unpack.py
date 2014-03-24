@@ -1,6 +1,6 @@
 from io import BytesIO
 import sys
-from msgpack import Unpacker, packb, OutOfData
+from msgpack import Unpacker, packb, OutOfData, ExtType
 from pytest import raises, mark
 
 
@@ -42,6 +42,29 @@ def test_unpacker_hook_refcnt():
     assert sys.getrefcount(hook) == basecnt
 
 
+def test_unpacker_ext_hook():
+
+    class MyUnpacker(Unpacker):
+
+        def __init__(self):
+            super().__init__(ext_hook=self._hook, encoding='utf-8')
+
+        def _hook(self, code, data):
+            if code == 1:
+                return int(data)
+            else:
+                return ExtType(code, data)
+
+    unpacker = MyUnpacker()
+    unpacker.feed(packb({'a': 1}, encoding='utf-8'))
+    assert unpacker.unpack() == {'a': 1}
+    unpacker.feed(packb({'a': ExtType(1, b'123')}, encoding='utf-8'))
+    assert unpacker.unpack() == {'a': 123}
+    unpacker.feed(packb({'a': ExtType(2, b'321')}, encoding='utf-8'))
+    assert unpacker.unpack() == {'a': ExtType(2, b'321')}
+
+
 if __name__ == '__main__':
     test_unpack_array_header_from_file()
     test_unpacker_hook_refcnt()
+    test_unpacker_ext_hook()
