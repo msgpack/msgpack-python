@@ -2,7 +2,7 @@
 # coding: utf-8
 import pytest
 
-from msgpack import packb, unpackb
+from msgpack import packb, unpackb, Packer
 
 
 def test_integer():
@@ -16,11 +16,27 @@ def test_integer():
     with pytest.raises(OverflowError):
         packb(x+1)
 
+
+def test_array_header():
+    packer = Packer()
+    packer.pack_array_header(2**32-1)
+    with pytest.raises(ValueError):
+        packer.pack_array_header(2**32)
+
+
+def test_map_header():
+    packer = Packer()
+    packer.pack_map_header(2**32-1)
+    with pytest.raises(ValueError):
+        packer.pack_array_header(2**32)
+
+
 @pytest.mark.skipif(True, "Requires very large memory.")
 def test_binary():
     x = b'x' * (2**32 - 1)
     assert unpackb(packb(x)) == x
-    x += b'y'
+    del x
+    x = b'x' * (2**32)
     with pytest.raises(ValueError):
         packb(x)
 
