@@ -135,6 +135,8 @@ cdef class Packer(object):
                 else:
                     ret = msgpack_pack_false(&self.pk)
             elif PyLong_Check(o):
+                # PyInt_Check(long) is True for Python 3.
+                # Sow we should test long before int.
                 if o > 0:
                     ullval = o
                     ret = msgpack_pack_unsigned_long_long(&self.pk, ullval)
@@ -152,8 +154,10 @@ cdef class Packer(object):
                    dval = o
                    ret = msgpack_pack_double(&self.pk, dval)
             elif PyBytes_Check(o):
-                rawval = o
                 L = len(o)
+                if L > (2**32)-1:
+                    raise ValueError("bytes is too large")
+                rawval = o
                 ret = msgpack_pack_bin(&self.pk, L)
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
@@ -161,13 +165,19 @@ cdef class Packer(object):
                 if not self.encoding:
                     raise TypeError("Can't encode unicode string: no encoding is specified")
                 o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
+                L = len(o)
+                if L > (2**32)-1:
+                    raise ValueError("dict is too large")
                 rawval = o
                 ret = msgpack_pack_raw(&self.pk, len(o))
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
             elif PyDict_CheckExact(o):
                 d = <dict>o
-                ret = msgpack_pack_map(&self.pk, len(d))
+                L = len(d)
+                if L > (2**32)-1:
+                    raise ValueError("dict is too large")
+                ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
                     for k, v in d.iteritems():
                         ret = self._pack(k, nest_limit-1)
@@ -175,7 +185,10 @@ cdef class Packer(object):
                         ret = self._pack(v, nest_limit-1)
                         if ret != 0: break
             elif PyDict_Check(o):
-                ret = msgpack_pack_map(&self.pk, len(o))
+                L = len(o)
+                if L > (2**32)-1:
+                    raise ValueError("dict is too large")
+                ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
                     for k, v in o.items():
                         ret = self._pack(k, nest_limit-1)
@@ -187,10 +200,15 @@ cdef class Packer(object):
                 longval = o.code
                 rawval = o.data
                 L = len(o.data)
+                if L > (2**32)-1:
+                    raise ValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyTuple_Check(o) or PyList_Check(o):
-                ret = msgpack_pack_array(&self.pk, len(o))
+                L = len(o)
+                if L > (2**32)-1:
+                    raise ValueError("list is too large")
+                ret = msgpack_pack_array(&self.pk, L)
                 if ret == 0:
                     for v in o:
                         ret = self._pack(v, nest_limit-1)
@@ -220,6 +238,8 @@ cdef class Packer(object):
         msgpack_pack_raw_body(&self.pk, data, len(data))
 
     def pack_array_header(self, size_t size):
+        if size >= (2**32-1):
+            raise ValueError
         cdef int ret = msgpack_pack_array(&self.pk, size)
         if ret == -1:
             raise MemoryError
@@ -231,6 +251,8 @@ cdef class Packer(object):
             return buf
 
     def pack_map_header(self, size_t size):
+        if size >= (2**32-1):
+            raise ValueError
         cdef int ret = msgpack_pack_map(&self.pk, size)
         if ret == -1:
             raise MemoryError
