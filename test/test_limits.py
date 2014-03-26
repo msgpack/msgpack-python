@@ -31,7 +31,7 @@ def test_map_header():
         packer.pack_array_header(2**32)
 
 
-@pytest.mark.skipif(True, "Requires very large memory.")
+@pytest.mark.skipif(True, reason="Requires very large memory.")
 def test_binary():
     x = b'x' * (2**32 - 1)
     assert unpackb(packb(x)) == x
@@ -41,7 +41,7 @@ def test_binary():
         packb(x)
 
 
-@pytest.mark.skipif(True, "Requires very large memory.")
+@pytest.mark.skipif(True, reason="Requires very large memory.")
 def test_string():
     x = u'x' * (2**32 - 1)
     assert unpackb(packb(x)) == x
@@ -50,7 +50,7 @@ def test_string():
         packb(x)
 
 
-@pytest.mark.skipif(True, "Requires very large memory.")
+@pytest.mark.skipif(True, reason="Requires very large memory.")
 def test_array():
     x = [0] * (2**32 - 1)
     assert unpackb(packb(x)) == x
