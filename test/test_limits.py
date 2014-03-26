@@ -8,12 +8,12 @@ from msgpack import packb, unpackb, Packer
 def test_integer():
     x = -(2 ** 63)
     assert unpackb(packb(x)) == x
-    with pytest.raises(OverflowError):
+    with pytest.raises((OverflowError, ValueError)):
         packb(x-1)
 
     x = 2 ** 64 - 1
     assert unpackb(packb(x)) == x
-    with pytest.raises(OverflowError):
+    with pytest.raises((OverflowError, ValueError)):
         packb(x+1)
 
 
