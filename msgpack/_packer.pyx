@@ -238,7 +238,7 @@ cdef class Packer(object):
         msgpack_pack_raw_body(&self.pk, data, len(data))
 
     def pack_array_header(self, size_t size):
-        if size >= (2**32-1):
+        if size > (2**32-1):
             raise ValueError
         cdef int ret = msgpack_pack_array(&self.pk, size)
         if ret == -1:
@@ -251,7 +251,7 @@ cdef class Packer(object):
             return buf
 
     def pack_map_header(self, size_t size):
-        if size >= (2**32-1):
+        if size > (2**32-1):
             raise ValueError
         cdef int ret = msgpack_pack_map(&self.pk, size)
         if ret == -1:

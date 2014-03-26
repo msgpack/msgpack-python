@@ -633,6 +633,8 @@ class Packer(object):
         return ret
 
     def pack_array_header(self, n):
+        if n >= 2**32:
+            raise ValueError
         self._fb_pack_array_header(n)
         ret = self._buffer.getvalue()
         if self._autoreset:
@@ -642,6 +644,8 @@ class Packer(object):
         return ret
 
     def pack_map_header(self, n):
+        if n >= 2**32:
+            raise ValueError
         self._fb_pack_map_header(n)
         ret = self._buffer.getvalue()
         if self._autoreset:
