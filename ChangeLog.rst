@@ -1,3 +1,19 @@
+0.4.2
+=====
+:release date: 2014-03-26
+
+Inconpatible Changes
+--------------------
+
+Changes
+-------
+
+Bugs fixed
+----------
+
+* Unpacker doesn't increment refcount of ExtType hook.
+* Packer raises no exception for inputs doesn't fit to msgpack format.
+
 0.4.1
 =====
 :release date: 2014-02-17
