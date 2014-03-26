@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+from __future__ import absolute_import, division, print_function, unicode_literals
 import pytest
 
 from msgpack import packb, unpackb, Packer
@@ -43,9 +44,9 @@ def test_binary():
 
 @pytest.mark.skipif(True, reason="Requires very large memory.")
 def test_string():
-    x = u'x' * (2**32 - 1)
+    x = 'x' * (2**32 - 1)
     assert unpackb(packb(x)) == x
-    x += u'y'
+    x += 'y'
     with pytest.raises(ValueError):
         packb(x)
 
