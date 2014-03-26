@@ -32,29 +32,31 @@ def test_map_header():
         packer.pack_array_header(2**32)
 
 
-@pytest.mark.skipif(True, reason="Requires very large memory.")
-def test_binary():
-    x = b'x' * (2**32 - 1)
-    assert unpackb(packb(x)) == x
-    del x
-    x = b'x' * (2**32)
-    with pytest.raises(ValueError):
-        packb(x)
-
-
-@pytest.mark.skipif(True, reason="Requires very large memory.")
-def test_string():
-    x = 'x' * (2**32 - 1)
-    assert unpackb(packb(x)) == x
-    x += 'y'
-    with pytest.raises(ValueError):
-        packb(x)
-
-
-@pytest.mark.skipif(True, reason="Requires very large memory.")
-def test_array():
-    x = [0] * (2**32 - 1)
-    assert unpackb(packb(x)) == x
-    x.append(0)
-    with pytest.raises(ValueError):
-        packb(x)
+# PyPy fails following tests because of constant folding?
+# https://bugs.pypy.org/issue1721
+#@pytest.mark.skipif(True, reason="Requires very large memory.")
+#def test_binary():
+#    x = b'x' * (2**32 - 1)
+#    assert unpackb(packb(x)) == x
+#    del x
+#    x = b'x' * (2**32)
+#    with pytest.raises(ValueError):
+#        packb(x)
+#
+#
+#@pytest.mark.skipif(True, reason="Requires very large memory.")
+#def test_string():
+#    x = 'x' * (2**32 - 1)
+#    assert unpackb(packb(x)) == x
+#    x += 'y'
+#    with pytest.raises(ValueError):
+#        packb(x)
+#
+#
+#@pytest.mark.skipif(True, reason="Requires very large memory.")
+#def test_array():
+#    x = [0] * (2**32 - 1)
+#    assert unpackb(packb(x)) == x
+#    x.append(0)
+#    with pytest.raises(ValueError):
+#        packb(x)
