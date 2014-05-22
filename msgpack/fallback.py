@@ -485,10 +485,13 @@ class Packer(object):
             Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
-    :param bool distinguish_tuple:
-        If set to true, tuples will not be serialized as lists
-        and will be treated as unsupported type. This is useful when trying
-        to implement accurate serialization for python types.
+    :param bool precise_mode:
+        If set to true, types will be checked to be exact. Derived classes
+        from serializeable types will not be serialized and will be
+        treated as unsupported type and forwarded to default.
+        Additionally tuples will not be serialized as lists.
+        This is useful when trying to implement accurate serialization 
+        for python types.
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
@@ -499,9 +502,9 @@ class Packer(object):
         It also enable str8 type for unicode.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 distinguish_tuple=False, use_single_float=False, autoreset=True,
+                 precise_mode=False, use_single_float=False, autoreset=True,
                  use_bin_type=False):
-        self._distinguish_tuple = distinguish_tuple
+        self._precise_mode = precise_mode
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
@@ -513,19 +516,30 @@ class Packer(object):
                 raise TypeError("default must be callable")
         self._default = default
 
-    def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT, isinstance=isinstance):
+    def _check_precise(obj, t, type=type, tuple=tuple):
+        if type(t) is tuple:
+            return type(obj) in t
+        else:
+            return type(obj) is t
+
+    def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT,
+              check=isinstance, check_precise=_check_precise):
         default_used = False
-        list_type = list if self._distinguish_tuple else (list, tuple)
+        if self._precise_mode:
+            check = check_precise
+            list_types = list
+        else:
+            list_types = (list, tuple)
         while True:
             if nest_limit < 0:
                 raise PackValueError("recursion limit exceeded")
             if obj is None:
                 return self._buffer.write(b"\xc0")
-            if isinstance(obj, bool):
+            if check(obj, bool):
                 if obj:
                     return self._buffer.write(b"\xc3")
                 return self._buffer.write(b"\xc2")
-            if isinstance(obj, int_types):
+            if check(obj, int_types):
                 if 0 <= obj < 0x80:
                     return self._buffer.write(struct.pack("B", obj))
                 if -0x20 <= obj < 0:
@@ -547,7 +561,7 @@ class Packer(object):
                 if -0x8000000000000000 <= obj < -0x80000000:
                     return self._buffer.write(struct.pack(">Bq", 0xd3, obj))
                 raise PackValueError("Integer value out of range")
-            if self._use_bin_type and isinstance(obj, bytes):
+            if self._use_bin_type and check(obj, bytes):
                 n = len(obj)
                 if n <= 0xff:
                     self._buffer.write(struct.pack('>BB', 0xc4, n))
@@ -558,8 +572,8 @@ class Packer(object):
                 else:
                     raise PackValueError("Bytes is too large")
                 return self._buffer.write(obj)
-            if isinstance(obj, (Unicode, bytes)):
-                if isinstance(obj, Unicode):
+            if check(obj, (Unicode, bytes)):
+                if check(obj, Unicode):
                     if self._encoding is None:
                         raise TypeError(
                             "Can't encode unicode string: "
@@ -577,11 +591,11 @@ class Packer(object):
                 else:
                     raise PackValueError("String is too large")
                 return self._buffer.write(obj)
-            if isinstance(obj, float):
+            if check(obj, float):
                 if self._use_float:
                     return self._buffer.write(struct.pack(">Bf", 0xca, obj))
                 return self._buffer.write(struct.pack(">Bd", 0xcb, obj))
-            if isinstance(obj, ExtType):
+            if check(obj, ExtType):
                 code = obj.code
                 data = obj.data
                 assert isinstance(code, int)
@@ -606,13 +620,13 @@ class Packer(object):
                 self._buffer.write(struct.pack("b", code))
                 self._buffer.write(data)
                 return
-            if isinstance(obj, list_type):
+            if check(obj, list_types):
                 n = len(obj)
                 self._fb_pack_array_header(n)
                 for i in xrange(n):
                     self._pack(obj[i], nest_limit - 1)
                 return
-            if isinstance(obj, dict):
+            if check(obj, dict):
                 return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
                                                nest_limit - 1)
             if not default_used and self._default is not None:
