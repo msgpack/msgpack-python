@@ -56,6 +56,10 @@ cdef class Packer(object):
         Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
+    :param bool distinguish_tuple:
+        If set to true, tuples will not be serialized as lists
+        and will be treated as unsupported type. This is useful when trying
+        to implement accurate serialization for python types.
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
@@ -71,6 +75,7 @@ cdef class Packer(object):
     cdef object _berrors
     cdef char *encoding
     cdef char *unicode_errors
+    cdef bool distinguish_tuple
     cdef bool use_float
     cdef bint autoreset
 
@@ -83,10 +88,12 @@ cdef class Packer(object):
         self.pk.length = 0
 
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 use_single_float=False, bint autoreset=1, bint use_bin_type=0):
+                 distinguish_tuple=False, use_single_float=False, bint autoreset=1,
+                 bint use_bin_type=0):
         """
         """
         self.use_float = use_single_float
+        self.distinguish_tuple = distinguish_tuple
         self.autoreset = autoreset
         self.pk.use_bin_type = use_bin_type
         if default is not None:
@@ -122,6 +129,7 @@ cdef class Packer(object):
         cdef dict d
         cdef size_t L
         cdef int default_used = 0
+        cdef bool distinguish_tuple = self.distinguish_tuple
 
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded.")
@@ -204,7 +212,7 @@ cdef class Packer(object):
                     raise ValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-            elif PyTuple_Check(o) or PyList_Check(o):
+            elif (PyTuple_Check(o) and not distinguish_tuple) or PyList_Check(o):
                 L = len(o)
                 if L > (2**32)-1:
                     raise ValueError("list is too large")

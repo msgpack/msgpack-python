@@ -485,6 +485,10 @@ class Packer(object):
             Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
+    :param bool distinguish_tuple:
+        If set to true, tuples will not be serialized as lists
+        and will be treated as unsupported type. This is useful when trying
+        to implement accurate serialization for python types.
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
@@ -495,7 +499,9 @@ class Packer(object):
         It also enable str8 type for unicode.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 use_single_float=False, autoreset=True, use_bin_type=False):
+                 distinguish_tuple=False, use_single_float=False, autoreset=True,
+                 use_bin_type=False):
+        self._distinguish_tuple = distinguish_tuple
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
@@ -509,6 +515,7 @@ class Packer(object):
 
     def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT, isinstance=isinstance):
         default_used = False
+        list_type = list if self._distinguish_tuple else (list, tuple)
         while True:
             if nest_limit < 0:
                 raise PackValueError("recursion limit exceeded")
@@ -599,7 +606,7 @@ class Packer(object):
                 self._buffer.write(struct.pack("b", code))
                 self._buffer.write(data)
                 return
-            if isinstance(obj, (list, tuple)):
+            if isinstance(obj, list_type):
                 n = len(obj)
                 self._fb_pack_array_header(n)
                 for i in xrange(n):
