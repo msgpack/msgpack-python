@@ -62,7 +62,7 @@ static inline int unpack_callback_uint32(unpack_user* u, uint32_t d, msgpack_unp
     } else
 #endif
     {
-        p = PyInt_FromLong((long)d);
+        p = PyInt_FromUnsignedLong((long)d);
     }
     if (!p)
         return -1;
