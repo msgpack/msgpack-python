@@ -1,3 +1,18 @@
+0.4.3
+=====
+:release date: TBD
+
+Inconpatible Changes
+--------------------
+
+Changes
+-------
+
+Bugs fixed
+----------
+
+* Unpacker may unpack wrong uint32 value on 32bit or LLP64 environment. (#101)
+
 0.4.2
 =====
 :release date: 2014-03-26
