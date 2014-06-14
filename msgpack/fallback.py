@@ -252,6 +252,7 @@ class Unpacker(object):
                 if not tmp:
                     break
                 buffs.append(tmp)
+                self._fb_buf_n += len(tmp)
                 continue
             sliced = n - len(ret)
             ret += buffs[self._fb_buf_i][self._fb_buf_o:self._fb_buf_o + sliced]
