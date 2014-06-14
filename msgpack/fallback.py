@@ -169,7 +169,7 @@ class Unpacker(object):
         self._max_buffer_size = max_buffer_size or 2**31-1
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
-        self._read_size = read_size or min(self._max_buffer_size, 2048)
+        self._read_size = read_size or min(self._max_buffer_size, 4096)
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
