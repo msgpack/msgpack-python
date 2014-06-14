@@ -202,12 +202,17 @@ class Unpacker(object):
         self._fb_buffers.append(next_bytes)
 
     def _fb_consume(self):
-        self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
+        if self._fb_buf_i:
+            for i in xrange(self._fb_buf_i):
+                self._fb_buf_n -=  len(self._fb_buffers[i])
+            self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
+            self._fb_buf_i = 0
         if self._fb_buffers:
             self._fb_buffers[0] = self._fb_buffers[0][self._fb_buf_o:]
+            self._fb_buf_n -= self._fb_buf_o
+        else:
+            self._fb_buf_n = 0
         self._fb_buf_o = 0
-        self._fb_buf_i = 0
-        self._fb_buf_n = sum(map(len, self._fb_buffers))
 
     def _fb_got_extradata(self):
         if self._fb_buf_i != len(self._fb_buffers):
