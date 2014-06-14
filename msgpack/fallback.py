@@ -263,16 +263,19 @@ class Unpacker(object):
         # The remaining cases.
         ret = b''
         while len(ret) != n:
+            sliced = n - len(ret)
             if self._fb_buf_i == len(buffs):
                 if self._fb_feeding:
                     break
-                tmp = self.file_like.read(self._read_size)
+                to_read = sliced
+                if self._read_size > to_read:
+                    to_read = self._read_size
+                tmp = self.file_like.read(to_read)
                 if not tmp:
                     break
                 buffs.append(tmp)
                 self._fb_buf_n += len(tmp)
                 continue
-            sliced = n - len(ret)
             ret += buffs[self._fb_buf_i][self._fb_buf_o:self._fb_buf_o + sliced]
             self._fb_buf_o += sliced
             if self._fb_buf_o >= len(buffs[self._fb_buf_i]):
