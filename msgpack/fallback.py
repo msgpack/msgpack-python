@@ -201,7 +201,16 @@ class Unpacker(object):
         self._fb_buf_n += len(next_bytes)
         self._fb_buffers.append(next_bytes)
 
+    def _fb_sloppy_consume(self):
+        """ Gets rid of some of the used parts of the buffer. """
+        if self._fb_buf_i:
+            for i in xrange(self._fb_buf_i):
+                self._fb_buf_n -=  len(self._fb_buffers[i])
+            self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
+            self._fb_buf_i = 0
+
     def _fb_consume(self):
+        """ Gets rid of the used parts of the buffer. """
         if self._fb_buf_i:
             for i in xrange(self._fb_buf_i):
                 self._fb_buf_n -=  len(self._fb_buffers[i])
@@ -446,9 +455,10 @@ class Unpacker(object):
     def next(self):
         try:
             ret = self._fb_unpack(EX_CONSTRUCT, None)
-            self._fb_consume()
+            self._fb_sloppy_consume()
             return ret
         except OutOfData:
+            self._fb_consume()
             raise StopIteration
     __next__ = next
 
