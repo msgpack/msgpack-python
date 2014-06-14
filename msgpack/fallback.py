@@ -252,11 +252,15 @@ class Unpacker(object):
 
     def _fb_read(self, n, write_bytes=None):
         buffs = self._fb_buffers
+        # We have a redundant codepath for the most common case, such that
+        # pypy optimizes it properly.  This is the case that the read fits
+        # in the current buffer.
         if (write_bytes is None and self._fb_buf_i < len(buffs) and
                 self._fb_buf_o + n < len(buffs[self._fb_buf_i])):
             self._fb_buf_o += n
             return buffs[self._fb_buf_i][self._fb_buf_o - n:self._fb_buf_o]
 
+        # The remaining cases.
         ret = b''
         while len(ret) != n:
             if self._fb_buf_i == len(buffs):
