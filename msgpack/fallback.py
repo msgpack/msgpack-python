@@ -166,6 +166,11 @@ class Unpacker(object):
         self._fb_buf_o = 0
         self._fb_buf_i = 0
         self._fb_buf_n = 0
+        # When Unpacker is used as an iterable, between the calls to next(),
+        # the buffer is not "consumed" completely, for efficiency sake.
+        # Instead, it is done sloppily.  To make sure we raise BufferFull at
+        # the correct moments, we have to keep track of how sloppy we were.
+        self._fb_sloppiness = 0
         self._max_buffer_size = max_buffer_size or 2**31-1
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
@@ -196,7 +201,8 @@ class Unpacker(object):
         elif isinstance(next_bytes, bytearray):
             next_bytes = bytes(next_bytes)
         assert self._fb_feeding
-        if self._fb_buf_n + len(next_bytes) > self._max_buffer_size:
+        if (self._fb_buf_n + len(next_bytes) - self._fb_sloppiness
+                        > self._max_buffer_size):
             raise BufferFull
         self._fb_buf_n += len(next_bytes)
         self._fb_buffers.append(next_bytes)
@@ -208,6 +214,10 @@ class Unpacker(object):
                 self._fb_buf_n -=  len(self._fb_buffers[i])
             self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
             self._fb_buf_i = 0
+        if self._fb_buffers:
+            self._fb_sloppiness = self._fb_buf_o
+        else:
+            self._fb_sloppiness = 0
 
     def _fb_consume(self):
         """ Gets rid of the used parts of the buffer. """
@@ -222,6 +232,7 @@ class Unpacker(object):
         else:
             self._fb_buf_n = 0
         self._fb_buf_o = 0
+        self._fb_sloppiness = 0
 
     def _fb_got_extradata(self):
         if self._fb_buf_i != len(self._fb_buffers):
