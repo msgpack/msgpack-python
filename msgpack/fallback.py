@@ -166,10 +166,15 @@ class Unpacker(object):
         self._fb_buf_o = 0
         self._fb_buf_i = 0
         self._fb_buf_n = 0
+        # When Unpacker is used as an iterable, between the calls to next(),
+        # the buffer is not "consumed" completely, for efficiency sake.
+        # Instead, it is done sloppily.  To make sure we raise BufferFull at
+        # the correct moments, we have to keep track of how sloppy we were.
+        self._fb_sloppiness = 0
         self._max_buffer_size = max_buffer_size or 2**31-1
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
-        self._read_size = read_size or min(self._max_buffer_size, 2048)
+        self._read_size = read_size or min(self._max_buffer_size, 4096)
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
@@ -196,18 +201,38 @@ class Unpacker(object):
         elif isinstance(next_bytes, bytearray):
             next_bytes = bytes(next_bytes)
         assert self._fb_feeding
-        if self._fb_buf_n + len(next_bytes) > self._max_buffer_size:
+        if (self._fb_buf_n + len(next_bytes) - self._fb_sloppiness
+                        > self._max_buffer_size):
             raise BufferFull
         self._fb_buf_n += len(next_bytes)
         self._fb_buffers.append(next_bytes)
 
+    def _fb_sloppy_consume(self):
+        """ Gets rid of some of the used parts of the buffer. """
+        if self._fb_buf_i:
+            for i in xrange(self._fb_buf_i):
+                self._fb_buf_n -=  len(self._fb_buffers[i])
+            self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
+            self._fb_buf_i = 0
+        if self._fb_buffers:
+            self._fb_sloppiness = self._fb_buf_o
+        else:
+            self._fb_sloppiness = 0
+
     def _fb_consume(self):
-        self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
+        """ Gets rid of the used parts of the buffer. """
+        if self._fb_buf_i:
+            for i in xrange(self._fb_buf_i):
+                self._fb_buf_n -=  len(self._fb_buffers[i])
+            self._fb_buffers = self._fb_buffers[self._fb_buf_i:]
+            self._fb_buf_i = 0
         if self._fb_buffers:
             self._fb_buffers[0] = self._fb_buffers[0][self._fb_buf_o:]
+            self._fb_buf_n -= self._fb_buf_o
+        else:
+            self._fb_buf_n = 0
         self._fb_buf_o = 0
-        self._fb_buf_i = 0
-        self._fb_buf_n = sum(map(len, self._fb_buffers))
+        self._fb_sloppiness = 0
 
     def _fb_got_extradata(self):
         if self._fb_buf_i != len(self._fb_buffers):
@@ -238,22 +263,30 @@ class Unpacker(object):
 
     def _fb_read(self, n, write_bytes=None):
         buffs = self._fb_buffers
+        # We have a redundant codepath for the most common case, such that
+        # pypy optimizes it properly.  This is the case that the read fits
+        # in the current buffer.
         if (write_bytes is None and self._fb_buf_i < len(buffs) and
                 self._fb_buf_o + n < len(buffs[self._fb_buf_i])):
             self._fb_buf_o += n
             return buffs[self._fb_buf_i][self._fb_buf_o - n:self._fb_buf_o]
 
+        # The remaining cases.
         ret = b''
         while len(ret) != n:
+            sliced = n - len(ret)
             if self._fb_buf_i == len(buffs):
                 if self._fb_feeding:
                     break
-                tmp = self.file_like.read(self._read_size)
+                to_read = sliced
+                if self._read_size > to_read:
+                    to_read = self._read_size
+                tmp = self.file_like.read(to_read)
                 if not tmp:
                     break
                 buffs.append(tmp)
+                self._fb_buf_n += len(tmp)
                 continue
-            sliced = n - len(ret)
             ret += buffs[self._fb_buf_i][self._fb_buf_o:self._fb_buf_o + sliced]
             self._fb_buf_o += sliced
             if self._fb_buf_o >= len(buffs[self._fb_buf_i]):
@@ -440,9 +473,10 @@ class Unpacker(object):
     def next(self):
         try:
             ret = self._fb_unpack(EX_CONSTRUCT, None)
-            self._fb_consume()
+            self._fb_sloppy_consume()
             return ret
         except OutOfData:
+            self._fb_consume()
             raise StopIteration
     __next__ = next
 
