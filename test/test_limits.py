@@ -21,14 +21,14 @@ def test_integer():
 def test_array_header():
     packer = Packer()
     packer.pack_array_header(2**32-1)
-    with pytest.raises(ValueError):
+    with pytest.raises((OverflowError, ValueError)):
         packer.pack_array_header(2**32)
 
 
 def test_map_header():
     packer = Packer()
     packer.pack_map_header(2**32-1)
-    with pytest.raises(ValueError):
+    with pytest.raises((OverflowError, ValueError)):
         packer.pack_array_header(2**32)
 
 
