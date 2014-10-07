@@ -4,8 +4,8 @@
 from msgpack import packb, unpackb
 
 
-def check(length, obj):
-    v = packb(obj)
+def check(length, obj, use_bin_type=False):
+    v = packb(obj, use_bin_type=use_bin_type)
     assert len(v) == length, \
         "%r length should be %r but get %r" % (obj, length, len(v))
     assert unpackb(v, use_list=0) == obj
@@ -37,20 +37,31 @@ def test_9():
               1.0, 0.1, -0.1, -1.0]:
         check(9, o)
 
-
-def check_raw(overhead, num):
+def check_str(overhead, num):
     check(num + overhead, b" " * num)
 
-def test_fixraw():
-    check_raw(1, 0)
-    check_raw(1, (1<<5) - 1)
+def check_bin(overhead, num):
+    check(num + overhead, b" " * num, use_bin_type=True)
+
+def test_raw_short():
+    check_str(1, 0)
+    check_str(1, (1<<5) - 1)
+    check_str(2, 1<<5)
+    check_str(2, (1<<8) - 1)
+
+    check_bin(2, 0)
+    check_bin(2, (1<<8) - 1)
 
 def test_raw16():
-    check_raw(3, 1<<5)
-    check_raw(3, (1<<16) - 1)
+    check_str(3, 1<<8)
+    check_str(3, (1<<16) - 1)
+
+    check_bin(3, 1<<8)
+    check_bin(3, (1<<16) - 1)
 
 def test_raw32():
-    check_raw(5, 1<<16)
+    check_str(5, 1<<16)
+    check_bin(5, 1<<16)
 
 
 def check_array(overhead, num):
