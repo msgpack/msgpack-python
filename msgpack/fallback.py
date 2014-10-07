@@ -595,7 +595,7 @@ class Packer(object):
                 n = len(obj)
                 if n <= 0x1f:
                     self._buffer.write(struct.pack('B', 0xa0 + n))
-                elif self._use_bin_type and n <= 0xff:
+                elif n <= 0xff:
                     self._buffer.write(struct.pack('>BB', 0xd9, n))
                 elif n <= 0xffff:
                     self._buffer.write(struct.pack(">BH", 0xda, n))
