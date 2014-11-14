@@ -23,7 +23,10 @@ if hasattr(sys, 'pypy_version_info'):
     # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
     # StringBuilder is fastest.
     from __pypy__ import newlist_hint
-    from __pypy__.builders import StringBuilder
+    try:
+        from __pypy__.builders import BytesBuilder as StringBuilder
+    except ImportError:
+        from __pypy__.builders import StringBuilder
     USING_STRINGBUILDER = True
     class StringIO(object):
         def __init__(self, s=b''):
