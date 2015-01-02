@@ -110,7 +110,7 @@ msgpack provides ``dumps`` and ``loads`` as alias for compatibility with
    >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
    (1, 2, 3)
 
-You should always pass the ``use_list`` keyword argument. See performance issues relating to use_list_ below.
+You should always pass the ``use_list`` keyword argument. See performance issues relating to `use_list option`_ below.
 
 Read the docstring for other options.
 
@@ -237,8 +237,8 @@ CPython's GC starts when growing allocated object.
 This means unpacking may cause useless GC.
 You can use ``gc.disable()`` when unpacking large message.
 
-`use_list` option
-^^^^^^^^^^^^^^^^^^
+use_list option
+^^^^^^^^^^^^^^^^
 List is the default sequence type of Python.
 But tuple is lighter than list.
 You can use ``use_list=False`` while unpacking when performance is important.
