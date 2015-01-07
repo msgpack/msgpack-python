@@ -5,7 +5,6 @@ from cpython cimport *
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *
-from libc.stdint cimport int8_t
 
 from msgpack.exceptions import PackValueError
 from msgpack import ExtType
@@ -32,7 +31,7 @@ cdef extern from "pack.h":
     int msgpack_pack_raw(msgpack_packer* pk, size_t l)
     int msgpack_pack_bin(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
-    int msgpack_pack_ext(msgpack_packer* pk, int8_t typecode, size_t l)
+    int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
 
