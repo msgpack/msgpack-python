@@ -3,8 +3,8 @@ MessagePack for Python
 =======================
 
 :author: INADA Naoki
-:version: 0.4.1
-:date: 2014-02-17
+:version: 0.4.3
+:date: 2015-01-07
 
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
@@ -18,17 +18,15 @@ writing MessagePack data.
 
 Install
 ---------
-You can use ``pip`` or ``easy_install`` to install msgpack::
 
-   $ easy_install msgpack-python
-     or
+::
+
    $ pip install msgpack-python
 
 PyPy
 ^^^^^
 
-msgpack-python provides pure python implementation.
-PyPy can use this.
+msgpack-python provides pure python implementation.  PyPy can use this.
 
 Windows
 ^^^^^^^

@@ -1,6 +1,6 @@
 0.4.3
 =====
-:release date: TBD
+:release date: 2015-01-07
 
 Inconpatible Changes
 --------------------
@@ -12,6 +12,7 @@ Bugs fixed
 ----------
 
 * Unpacker may unpack wrong uint32 value on 32bit or LLP64 environment. (#101)
+* Build failed on Windows Python 2.7.
 
 0.4.2
 =====
