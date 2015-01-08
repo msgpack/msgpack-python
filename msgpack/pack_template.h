@@ -712,7 +712,7 @@ static inline int msgpack_pack_raw_body(msgpack_packer* x, const void* b, size_t
 /*
  * Ext
  */
-static inline int msgpack_pack_ext(msgpack_packer* x, int8_t typecode, size_t l)
+static inline int msgpack_pack_ext(msgpack_packer* x, char typecode, size_t l)
 {
     if (l == 1) {
         unsigned char buf[2];
