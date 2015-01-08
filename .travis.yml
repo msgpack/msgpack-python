@@ -7,4 +7,4 @@ install:
     - pip install tox cython
     - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
 
-script: "tox && MSGPACK_PUREPYTHON=x tox"
+script: tox
