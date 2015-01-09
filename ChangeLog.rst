@@ -1,3 +1,18 @@
+0.4.4
+=====
+:release date: 2015-01-09
+
+Inconpatible Changes
+--------------------
+
+Changes
+-------
+
+Bugs fixed
+----------
+
+* Fix compile error.
+
 0.4.3
 =====
 :release date: 2015-01-07
