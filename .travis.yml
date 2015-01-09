@@ -1,10 +1,17 @@
 sudo: false
+cache:
+    directories:
+        - wheelhouse
+
 language: python
 python:
     - 2.7
 
 install:
-    - pip install tox cython
+    - pip install wheel tox
+    - ls -la wheelhouse
+    - if [ ! -f wheelhouse/Cython-0.21.2-cp27-none-linux_x86_64.whl ] ; then pip wheel cython ; fi
+    - pip install wheelhouse/Cython-0.21.2-cp27-none-linux_x86_64.whl
     - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
 
 script: tox
