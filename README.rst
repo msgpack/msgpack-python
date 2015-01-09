@@ -52,6 +52,8 @@ It is non-string binary like Python 3's ``bytes``.
 To use *bin* type for packing ``bytes``, pass ``use_bin_type=True`` to
 packer argument.
 
+.. code-block:: pycon
+
     >>> import msgpack
     >>> packed = msgpack.packb([b'spam', u'egg'], use_bin_type=True)
     >>> msgpack.unpackb(packed, encoding='utf-8')
@@ -61,6 +63,8 @@ You shoud use it carefully. When you use ``use_bin_type=True``, packed
 binary can be unpacked by unpackers supporting msgpack-2.0.
 
 To use *ext* type, pass ``msgpack.ExtType`` object to packer.
+
+.. code-block:: pycon
 
     >>> import msgpack
     >>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
@@ -95,7 +99,7 @@ msgpack provides ``dumps`` and ``loads`` as alias for compatibility with
 ``pack`` and ``dump`` packs to file-like object.
 ``unpack`` and ``load`` unpacks from file-like object.
 
-::
+.. code-block:: pycon
 
    >>> import msgpack
    >>> msgpack.packb([1, 2, 3])
@@ -103,7 +107,9 @@ msgpack provides ``dumps`` and ``loads`` as alias for compatibility with
    >>> msgpack.unpackb(_)
    [1, 2, 3]
 
-``unpack`` unpacks msgpack's array to Python's list, but can unpack to tuple::
+``unpack`` unpacks msgpack's array to Python's list, but can unpack to tuple:
+
+.. code-block:: pycon
 
    >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
    (1, 2, 3)
@@ -119,7 +125,7 @@ Streaming unpacking
 ``Unpacker`` is a "streaming unpacker". It unpacks multiple objects from one
 stream (or from bytes provided through its ``feed`` method).
 
-::
+.. code-block:: python
 
    import msgpack
    from io import BytesIO
@@ -141,7 +147,7 @@ Packing/unpacking of custom data type
 It is also possible to pack/unpack custom data types. Here is an example for
 ``datetime.datetime``.
 
-::
+.. code-block:: python
 
     import datetime
 
@@ -174,6 +180,8 @@ Extended types
 ^^^^^^^^^^^^^^^
 
 It is also possible to pack/unpack custom data types using the msgpack 2.0 feature.
+
+.. code-block:: pycon
 
     >>> import msgpack
     >>> import array
@@ -209,7 +217,7 @@ in a map, can be unpacked or skipped individually.
 Each of these methods may optionally write the packed data it reads to a
 callback function:
 
-::
+.. code-block:: python
 
     from io import BytesIO
 
