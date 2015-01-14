@@ -2,7 +2,7 @@
 =====
 :release date: 2015-01-09
 
-Inconpatible Changes
+Incompatible Changes
 --------------------
 
 Changes
@@ -17,7 +17,7 @@ Bugs fixed
 =====
 :release date: 2015-01-07
 
-Inconpatible Changes
+Incompatible Changes
 --------------------
 
 Changes
@@ -33,7 +33,7 @@ Bugs fixed
 =====
 :release date: 2014-03-26
 
-Inconpatible Changes
+Incompatible Changes
 --------------------
 
 Changes
@@ -49,7 +49,7 @@ Bugs fixed
 =====
 :release date: 2014-02-17
 
-Inconpatible Changes
+Incompatible Changes
 --------------------
 
 Changes
@@ -67,7 +67,7 @@ Bugs fixed
 =====
 :release date: 2013-10-21
 
-Inconpatible Changes
+Incompatible Changes
 --------------------
 
 * Raises TypeError instead of ValueError when packer receives unsupported type.
@@ -81,7 +81,7 @@ Changes
 0.3.0
 =====
 
-Inconpatible Changes
+Incompatible Changes
 --------------------
 
 * Default value of ``use_list`` is ``True`` for now. (It was ``False`` for 0.2.x)
