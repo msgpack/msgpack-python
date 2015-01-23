@@ -16,7 +16,7 @@ def test_unpack_array_header_from_file():
         unpacker.unpack()
 
 
-@mark.skipif(not hasattr(sys, 'getrefcount'),
+@mark.skipif("not hasattr(sys, 'getrefcount') == True",
              reason='sys.getrefcount() is needed to pass this test')
 def test_unpacker_hook_refcnt():
     result = []
