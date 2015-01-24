@@ -7,6 +7,13 @@ language: python
 python:
     - 2.7
 
+env:
+    - TOXENV=py26-c,py27-c
+    - TOXENV=py32-c,py33-c,py34-c
+    - TOXENV=py26-pure,py27-pure
+    - TOXENV=py32-pure,py33-pure,py34-pure
+    - TOXENV=pypy-pure,pypy3-pure
+
 install:
     - pip install wheel tox
     - ls -la wheelhouse

@@ -27,6 +27,7 @@ typedef struct unpack_user {
     PyObject *ext_hook;
     const char *encoding;
     const char *unicode_errors;
+    Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
 } unpack_user;
 
 typedef PyObject* msgpack_unpack_object;
@@ -68,7 +69,7 @@ static inline int unpack_callback_uint64(unpack_user* u, uint64_t d, msgpack_unp
     if (d > LONG_MAX) {
         p = PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG)d);
     } else {
-        p = PyInt_FromLong((long)d);
+        p = PyInt_FromSize_t((size_t)d);
     }
     if (!p)
         return -1;
@@ -132,6 +133,10 @@ static inline int unpack_callback_false(unpack_user* u, msgpack_unpack_object* o
 
 static inline int unpack_callback_array(unpack_user* u, unsigned int n, msgpack_unpack_object* o)
 {
+    if (n > u->max_array_len) {
+        PyErr_Format(PyExc_ValueError, "%u exceeds max_array_len(%zd)", n, u->max_array_len);
+        return -1;
+    }
     PyObject *p = u->use_list ? PyList_New(n) : PyTuple_New(n);
 
     if (!p)
@@ -163,6 +168,10 @@ static inline int unpack_callback_array_end(unpack_user* u, msgpack_unpack_objec
 
 static inline int unpack_callback_map(unpack_user* u, unsigned int n, msgpack_unpack_object* o)
 {
+    if (n > u->max_map_len) {
+        PyErr_Format(PyExc_ValueError, "%u exceeds max_map_len(%zd)", n, u->max_map_len);
+        return -1;
+    }
     PyObject *p;
     if (u->has_pairs_hook) {
         p = PyList_New(n); // Or use tuple?
@@ -210,6 +219,11 @@ static inline int unpack_callback_map_end(unpack_user* u, msgpack_unpack_object*
 
 static inline int unpack_callback_raw(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
 {
+    if (l > u->max_str_len) {
+        PyErr_Format(PyExc_ValueError, "%u exceeds max_str_len(%zd)", l, u->max_str_len);
+        return -1;
+    }
+
     PyObject *py;
     if(u->encoding) {
         py = PyUnicode_Decode(p, l, u->encoding, u->unicode_errors);
@@ -224,6 +238,11 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
 
 static inline int unpack_callback_bin(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
 {
+    if (l > u->max_bin_len) {
+        PyErr_Format(PyExc_ValueError, "%u exceeds max_bin_len(%zd)", l, u->max_bin_len);
+        return -1;
+    }
+
     PyObject *py = PyBytes_FromStringAndSize(p, l);
     if (!py)
         return -1;
@@ -232,7 +251,7 @@ static inline int unpack_callback_bin(unpack_user* u, const char* b, const char*
 }
 
 static inline int unpack_callback_ext(unpack_user* u, const char* base, const char* pos,
-                                      unsigned int lenght, msgpack_unpack_object* o)
+                                      unsigned int length, msgpack_unpack_object* o)
 {
     PyObject *py;
     int8_t typecode = (int8_t)*pos++;
@@ -240,11 +259,15 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
         PyErr_SetString(PyExc_AssertionError, "u->ext_hook cannot be NULL");
         return -1;
     }
-    // length also includes the typecode, so the actual data is lenght-1
+    if (length-1 > u->max_ext_len) {
+        PyErr_Format(PyExc_ValueError, "%u exceeds max_ext_len(%zd)", length, u->max_ext_len);
+        return -1;
+    }
+    // length also includes the typecode, so the actual data is length-1
 #if PY_MAJOR_VERSION == 2
-    py = PyObject_CallFunction(u->ext_hook, "(is#)", typecode, pos, lenght-1);
+    py = PyObject_CallFunction(u->ext_hook, "(is#)", typecode, pos, length-1);
 #else
-    py = PyObject_CallFunction(u->ext_hook, "(iy#)", typecode, pos, lenght-1);
+    py = PyObject_CallFunction(u->ext_hook, "(iy#)", typecode, pos, length-1);
 #endif
     if (!py)
         return -1;

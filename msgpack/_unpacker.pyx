@@ -28,6 +28,11 @@ cdef extern from "unpack.h":
         PyObject* ext_hook
         char *encoding
         char *unicode_errors
+        Py_ssize_t max_str_len
+        Py_ssize_t max_bin_len
+        Py_ssize_t max_array_len
+        Py_ssize_t max_map_len
+        Py_ssize_t max_ext_len
 
     ctypedef struct unpack_context:
         msgpack_user user
@@ -46,10 +51,18 @@ cdef extern from "unpack.h":
 cdef inline init_ctx(unpack_context *ctx,
                      object object_hook, object object_pairs_hook,
                      object list_hook, object ext_hook,
-                     bint use_list, char* encoding, char* unicode_errors):
+                     bint use_list, char* encoding, char* unicode_errors,
+                     Py_ssize_t max_str_len, Py_ssize_t max_bin_len,
+                     Py_ssize_t max_array_len, Py_ssize_t max_map_len,
+                     Py_ssize_t max_ext_len):
     unpack_init(ctx)
     ctx.user.use_list = use_list
     ctx.user.object_hook = ctx.user.list_hook = <PyObject*>NULL
+    ctx.user.max_str_len = max_str_len
+    ctx.user.max_bin_len = max_bin_len
+    ctx.user.max_array_len = max_array_len
+    ctx.user.max_map_len = max_map_len
+    ctx.user.max_ext_len = max_ext_len
 
     if object_hook is not None and object_pairs_hook is not None:
         raise TypeError("object_pairs_hook and object_hook are mutually exclusive.")
@@ -85,7 +98,12 @@ def default_read_extended_type(typecode, data):
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=1, encoding=None, unicode_errors="strict",
-            object_pairs_hook=None, ext_hook=ExtType):
+            object_pairs_hook=None, ext_hook=ExtType,
+            Py_ssize_t max_str_len=2147483647, # 2**32-1
+            Py_ssize_t max_bin_len=2147483647,
+            Py_ssize_t max_array_len=2147483647,
+            Py_ssize_t max_map_len=2147483647,
+            Py_ssize_t max_ext_len=2147483647):
     """
     Unpack packed_bytes to object. Returns an unpacked object.
 
@@ -115,7 +133,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         cerr = PyBytes_AsString(unicode_errors)
 
     init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
-             use_list, cenc, cerr)
+             use_list, cenc, cerr,
+             max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
     ret = unpack_construct(&ctx, buf, buf_len, &off)
     if ret == 1:
         obj = unpack_data(&ctx)
@@ -144,8 +163,7 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
 
 
 cdef class Unpacker(object):
-    """
-    Streaming unpacker.
+    """Streaming unpacker.
 
     arguments:
 
@@ -182,6 +200,19 @@ cdef class Unpacker(object):
         Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
         Raises `BufferFull` exception when it is insufficient.
         You shoud set this parameter when unpacking data from untrasted source.
+
+    :param int max_str_len:
+        Limits max length of str. (default: 2**31-1)
+
+    :param int max_bin_len:
+        Limits max length of bin. (default: 2**31-1)
+
+    :param int max_array_len:
+        Limits max length of array. (default: 2**31-1)
+
+    :param int max_map_len:
+        Limits max length of map. (default: 2**31-1)
+
 
     example of streaming deserialize from file-like object::
 
@@ -220,8 +251,13 @@ cdef class Unpacker(object):
 
     def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
-                 str encoding=None, str unicode_errors='strict', int max_buffer_size=0,
-                 object ext_hook=ExtType):
+                 encoding=None, unicode_errors='strict', int max_buffer_size=0,
+                 object ext_hook=ExtType,
+                 Py_ssize_t max_str_len=2147483647, # 2**32-1
+                 Py_ssize_t max_bin_len=2147483647,
+                 Py_ssize_t max_array_len=2147483647,
+                 Py_ssize_t max_map_len=2147483647,
+                 Py_ssize_t max_ext_len=2147483647):
         cdef char *cenc=NULL,
         cdef char *cerr=NULL
 
@@ -253,19 +289,25 @@ cdef class Unpacker(object):
         if encoding is not None:
             if isinstance(encoding, unicode):
                 self.encoding = encoding.encode('ascii')
-            else:
+            elif isinstance(encoding, bytes):
                 self.encoding = encoding
+            else:
+                raise TypeError("encoding should be bytes or unicode")
             cenc = PyBytes_AsString(self.encoding)
 
         if unicode_errors is not None:
             if isinstance(unicode_errors, unicode):
                 self.unicode_errors = unicode_errors.encode('ascii')
-            else:
+            elif isinstance(unicode_errors, bytes):
                 self.unicode_errors = unicode_errors
+            else:
+                raise TypeError("unicode_errors should be bytes or unicode")
             cerr = PyBytes_AsString(self.unicode_errors)
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
-                 ext_hook, use_list, cenc, cerr)
+                 ext_hook, use_list, cenc, cerr,
+                 max_str_len, max_bin_len, max_array_len,
+                 max_map_len, max_ext_len)
 
     def feed(self, object next_bytes):
         """Append `next_bytes` to internal buffer."""
@@ -365,7 +407,7 @@ cdef class Unpacker(object):
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
     def read_bytes(self, Py_ssize_t nbytes):
-        """read a specified number of raw bytes from the stream"""
+        """Read a specified number of raw bytes from the stream"""
         cdef size_t nread
         nread = min(self.buf_tail - self.buf_head, nbytes)
         ret = PyBytes_FromStringAndSize(self.buf + self.buf_head, nread)
@@ -375,8 +417,7 @@ cdef class Unpacker(object):
         return ret
 
     def unpack(self, object write_bytes=None):
-        """
-        unpack one object
+        """Unpack one object
 
         If write_bytes is not None, it will be called with parts of the raw
         message as it is unpacked.
@@ -386,8 +427,7 @@ cdef class Unpacker(object):
         return self._unpack(unpack_construct, write_bytes)
 
     def skip(self, object write_bytes=None):
-        """
-        read and ignore one object, returning None
+        """Read and ignore one object, returning None
 
         If write_bytes is not None, it will be called with parts of the raw
         message as it is unpacked.
