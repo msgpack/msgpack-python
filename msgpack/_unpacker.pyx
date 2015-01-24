@@ -251,7 +251,7 @@ cdef class Unpacker(object):
 
     def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
-                 str encoding=None, str unicode_errors='strict', int max_buffer_size=0,
+                 encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  object ext_hook=ExtType,
                  Py_ssize_t max_str_len=2147483647, # 2**32-1
                  Py_ssize_t max_bin_len=2147483647,
@@ -289,15 +289,19 @@ cdef class Unpacker(object):
         if encoding is not None:
             if isinstance(encoding, unicode):
                 self.encoding = encoding.encode('ascii')
-            else:
+            elif isinstance(encoding, bytes):
                 self.encoding = encoding
+            else:
+                raise TypeError("encoding should be bytes or unicode")
             cenc = PyBytes_AsString(self.encoding)
 
         if unicode_errors is not None:
             if isinstance(unicode_errors, unicode):
                 self.unicode_errors = unicode_errors.encode('ascii')
-            else:
+            elif isinstance(unicode_errors, bytes):
                 self.unicode_errors = unicode_errors
+            else:
+                raise TypeError("unicode_errors should be bytes or unicode")
             cerr = PyBytes_AsString(self.unicode_errors)
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
