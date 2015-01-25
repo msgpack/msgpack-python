@@ -1,3 +1,21 @@
+0.4.5
+=====
+:release date: 2015-01-25
+
+Incompatible Changes
+--------------------
+
+Changes
+-------
+
+Bugs fixed
+----------
+
+* Fix test failure on pytest 2.3.  (by @ktdreyer)
+* Fix typos in ChangeLog.  (Thanks to @dmick)
+* Improve README.rst  (by @msabramo)
+
+
 0.4.4
 =====
 :release date: 2015-01-09
