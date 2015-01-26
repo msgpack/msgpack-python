@@ -84,3 +84,15 @@ def test_readbytes():
     assert unpacker.read_bytes(3) == b'oob'
     assert unpacker.unpack() == ord(b'a')
     assert unpacker.unpack() == ord(b'r')
+
+def test_issue124():
+    unpacker = Unpacker()
+    unpacker.feed('\xa1?\xa1!')
+    assert tuple(unpacker) == ('?', '!')
+    assert tuple(unpacker) == ()
+    unpacker.feed("\xa1?\xa1")
+    assert tuple(unpacker) == ('?',)
+    assert tuple(unpacker) == ()
+    unpacker.feed("!")
+    assert tuple(unpacker) == ('!',)
+    assert tuple(unpacker) == ()
