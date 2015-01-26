@@ -87,12 +87,12 @@ def test_readbytes():
 
 def test_issue124():
     unpacker = Unpacker()
-    unpacker.feed('\xa1?\xa1!')
-    assert tuple(unpacker) == ('?', '!')
+    unpacker.feed(b'\xa1?\xa1!')
+    assert tuple(unpacker) == (b'?', b'!')
     assert tuple(unpacker) == ()
-    unpacker.feed("\xa1?\xa1")
-    assert tuple(unpacker) == ('?',)
+    unpacker.feed(b"\xa1?\xa1")
+    assert tuple(unpacker) == (b'?',)
     assert tuple(unpacker) == ()
-    unpacker.feed("!")
-    assert tuple(unpacker) == ('!',)
+    unpacker.feed(b"!")
+    assert tuple(unpacker) == (b'!',)
     assert tuple(unpacker) == ()
