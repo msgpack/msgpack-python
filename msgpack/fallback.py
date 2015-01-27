@@ -187,10 +187,16 @@ class Unpacker(object):
                 raise TypeError("`file_like.read` must be callable")
             self.file_like = file_like
             self._fb_feeding = False
+
+        #: array of bytes feeded.
         self._fb_buffers = []
-        self._fb_buf_o = 0
+        #: Which buffer we currently reads
         self._fb_buf_i = 0
+        #: Which position we currently reads
+        self._fb_buf_o = 0
+        #: Total size of _fb_bufferes
         self._fb_buf_n = 0
+
         # When Unpacker is used as an iterable, between the calls to next(),
         # the buffer is not "consumed" completely, for efficiency sake.
         # Instead, it is done sloppily.  To make sure we raise BufferFull at
@@ -199,6 +205,7 @@ class Unpacker(object):
         # we raise an OutOfData) we need to rollback the buffer to the correct
         # state, which _fb_slopiness records.
         self._fb_sloppiness = 0
+
         self._max_buffer_size = max_buffer_size or 2**31-1
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
