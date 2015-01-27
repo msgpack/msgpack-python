@@ -195,6 +195,9 @@ class Unpacker(object):
         # the buffer is not "consumed" completely, for efficiency sake.
         # Instead, it is done sloppily.  To make sure we raise BufferFull at
         # the correct moments, we have to keep track of how sloppy we were.
+        # Furthermore, when the buffer is incomplete (that is: in the case
+        # we raise an OutOfData) we need to rollback the buffer to the correct
+        # state, which _fb_slopiness records.
         self._fb_sloppiness = 0
         self._max_buffer_size = max_buffer_size or 2**31-1
         if read_size > self._max_buffer_size:
@@ -283,7 +286,7 @@ class Unpacker(object):
 
     def _fb_rollback(self):
         self._fb_buf_i = 0
-        self._fb_buf_o = 0
+        self._fb_buf_o = self._fb_sloppiness
 
     def _fb_get_extradata(self):
         bufs = self._fb_buffers[self._fb_buf_i:]
