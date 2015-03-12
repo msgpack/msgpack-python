@@ -1,3 +1,14 @@
+0.4.6
+=====
+:release date: 2015-03-13
+
+Bugs fixed
+----------
+
+* fallback.Unpacker: Fix Data corruption when OutOfData.
+  This bug only affects "Streaming unpacking."
+
+
 0.4.5
 =====
 :release date: 2015-01-25
