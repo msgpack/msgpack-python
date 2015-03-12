@@ -7,6 +7,10 @@ language: python
 python:
     - 2.7
 
+branches:
+    only:
+        - master
+
 env:
     - TOXENV=py26-c,py27-c
     - TOXENV=py32-c,py33-c,py34-c
