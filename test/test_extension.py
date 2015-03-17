@@ -71,7 +71,7 @@ def test_overriding_hooks():
     obj = {"testval": long(1823746192837461928374619)}
     refobj = {"testval": default(obj["testval"])}
     refout = msgpack.packb(refobj)
-    assert isinstance(refout, str)
+    assert isinstance(refout, (str, bytes))
     testout = msgpack.packb(obj, default=default)
 
     assert refout == testout
