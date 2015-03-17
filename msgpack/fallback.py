@@ -624,10 +624,12 @@ class Packer(object):
         self._default = default
 
     def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT, isinstance=isinstance):
-        default_used = False
-        while True:
+        # default_used = False
+        # while True: # I think the only time this gets used is when it hits the default
             if nest_limit < 0:
                 raise PackValueError("recursion limit exceeded")
+            if self._default is not None:
+                obj = self._default(obj)
             if obj is None:
                 return self._buffer.write(b"\xc0")
             if isinstance(obj, bool):
@@ -724,10 +726,6 @@ class Packer(object):
             if isinstance(obj, dict):
                 return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
                                                nest_limit - 1)
-            if not default_used and self._default is not None:
-                obj = self._default(obj)
-                default_used = 1
-                continue
             raise TypeError("Cannot serialize %r" % obj)
 
     def pack(self, obj):
