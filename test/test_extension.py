@@ -57,11 +57,11 @@ def test_extension_type():
     obj2 = msgpack.unpackb(s, ext_hook=ext_hook)
     assert obj == obj2
 
+import sys
+if sys.version > '3':
+    long = int
 
 def test_overriding_hooks():
-    if sys.version > '3':
-        long = int
-
     def default(obj):
         if isinstance(obj, long):
             return {"__type__": "long", "__data__": str(obj)}
