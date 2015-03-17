@@ -59,6 +59,9 @@ def test_extension_type():
 
 
 def test_overriding_hooks():
+    if sys.version > '3':
+        long = int
+
     def default(obj):
         if isinstance(obj, long):
             return {"__type__": "long", "__data__": str(obj)}
