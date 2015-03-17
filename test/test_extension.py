@@ -42,7 +42,8 @@ def test_extension_type():
             typecode = 123 # application specific typecode
             data = obj.tostring()
             return ExtType(typecode, data)
-        raise TypeError("Unknwon type object %r" % (obj,))
+        # raise TypeError("Unknwon type object %r" % (obj,))
+        return obj
 
     def ext_hook(code, data):
         print('ext_hook called', code, data)
@@ -55,3 +56,22 @@ def test_extension_type():
     s = msgpack.packb(obj, default=default)
     obj2 = msgpack.unpackb(s, ext_hook=ext_hook)
     assert obj == obj2
+
+import sys
+if sys.version > '3':
+    long = int
+
+def test_overriding_hooks():
+    def default(obj):
+        if isinstance(obj, long):
+            return {"__type__": "long", "__data__": str(obj)}
+        else:
+            return obj
+
+    obj = {"testval": long(1823746192837461928374619)}
+    refobj = {"testval": default(obj["testval"])}
+    refout = msgpack.packb(refobj)
+    assert isinstance(refout, (str, bytes))
+    testout = msgpack.packb(obj, default=default)
+
+    assert refout == testout
