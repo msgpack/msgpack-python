@@ -124,101 +124,98 @@ cdef class Packer(object):
 
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded.")
+        if self._default is not None:
+            o = self._default(o)
 
-        while True:
-            if o is None:
-                ret = msgpack_pack_nil(&self.pk)
-            elif isinstance(o, bool):
+        if o is None:
+            ret = msgpack_pack_nil(&self.pk)
+        elif isinstance(o, bool):
                 if o:
                     ret = msgpack_pack_true(&self.pk)
                 else:
                     ret = msgpack_pack_false(&self.pk)
-            elif PyLong_Check(o):
-                # PyInt_Check(long) is True for Python 3.
-                # Sow we should test long before int.
-                if o > 0:
-                    ullval = o
-                    ret = msgpack_pack_unsigned_long_long(&self.pk, ullval)
-                else:
-                    llval = o
-                    ret = msgpack_pack_long_long(&self.pk, llval)
-            elif PyInt_Check(o):
-                longval = o
-                ret = msgpack_pack_long(&self.pk, longval)
-            elif PyFloat_Check(o):
-                if self.use_float:
-                   fval = o
-                   ret = msgpack_pack_float(&self.pk, fval)
-                else:
-                   dval = o
-                   ret = msgpack_pack_double(&self.pk, dval)
-            elif PyBytes_Check(o):
-                L = len(o)
-                if L > (2**32)-1:
-                    raise ValueError("bytes is too large")
-                rawval = o
-                ret = msgpack_pack_bin(&self.pk, L)
-                if ret == 0:
-                    ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-            elif PyUnicode_Check(o):
-                if not self.encoding:
-                    raise TypeError("Can't encode unicode string: no encoding is specified")
-                o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
-                L = len(o)
-                if L > (2**32)-1:
-                    raise ValueError("dict is too large")
-                rawval = o
-                ret = msgpack_pack_raw(&self.pk, len(o))
-                if ret == 0:
-                    ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
-            elif PyDict_CheckExact(o):
-                d = <dict>o
-                L = len(d)
-                if L > (2**32)-1:
-                    raise ValueError("dict is too large")
-                ret = msgpack_pack_map(&self.pk, L)
-                if ret == 0:
-                    for k, v in d.iteritems():
-                        ret = self._pack(k, nest_limit-1)
-                        if ret != 0: break
-                        ret = self._pack(v, nest_limit-1)
-                        if ret != 0: break
-            elif PyDict_Check(o):
-                L = len(o)
-                if L > (2**32)-1:
-                    raise ValueError("dict is too large")
-                ret = msgpack_pack_map(&self.pk, L)
-                if ret == 0:
-                    for k, v in o.items():
-                        ret = self._pack(k, nest_limit-1)
-                        if ret != 0: break
-                        ret = self._pack(v, nest_limit-1)
-                        if ret != 0: break
-            elif isinstance(o, ExtType):
-                # This should be before Tuple because ExtType is namedtuple.
-                longval = o.code
-                rawval = o.data
-                L = len(o.data)
-                if L > (2**32)-1:
-                    raise ValueError("EXT data is too large")
-                ret = msgpack_pack_ext(&self.pk, longval, L)
-                ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-            elif PyTuple_Check(o) or PyList_Check(o):
-                L = len(o)
-                if L > (2**32)-1:
-                    raise ValueError("list is too large")
-                ret = msgpack_pack_array(&self.pk, L)
-                if ret == 0:
-                    for v in o:
-                        ret = self._pack(v, nest_limit-1)
-                        if ret != 0: break
-            elif not default_used and self._default:
-                o = self._default(o)
-                default_used = 1
-                continue
+        elif PyLong_Check(o):
+            # PyInt_Check(long) is True for Python 3.
+            # Sow we should test long before int.
+            if o > 0:
+                ullval = o
+                ret = msgpack_pack_unsigned_long_long(&self.pk, ullval)
             else:
-                raise TypeError("can't serialize %r" % (o,))
-            return ret
+                llval = o
+                ret = msgpack_pack_long_long(&self.pk, llval)
+        elif PyInt_Check(o):
+            longval = o
+            ret = msgpack_pack_long(&self.pk, longval)
+        elif PyFloat_Check(o):
+            if self.use_float:
+               fval = o
+               ret = msgpack_pack_float(&self.pk, fval)
+            else:
+               dval = o
+               ret = msgpack_pack_double(&self.pk, dval)
+        elif PyBytes_Check(o):
+            L = len(o)
+            if L > (2**32)-1:
+                raise ValueError("bytes is too large")
+            rawval = o
+            ret = msgpack_pack_bin(&self.pk, L)
+            if ret == 0:
+                ret = msgpack_pack_raw_body(&self.pk, rawval, L)
+        elif PyUnicode_Check(o):
+            if not self.encoding:
+                raise TypeError("Can't encode unicode string: no encoding is specified")
+            o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
+            L = len(o)
+            if L > (2**32)-1:
+                raise ValueError("dict is too large")
+            rawval = o
+            ret = msgpack_pack_raw(&self.pk, len(o))
+            if ret == 0:
+                ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
+        elif PyDict_CheckExact(o):
+            d = <dict>o
+            L = len(d)
+            if L > (2**32)-1:
+                raise ValueError("dict is too large")
+            ret = msgpack_pack_map(&self.pk, L)
+            if ret == 0:
+                for k, v in d.iteritems():
+                    ret = self._pack(k, nest_limit-1)
+                    if ret != 0: break
+                    ret = self._pack(v, nest_limit-1)
+                    if ret != 0: break
+        elif PyDict_Check(o):
+            L = len(o)
+            if L > (2**32)-1:
+                raise ValueError("dict is too large")
+            ret = msgpack_pack_map(&self.pk, L)
+            if ret == 0:
+                for k, v in o.items():
+                    ret = self._pack(k, nest_limit-1)
+                    if ret != 0: break
+                    ret = self._pack(v, nest_limit-1)
+                    if ret != 0: break
+        elif isinstance(o, ExtType):
+            # This should be before Tuple because ExtType is namedtuple.
+            longval = o.code
+            rawval = o.data
+            L = len(o.data)
+            if L > (2**32)-1:
+                raise ValueError("EXT data is too large")
+            ret = msgpack_pack_ext(&self.pk, longval, L)
+            ret = msgpack_pack_raw_body(&self.pk, rawval, L)
+        elif PyTuple_Check(o) or PyList_Check(o):
+            L = len(o)
+            if L > (2**32)-1:
+                raise ValueError("list is too large")
+            ret = msgpack_pack_array(&self.pk, L)
+            if ret == 0:
+                for v in o:
+                    ret = self._pack(v, nest_limit-1)
+                    if ret != 0: break
+        else:
+            raise TypeError("can't serialize %r" % (o,))
+        return ret
 
     cpdef pack(self, object obj):
         cdef int ret
