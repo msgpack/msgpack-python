@@ -624,109 +624,107 @@ class Packer(object):
         self._default = default
 
     def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT, isinstance=isinstance):
-        # default_used = False
-        # while True: # I think the only time this gets used is when it hits the default
-            if nest_limit < 0:
-                raise PackValueError("recursion limit exceeded")
-            if self._default is not None:
-                obj = self._default(obj)
-            if obj is None:
-                return self._buffer.write(b"\xc0")
-            if isinstance(obj, bool):
-                if obj:
-                    return self._buffer.write(b"\xc3")
-                return self._buffer.write(b"\xc2")
-            if isinstance(obj, int_types):
-                if 0 <= obj < 0x80:
-                    return self._buffer.write(struct.pack("B", obj))
-                if -0x20 <= obj < 0:
-                    return self._buffer.write(struct.pack("b", obj))
-                if 0x80 <= obj <= 0xff:
-                    return self._buffer.write(struct.pack("BB", 0xcc, obj))
-                if -0x80 <= obj < 0:
-                    return self._buffer.write(struct.pack(">Bb", 0xd0, obj))
-                if 0xff < obj <= 0xffff:
-                    return self._buffer.write(struct.pack(">BH", 0xcd, obj))
-                if -0x8000 <= obj < -0x80:
-                    return self._buffer.write(struct.pack(">Bh", 0xd1, obj))
-                if 0xffff < obj <= 0xffffffff:
-                    return self._buffer.write(struct.pack(">BI", 0xce, obj))
-                if -0x80000000 <= obj < -0x8000:
-                    return self._buffer.write(struct.pack(">Bi", 0xd2, obj))
-                if 0xffffffff < obj <= 0xffffffffffffffff:
-                    return self._buffer.write(struct.pack(">BQ", 0xcf, obj))
-                if -0x8000000000000000 <= obj < -0x80000000:
-                    return self._buffer.write(struct.pack(">Bq", 0xd3, obj))
-                raise PackValueError("Integer value out of range")
-            if self._use_bin_type and isinstance(obj, bytes):
-                n = len(obj)
-                if n <= 0xff:
-                    self._buffer.write(struct.pack('>BB', 0xc4, n))
-                elif n <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xc5, n))
-                elif n <= 0xffffffff:
-                    self._buffer.write(struct.pack(">BI", 0xc6, n))
-                else:
-                    raise PackValueError("Bytes is too large")
-                return self._buffer.write(obj)
-            if isinstance(obj, (Unicode, bytes)):
-                if isinstance(obj, Unicode):
-                    if self._encoding is None:
-                        raise TypeError(
-                            "Can't encode unicode string: "
-                            "no encoding is specified")
-                    obj = obj.encode(self._encoding, self._unicode_errors)
-                n = len(obj)
-                if n <= 0x1f:
-                    self._buffer.write(struct.pack('B', 0xa0 + n))
-                elif self._use_bin_type and n <= 0xff:
-                    self._buffer.write(struct.pack('>BB', 0xd9, n))
-                elif n <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xda, n))
-                elif n <= 0xffffffff:
-                    self._buffer.write(struct.pack(">BI", 0xdb, n))
-                else:
-                    raise PackValueError("String is too large")
-                return self._buffer.write(obj)
-            if isinstance(obj, float):
-                if self._use_float:
-                    return self._buffer.write(struct.pack(">Bf", 0xca, obj))
-                return self._buffer.write(struct.pack(">Bd", 0xcb, obj))
-            if isinstance(obj, ExtType):
-                code = obj.code
-                data = obj.data
-                assert isinstance(code, int)
-                assert isinstance(data, bytes)
-                L = len(data)
-                if L == 1:
-                    self._buffer.write(b'\xd4')
-                elif L == 2:
-                    self._buffer.write(b'\xd5')
-                elif L == 4:
-                    self._buffer.write(b'\xd6')
-                elif L == 8:
-                    self._buffer.write(b'\xd7')
-                elif L == 16:
-                    self._buffer.write(b'\xd8')
-                elif L <= 0xff:
-                    self._buffer.write(struct.pack(">BB", 0xc7, L))
-                elif L <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xc8, L))
-                else:
-                    self._buffer.write(struct.pack(">BI", 0xc9, L))
-                self._buffer.write(struct.pack("b", code))
-                self._buffer.write(data)
-                return
-            if isinstance(obj, (list, tuple)):
-                n = len(obj)
-                self._fb_pack_array_header(n)
-                for i in xrange(n):
-                    self._pack(obj[i], nest_limit - 1)
-                return
-            if isinstance(obj, dict):
-                return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
-                                               nest_limit - 1)
-            raise TypeError("Cannot serialize %r" % obj)
+        if nest_limit < 0:
+            raise PackValueError("recursion limit exceeded")
+        if self._default is not None:
+            obj = self._default(obj)
+        if obj is None:
+            return self._buffer.write(b"\xc0")
+        if isinstance(obj, bool):
+            if obj:
+                return self._buffer.write(b"\xc3")
+            return self._buffer.write(b"\xc2")
+        if isinstance(obj, int_types):
+            if 0 <= obj < 0x80:
+                return self._buffer.write(struct.pack("B", obj))
+            if -0x20 <= obj < 0:
+                return self._buffer.write(struct.pack("b", obj))
+            if 0x80 <= obj <= 0xff:
+                return self._buffer.write(struct.pack("BB", 0xcc, obj))
+            if -0x80 <= obj < 0:
+                return self._buffer.write(struct.pack(">Bb", 0xd0, obj))
+            if 0xff < obj <= 0xffff:
+                return self._buffer.write(struct.pack(">BH", 0xcd, obj))
+            if -0x8000 <= obj < -0x80:
+                return self._buffer.write(struct.pack(">Bh", 0xd1, obj))
+            if 0xffff < obj <= 0xffffffff:
+                return self._buffer.write(struct.pack(">BI", 0xce, obj))
+            if -0x80000000 <= obj < -0x8000:
+                return self._buffer.write(struct.pack(">Bi", 0xd2, obj))
+            if 0xffffffff < obj <= 0xffffffffffffffff:
+                return self._buffer.write(struct.pack(">BQ", 0xcf, obj))
+            if -0x8000000000000000 <= obj < -0x80000000:
+                return self._buffer.write(struct.pack(">Bq", 0xd3, obj))
+            raise PackValueError("Integer value out of range")
+        if self._use_bin_type and isinstance(obj, bytes):
+            n = len(obj)
+            if n <= 0xff:
+                self._buffer.write(struct.pack('>BB', 0xc4, n))
+            elif n <= 0xffff:
+                self._buffer.write(struct.pack(">BH", 0xc5, n))
+            elif n <= 0xffffffff:
+                self._buffer.write(struct.pack(">BI", 0xc6, n))
+            else:
+                raise PackValueError("Bytes is too large")
+            return self._buffer.write(obj)
+        if isinstance(obj, (Unicode, bytes)):
+            if isinstance(obj, Unicode):
+                if self._encoding is None:
+                    raise TypeError(
+                        "Can't encode unicode string: "
+                        "no encoding is specified")
+                obj = obj.encode(self._encoding, self._unicode_errors)
+            n = len(obj)
+            if n <= 0x1f:
+                self._buffer.write(struct.pack('B', 0xa0 + n))
+            elif self._use_bin_type and n <= 0xff:
+                self._buffer.write(struct.pack('>BB', 0xd9, n))
+            elif n <= 0xffff:
+                self._buffer.write(struct.pack(">BH", 0xda, n))
+            elif n <= 0xffffffff:
+                self._buffer.write(struct.pack(">BI", 0xdb, n))
+            else:
+                raise PackValueError("String is too large")
+            return self._buffer.write(obj)
+        if isinstance(obj, float):
+            if self._use_float:
+                return self._buffer.write(struct.pack(">Bf", 0xca, obj))
+            return self._buffer.write(struct.pack(">Bd", 0xcb, obj))
+        if isinstance(obj, ExtType):
+            code = obj.code
+            data = obj.data
+            assert isinstance(code, int)
+            assert isinstance(data, bytes)
+            L = len(data)
+            if L == 1:
+                self._buffer.write(b'\xd4')
+            elif L == 2:
+                self._buffer.write(b'\xd5')
+            elif L == 4:
+                self._buffer.write(b'\xd6')
+            elif L == 8:
+                self._buffer.write(b'\xd7')
+            elif L == 16:
+                self._buffer.write(b'\xd8')
+            elif L <= 0xff:
+                self._buffer.write(struct.pack(">BB", 0xc7, L))
+            elif L <= 0xffff:
+                self._buffer.write(struct.pack(">BH", 0xc8, L))
+            else:
+                self._buffer.write(struct.pack(">BI", 0xc9, L))
+            self._buffer.write(struct.pack("b", code))
+            self._buffer.write(data)
+            return
+        if isinstance(obj, (list, tuple)):
+            n = len(obj)
+            self._fb_pack_array_header(n)
+            for i in xrange(n):
+                self._pack(obj[i], nest_limit - 1)
+            return
+        if isinstance(obj, dict):
+            return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
+                                           nest_limit - 1)
+        raise TypeError("Cannot serialize %r" % obj)
 
     def pack(self, obj):
         self._pack(obj)
