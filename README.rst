@@ -37,7 +37,7 @@ Windows
 
 When you can't use binary distribution, you need to install Visual Studio
 or Windows SDK on Windows. (NOTE: Visual C++ Express 2010 doesn't support
-amd64. Windows SDK is recommanded way to build amd64 msgpack without any fee.)
+amd64. Windows SDK is recommended way to build amd64 msgpack without any fee.)
 
 Without extension, using pure python implementation on CPython runs slowly.
 
