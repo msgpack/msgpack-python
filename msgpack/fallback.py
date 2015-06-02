@@ -36,6 +36,8 @@ if hasattr(sys, 'pypy_version_info'):
             else:
                 self.builder = StringBuilder()
         def write(self, s):
+            if isinstance(s, bytearray):
+                s = str(s)
             self.builder.append(s)
         def getvalue(self):
             return self.builder.build()
