@@ -662,7 +662,7 @@ static inline int msgpack_pack_map(msgpack_packer* x, unsigned int n)
  * Raw
  */
 
-static inline int msgpack_pack_raw(msgpack_packer* x, size_t l)
+static inline int msgpack_pack_str(msgpack_packer* x, size_t l)
 {
     if (l < 32) {
         unsigned char d = 0xa0 | (uint8_t)l;
@@ -687,7 +687,7 @@ static inline int msgpack_pack_raw(msgpack_packer* x, size_t l)
 static inline int msgpack_pack_bin(msgpack_packer *x, size_t l)
 {
     if (!x->use_bin_type) {
-        return msgpack_pack_raw(x, l);
+        return msgpack_pack_str(x, l);
     }
     if (l < 256) {
         unsigned char buf[2] = {0xc4, (unsigned char)l};

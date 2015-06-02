@@ -28,7 +28,7 @@ cdef extern from "pack.h":
     int msgpack_pack_double(msgpack_packer* pk, double d)
     int msgpack_pack_array(msgpack_packer* pk, size_t l)
     int msgpack_pack_map(msgpack_packer* pk, size_t l)
-    int msgpack_pack_raw(msgpack_packer* pk, size_t l)
+    int msgpack_pack_str(msgpack_packer* pk, size_t l)
     int msgpack_pack_bin(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
@@ -168,7 +168,7 @@ cdef class Packer(object):
                 if L > (2**32)-1:
                     raise ValueError("dict is too large")
                 rawval = o
-                ret = msgpack_pack_raw(&self.pk, len(o))
+                ret = msgpack_pack_str(&self.pk, len(o))
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
             elif PyDict_CheckExact(o):
