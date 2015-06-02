@@ -157,7 +157,10 @@ cdef class Packer(object):
                 if L > (2**32)-1:
                     raise ValueError("bytes is too large")
                 rawval = o
-                ret = msgpack_pack_bin(&self.pk, L)
+                if self.pk.use_bin_type:
+                    ret = msgpack_pack_bin(&self.pk, L)
+                else:
+                    ret = msgpack_pack_str(&self.pk, L)
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyUnicode_Check(o):
