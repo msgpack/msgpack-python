@@ -25,7 +25,7 @@ def test_bin8():
     bin_header = b'\xc4'
     data = b''
     # Test raw encoding of strings in Python 2.X even with bin type enabled
-    if sys.version_info.major < 3:
+    if sys.version_info[0] < 3:
         b = packb(data, use_bin_type=True)
         assert len(b) == len(data) + 1
         assert b[0:1] == b'\xa0'
@@ -40,7 +40,7 @@ def test_bin8():
 
     data = b'x' * 255
     # Test raw encoding of strings in Python 2.X even with bin type enabled
-    if sys.version_info.major < 3:
+    if sys.version_info[0] < 3:
         b = packb(data, use_bin_type=True)
         assert len(b) == len(data) + 2
         assert b[0:2] == b'\xd9' + b'\xff'
@@ -59,7 +59,7 @@ def test_bin16():
     bin_header = b'\xc5'
     data = b'x' * 256
     # Test raw encoding of strings in Python 2.X even with bin type enabled
-    if sys.version_info.major < 3:
+    if sys.version_info[0] < 3:
         b = packb(data, use_bin_type=True)
         assert len(b) == len(data) + 3
         assert b[0:1] == str_header
@@ -76,7 +76,7 @@ def test_bin16():
 
     data = b'x' * 65535
     # Test raw encoding of strings in Python 2.X even with bin type enabled
-    if sys.version_info.major < 3:
+    if sys.version_info[0] < 3:
         b = packb(data, use_bin_type=True)
         assert len(b) == len(data) + 3
         assert b[0:1] == str_header
@@ -97,7 +97,7 @@ def test_bin32():
     bin_header = b'\xc6'
     data = b'x' * 65536
     # Test raw encoding of strings in Python 2.X even with bin type enabled
-    if sys.version_info.major < 3:
+    if sys.version_info[0] < 3:
         b = packb(data, use_bin_type=True)
         assert len(b) == len(data) + 5
         assert b[0:1] == str_header

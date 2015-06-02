@@ -49,7 +49,7 @@ def test_max_str_len():
 
 def test_max_bin_len():
     d = b'x' * 3
-    if sys.version_info.major < 3:
+    if sys.version_info[0] < 3:
         d = bytearray(d)
     packed = packb(d, use_bin_type=True)
 

@@ -664,7 +664,7 @@ class Packer(object):
             if isinstance(obj, bytes):
                 # In Python 2.X, 'bytes' is equivalent to 'str' so we don't convert
                 # strings implicitly to bin
-                if sys.version_info.major < 3:
+                if sys.version_info[0] < 3:
                     return self.pack_str(obj)
                 else:
                     if self._use_bin_type:
