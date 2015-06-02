@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
+import sys
 import pytest
 
 from msgpack import packb, unpackb, Packer, Unpacker, ExtType
@@ -48,6 +49,8 @@ def test_max_str_len():
 
 def test_max_bin_len():
     d = b'x' * 3
+    if sys.version_info[0] < 3:
+        d = bytearray(d)
     packed = packb(d, use_bin_type=True)
 
     unpacker = Unpacker(max_bin_len=3)
