@@ -2,6 +2,7 @@
 #cython: embedsignature=True
 
 from cpython cimport *
+from cpython.version cimport PY_MAJOR_VERSION
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *
@@ -9,6 +10,8 @@ from libc.limits cimport *
 from msgpack.exceptions import PackValueError
 from msgpack import ExtType
 
+cdef extern from "Python.h":
+    cdef int PyByteArray_Check(object o)
 
 cdef extern from "pack.h":
     struct msgpack_packer:
@@ -152,15 +155,31 @@ cdef class Packer(object):
                 else:
                    dval = o
                    ret = msgpack_pack_double(&self.pk, dval)
-            elif PyBytes_Check(o):
+            elif PyByteArray_Check(o):
                 L = len(o)
                 if L > (2**32)-1:
-                    raise ValueError("bytes is too large")
+                    raise ValueError("bytearray is too large")
                 rawval = o
                 if self.pk.use_bin_type:
                     ret = msgpack_pack_bin(&self.pk, L)
                 else:
                     ret = msgpack_pack_str(&self.pk, L)
+                if ret == 0:
+                    ret = msgpack_pack_raw_body(&self.pk, rawval, L)
+            elif PyBytes_Check(o):
+                L = len(o)
+                if L > (2**32)-1:
+                    raise ValueError("bytes is too large")
+                rawval = o
+                # In Python 2.X, 'bytes' is equivalent to 'str' so we don't convert
+                # strings implicitly to bin
+                if PY_MAJOR_VERSION < 3:
+                    ret = msgpack_pack_str(&self.pk, L)
+                else:
+                    if self.pk.use_bin_type:
+                        ret = msgpack_pack_bin(&self.pk, L)
+                    else:
+                        ret = msgpack_pack_str(&self.pk, L)
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyUnicode_Check(o):
@@ -169,7 +188,7 @@ cdef class Packer(object):
                 o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
                 L = len(o)
                 if L > (2**32)-1:
-                    raise ValueError("dict is too large")
+                    raise ValueError("unicode string is too large")
                 rawval = o
                 ret = msgpack_pack_str(&self.pk, len(o))
                 if ret == 0:

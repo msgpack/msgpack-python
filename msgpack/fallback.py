@@ -656,36 +656,28 @@ class Packer(object):
                 if -0x8000000000000000 <= obj < -0x80000000:
                     return self._buffer.write(struct.pack(">Bq", 0xd3, obj))
                 raise PackValueError("Integer value out of range")
-            if self._use_bin_type and isinstance(obj, bytes):
-                n = len(obj)
-                if n <= 0xff:
-                    self._buffer.write(struct.pack('>BB', 0xc4, n))
-                elif n <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xc5, n))
-                elif n <= 0xffffffff:
-                    self._buffer.write(struct.pack(">BI", 0xc6, n))
+            if isinstance(obj, bytearray):
+                if self._use_bin_type:
+                    return self.pack_bin(obj)
                 else:
-                    raise PackValueError("Bytes is too large")
-                return self._buffer.write(obj)
-            if isinstance(obj, (Unicode, bytes)):
-                if isinstance(obj, Unicode):
-                    if self._encoding is None:
-                        raise TypeError(
-                            "Can't encode unicode string: "
-                            "no encoding is specified")
-                    obj = obj.encode(self._encoding, self._unicode_errors)
-                n = len(obj)
-                if n <= 0x1f:
-                    self._buffer.write(struct.pack('B', 0xa0 + n))
-                elif self._use_bin_type and n <= 0xff:
-                    self._buffer.write(struct.pack('>BB', 0xd9, n))
-                elif n <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xda, n))
-                elif n <= 0xffffffff:
-                    self._buffer.write(struct.pack(">BI", 0xdb, n))
+                    return self.pack_str(obj)
+            if isinstance(obj, bytes):
+                # In Python 2.X, 'bytes' is equivalent to 'str' so we don't convert
+                # strings implicitly to bin
+                if sys.version_info.major < 3:
+                    return self.pack_str(obj)
                 else:
-                    raise PackValueError("String is too large")
-                return self._buffer.write(obj)
+                    if self._use_bin_type:
+                        return self.pack_bin(obj)
+                    else:
+                        return self.pack_str(obj)
+            if isinstance(obj, Unicode):
+                if self._encoding is None:
+                    raise TypeError(
+                        "Can't encode unicode string: "
+                        "no encoding is specified")
+                obj = obj.encode(self._encoding, self._unicode_errors)
+                return self.pack_str(obj)
             if isinstance(obj, float):
                 if self._use_float:
                     return self._buffer.write(struct.pack(">Bf", 0xca, obj))
@@ -769,6 +761,32 @@ class Packer(object):
         elif USING_STRINGBUILDER:
             self._buffer = StringIO(ret)
         return ret
+
+    def pack_bin(self, obj):
+        n = len(obj)
+        if n <= 0xff:
+            self._buffer.write(struct.pack('>BB', 0xc4, n))
+        elif n <= 0xffff:
+            self._buffer.write(struct.pack(">BH", 0xc5, n))
+        elif n <= 0xffffffff:
+            self._buffer.write(struct.pack(">BI", 0xc6, n))
+        else:
+            raise PackValueError("Binary data is too large")
+        return self._buffer.write(obj)
+
+    def pack_str(self, obj):
+        n = len(obj)
+        if n <= 0x1f:
+            self._buffer.write(struct.pack('B', 0xa0 + n))
+        elif self._use_bin_type and n <= 0xff:
+            self._buffer.write(struct.pack('>BB', 0xd9, n))
+        elif n <= 0xffff:
+            self._buffer.write(struct.pack(">BH", 0xda, n))
+        elif n <= 0xffffffff:
+            self._buffer.write(struct.pack(">BI", 0xdb, n))
+        else:
+            raise PackValueError("String is too large")
+        return self._buffer.write(obj)
 
     def pack_ext_type(self, typecode, data):
         if not isinstance(typecode, int):
