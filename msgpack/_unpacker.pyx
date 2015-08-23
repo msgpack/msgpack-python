@@ -147,7 +147,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
            bint use_list=1, encoding=None, unicode_errors="strict",
-           object_pairs_hook=None,
+           object_pairs_hook=None, ext_hook=ExtType
            ):
     """
     Unpack an object from `stream`.
@@ -158,7 +158,7 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
     """
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, object_pairs_hook=object_pairs_hook, list_hook=list_hook,
-                   encoding=encoding, unicode_errors=unicode_errors,
+                   encoding=encoding, unicode_errors=unicode_errors, ext_hook=ext_hook
                    )
 
 
