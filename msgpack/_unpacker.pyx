@@ -458,6 +458,11 @@ cdef class Unpacker(object):
     def __next__(self):
         return self._unpack(unpack_construct, None, 1)
 
+    def reset(self):
+        """Clear internal buffer."""
+        self.buf_head = 0
+        self.buf_tail = 0
+
     # for debug.
     #def _buf(self):
     #    return PyString_FromStringAndSize(self.buf, self.buf_tail)
