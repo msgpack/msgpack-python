@@ -580,7 +580,12 @@ class Unpacker(object):
         ret = self._fb_unpack(EX_READ_MAP_HEADER, write_bytes)
         self._fb_consume()
         return ret
-
+      
+    def reset(self):
+        self._fb_buffers = []
+        self._fb_buf_i = 0
+        self._fb_buf_o = 0
+        self._fb_buf_n = 0
 
 class Packer(object):
     """
