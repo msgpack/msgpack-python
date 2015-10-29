@@ -49,7 +49,7 @@ class BuildExt(build_ext):
         try:
             return build_ext.build_extension(self, ext)
         except Exception as e:
-            print("WARNING: Failed to compile extensiom modules.")
+            print("WARNING: Failed to compile extension modules.")
             print("msgpack uses fallback pure python implementation.")
             print(e)
 
