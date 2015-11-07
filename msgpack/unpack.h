@@ -33,7 +33,7 @@ typedef struct unpack_user {
 typedef PyObject* msgpack_unpack_object;
 struct unpack_context;
 typedef struct unpack_context unpack_context;
-typedef int (*execute_fn)(unpack_context *ctx, const char* data, size_t len, size_t* off);
+typedef int (*execute_fn)(unpack_context *ctx, const char* data, Py_ssize_t len, Py_ssize_t* off);
 
 static inline msgpack_unpack_object unpack_callback_root(unpack_user* u)
 {
