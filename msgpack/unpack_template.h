@@ -24,8 +24,8 @@
 
 typedef struct unpack_stack {
     PyObject* obj;
-    size_t size;
-    size_t count;
+    Py_ssize_t size;
+    Py_ssize_t count;
     unsigned int ct;
     PyObject* map_key;
 } unpack_stack;
@@ -72,7 +72,7 @@ static inline PyObject* unpack_data(unpack_context* ctx)
 
 
 template <bool construct>
-static inline int unpack_execute(unpack_context* ctx, const char* data, size_t len, size_t* off)
+static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize_t len, Py_ssize_t* off)
 {
     assert(len >= *off);
 
@@ -89,7 +89,7 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, size_t l
     */
     unpack_user* user = &ctx->user;
 
-    PyObject* obj;
+    PyObject* obj = NULL;
     unpack_stack* c = NULL;
 
     int ret;
@@ -409,7 +409,7 @@ _end:
 #undef start_container
 
 template <unsigned int fixed_offset, unsigned int var_offset>
-static inline int unpack_container_header(unpack_context* ctx, const char* data, size_t len, size_t* off)
+static inline int unpack_container_header(unpack_context* ctx, const char* data, Py_ssize_t len, Py_ssize_t* off)
 {
     assert(len >= *off);
     uint32_t size;
