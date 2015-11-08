@@ -154,7 +154,6 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
            Py_ssize_t max_array_len=2147483647,
            Py_ssize_t max_map_len=2147483647,
            Py_ssize_t max_ext_len=2147483647):
-           ):
     """
     Unpack an object from `stream`.
 
