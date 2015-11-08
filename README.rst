@@ -42,54 +42,6 @@ is recommended solution.
 For Python 3.5, [Microsoft Visual Studio 2015](https://www.visualstudio.com/en-us/products/vs-2015-product-editions.aspx)
 Community Edition or Express Edition can be used to build extension module.
 
-Notes
------
-
-Note for msgpack 2.0 support
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-msgpack 2.0 adds two types: *bin* and *ext*.
-
-*raw* was bytes or string type like Python 2's ``str``.
-To distinguish string and bytes, msgpack 2.0 adds *bin*.
-It is non-string binary like Python 3's ``bytes``.
-
-To use *bin* type for packing ``bytes``, pass ``use_bin_type=True`` to
-packer argument.
-
-.. code-block:: pycon
-
-    >>> import msgpack
-    >>> packed = msgpack.packb([b'spam', u'egg'], use_bin_type=True)
-    >>> msgpack.unpackb(packed, encoding='utf-8')
-    ['spam', u'egg']
-
-You shoud use it carefully. When you use ``use_bin_type=True``, packed
-binary can be unpacked by unpackers supporting msgpack-2.0.
-
-To use *ext* type, pass ``msgpack.ExtType`` object to packer.
-
-.. code-block:: pycon
-
-    >>> import msgpack
-    >>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
-    >>> msgpack.unpackb(packed)
-    ExtType(code=42, data='xyzzy')
-
-You can use it with ``default`` and ``ext_hook``. See below.
-
-Note for msgpack 0.2.x users
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The msgpack 0.3 have some incompatible changes.
-
-The default value of ``use_list`` keyword argument is ``True`` from 0.3.
-You should pass the argument explicitly for backward compatibility.
-
-`Unpacker.unpack()` and some unpack methods now raises `OutOfData`
-instead of `StopIteration`.
-`StopIteration` is used for iterator protocol only.
-
 
 How to use
 -----------
@@ -184,7 +136,7 @@ key-value pairs.
 Extended types
 ^^^^^^^^^^^^^^^
 
-It is also possible to pack/unpack custom data types using the msgpack 2.0 feature.
+It is also possible to pack/unpack custom data types using the **ext** type.
 
 .. code-block:: pycon
 
@@ -238,6 +190,58 @@ callback function:
             unpacker.skip(bytestream.write)
             worker.send(bytestream.getvalue())
 
+
+Notes
+-----
+
+string and binary type
+^^^^^^^^^^^^^^^^^^^^^^
+
+In old days, msgpack doesn't distinguish string and binary types like Python 1.
+The type for represent string and binary types is named **raw**.
+
+msgpack can distinguish string and binary type for now.  But it is not like Python 2.
+Python 2 added unicode string.  But msgpack renamed **raw** to **str** and added **bin** type.
+It is because keep compatibility with data created by old libs. **raw** was used for text more than binary.
+
+Currently, while msgpack-python supports new **bin** type, default setting doesn't use it and
+decodes **raw** as `bytes` instead of `unicode` (`str` in Python 3).
+
+You can change this by using `use_bin_type=True` option in Packer and `encoding="utf-8"` option in Unpacker.
+
+.. code-block:: pycon
+
+    >>> import msgpack
+    >>> packed = msgpack.packb([b'spam', u'egg'], use_bin_type=True)
+    >>> msgpack.unpackb(packed, encoding='utf-8')
+    ['spam', u'egg']
+
+ext type
+^^^^^^^^
+
+To use **ext** type, pass ``msgpack.ExtType`` object to packer.
+
+.. code-block:: pycon
+
+    >>> import msgpack
+    >>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
+    >>> msgpack.unpackb(packed)
+    ExtType(code=42, data='xyzzy')
+
+You can use it with ``default`` and ``ext_hook``. See below.
+
+Note for msgpack-python 0.2.x users
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The msgpack-python 0.3 have some incompatible changes.
+
+The default value of ``use_list`` keyword argument is ``True`` from 0.3.
+You should pass the argument explicitly for backward compatibility.
+
+`Unpacker.unpack()` and some unpack methods now raises `OutOfData`
+instead of `StopIteration`.
+`StopIteration` is used for iterator protocol only.
+
 Note about performance
 ------------------------
 
@@ -259,12 +263,17 @@ Python's dict can't use list as key and MessagePack allows array for key of mapp
 Another way to unpacking such object is using ``object_pairs_hook``.
 
 
+Development
+------------
+
 Test
-----
+^^^^
+
 MessagePack uses `pytest` for testing.
 Run test with following command:
 
     $ py.test
+
 
 ..
     vim: filetype=rst
