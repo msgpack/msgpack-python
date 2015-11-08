@@ -36,10 +36,10 @@ When you can't use binary distribution, you need to install Visual Studio
 or Windows SDK on Windows.
 Without extension, using pure python implementation on CPython runs slowly.
 
-For Python 2.7, [Microsoft Visual C++ Compiler for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266)
+For Python 2.7, `Microsoft Visual C++ Compiler for Python 2.7 <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_
 is recommended solution.
 
-For Python 3.5, [Microsoft Visual Studio 2015](https://www.visualstudio.com/en-us/products/vs-2015-product-editions.aspx)
+For Python 3.5, `Microsoft Visual Studio 2015 <https://www.visualstudio.com/en-us/products/vs-2015-product-editions.aspx>`_
 Community Edition or Express Edition can be used to build extension module.
 
 
