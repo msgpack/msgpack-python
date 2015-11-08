@@ -9,3 +9,6 @@ dist/*
 msgpack/__version__.py
 msgpack/*.cpp
 *.egg-info
+/venv
+/tags
+/docs/_build
