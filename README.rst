@@ -33,10 +33,14 @@ Windows
 ^^^^^^^
 
 When you can't use binary distribution, you need to install Visual Studio
-or Windows SDK on Windows. (NOTE: Visual C++ Express 2010 doesn't support
-amd64. Windows SDK is recommended way to build amd64 msgpack without any fee.)
-
+or Windows SDK on Windows.
 Without extension, using pure python implementation on CPython runs slowly.
+
+For Python 2.7, [Microsoft Visual C++ Compiler for Python 2.7](https://www.microsoft.com/en-us/download/details.aspx?id=44266)
+is recommended solution.
+
+For Python 3.5, [Microsoft Visual Studio 2015](https://www.visualstudio.com/en-us/products/vs-2015-product-editions.aspx)
+Community Edition or Express Edition can be used to build extension module.
 
 Notes
 -----
