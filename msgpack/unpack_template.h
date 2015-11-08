@@ -70,7 +70,7 @@ static inline PyObject* unpack_data(unpack_context* ctx)
     return (ctx)->stack[0].obj;
 }
 
-static inline PyObject* unpack_clear(unpack_context *ctx)
+static inline void unpack_clear(unpack_context *ctx)
 {
     Py_CLEAR(ctx->stack[0].obj);
 }
