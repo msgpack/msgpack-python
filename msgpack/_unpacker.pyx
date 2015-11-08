@@ -148,7 +148,12 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
            bint use_list=1, encoding=None, unicode_errors="strict",
-           object_pairs_hook=None, ext_hook=ExtType
+           object_pairs_hook=None, ext_hook=ExtType,
+           Py_ssize_t max_str_len=2147483647, # 2**32-1
+           Py_ssize_t max_bin_len=2147483647,
+           Py_ssize_t max_array_len=2147483647,
+           Py_ssize_t max_map_len=2147483647,
+           Py_ssize_t max_ext_len=2147483647):
            ):
     """
     Unpack an object from `stream`.
@@ -159,7 +164,12 @@ def unpack(object stream, object object_hook=None, object list_hook=None,
     """
     return unpackb(stream.read(), use_list=use_list,
                    object_hook=object_hook, object_pairs_hook=object_pairs_hook, list_hook=list_hook,
-                   encoding=encoding, unicode_errors=unicode_errors, ext_hook=ext_hook
+                   encoding=encoding, unicode_errors=unicode_errors, ext_hook=ext_hook,
+                   max_str_len=max_str_len,
+                   max_bin_len=max_bin_len,
+                   max_array_len=max_array_len,
+                   max_map_len=max_map_len,
+                   max_ext_len=max_ext_len,
                    )
 
 
