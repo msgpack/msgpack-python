@@ -136,12 +136,20 @@ cdef class Packer(object):
             elif PyLong_Check(o):
                 # PyInt_Check(long) is True for Python 3.
                 # Sow we should test long before int.
-                if o > 0:
-                    ullval = o
-                    ret = msgpack_pack_unsigned_long_long(&self.pk, ullval)
-                else:
-                    llval = o
-                    ret = msgpack_pack_long_long(&self.pk, llval)
+                try:
+                    if o > 0:
+                        ullval = o
+                        ret = msgpack_pack_unsigned_long_long(&self.pk, ullval)
+                    else:
+                        llval = o
+                        ret = msgpack_pack_long_long(&self.pk, llval)
+                except OverflowError, oe:
+                    if not default_used and self._default is not None:
+                        o = self._default(o)
+                        default_used = True
+                        continue
+                    else:
+                        raise
             elif PyInt_Check(o):
                 longval = o
                 ret = msgpack_pack_long(&self.pk, longval)
