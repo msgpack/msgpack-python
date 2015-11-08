@@ -9,9 +9,6 @@ MessagePack for Python
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.png
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
    
-.. image:: https://pypip.in/version/msgpack-python/badge.svg
-    :target: https://pypi.python.org/pypi/msgpack-python/
-    :alt: Latest Version
 
 What's this
 ------------
