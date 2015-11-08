@@ -47,6 +47,7 @@ cdef extern from "unpack.h":
     execute_fn read_map_header
     void unpack_init(unpack_context* ctx)
     object unpack_data(unpack_context* ctx)
+    void unpack_clear(unpack_context* ctx)
 
 cdef inline init_ctx(unpack_context *ctx,
                      object object_hook, object object_pairs_hook,
@@ -141,8 +142,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         if off < buf_len:
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
-    else:
-        raise UnpackValueError("Unpack failed: error = %s" % (ret,))
+    unpack_clear(&ctx)
+    raise UnpackValueError("Unpack failed: error = %d" % (ret,))
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
