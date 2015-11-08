@@ -1,3 +1,20 @@
+0.4.7
+=====
+:release date: TBD
+
+Bugs fixed
+----------
+
+* Memory leak when unpack is failed
+
+Changes
+-------
+
+* Reduce compiler warnings while building extension module
+* unpack() now accepts ext_hook argument like Unpacker and unpackb()
+* Update Cython version to 0.23.4
+
+
 0.4.6
 =====
 :release date: 2015-03-13
