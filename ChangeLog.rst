@@ -13,6 +13,7 @@ Changes
 * Reduce compiler warnings while building extension module
 * unpack() now accepts ext_hook argument like Unpacker and unpackb()
 * Update Cython version to 0.23.4
+* default function is called when integer overflow
 
 
 0.4.6
