@@ -213,7 +213,7 @@ cdef class Packer(object):
                         if ret != 0: break
                         ret = self._pack(v, nest_limit-1)
                         if ret != 0: break
-            elif isinstance(o, ExtType):
+            elif type(o) is ExtType if strict_types else isinstance(o, ExtType):
                 # This should be before Tuple because ExtType is namedtuple.
                 longval = o.code
                 rawval = o.data
