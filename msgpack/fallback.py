@@ -69,6 +69,13 @@ TYPE_EXT                = 5
 DEFAULT_RECURSE_LIMIT = 511
 
 
+def _check_type_strict(obj, t, type=type, tuple=tuple):
+    if type(t) is tuple:
+        return type(obj) in t
+    else:
+        return type(obj) is t
+
+
 def unpack(stream, **kwargs):
     """
     Unpack an object from `stream`.
@@ -601,7 +608,7 @@ class Packer(object):
             Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
-    :param bool precise_mode:
+    :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
         treated as unsupported type and forwarded to default.
@@ -618,9 +625,9 @@ class Packer(object):
         It also enable str8 type for unicode.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 precise_mode=False, use_single_float=False, autoreset=True,
+                 strict_types=False, use_single_float=False, autoreset=True,
                  use_bin_type=False):
-        self._precise_mode = precise_mode
+        self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
@@ -632,17 +639,11 @@ class Packer(object):
                 raise TypeError("default must be callable")
         self._default = default
 
-    def _check_precise(obj, t, type=type, tuple=tuple):
-        if type(t) is tuple:
-            return type(obj) in t
-        else:
-            return type(obj) is t
-
     def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT,
-              check=isinstance, check_precise=_check_precise):
+              check=isinstance, check_type_strict=_check_type_strict):
         default_used = False
-        if self._precise_mode:
-            check = check_precise
+        if self._strict_types:
+            check = check_type_strict
             list_types = list
         else:
             list_types = (list, tuple)
