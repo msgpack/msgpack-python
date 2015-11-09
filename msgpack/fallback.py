@@ -608,13 +608,6 @@ class Packer(object):
             Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
-    :param bool strict_types:
-        If set to true, types will be checked to be exact. Derived classes
-        from serializeable types will not be serialized and will be
-        treated as unsupported type and forwarded to default.
-        Additionally tuples will not be serialized as lists.
-        This is useful when trying to implement accurate serialization 
-        for python types.
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
@@ -623,10 +616,17 @@ class Packer(object):
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enable str8 type for unicode.
+    :param bool strict_types:
+        If set to true, types will be checked to be exact. Derived classes
+        from serializeable types will not be serialized and will be
+        treated as unsupported type and forwarded to default.
+        Additionally tuples will not be serialized as lists.
+        This is useful when trying to implement accurate serialization
+        for python types.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 strict_types=False, use_single_float=False, autoreset=True,
-                 use_bin_type=False):
+                 use_single_float=False, autoreset=True, use_bin_type=False,
+                 strict_types=False):
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
