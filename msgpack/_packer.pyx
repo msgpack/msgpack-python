@@ -10,6 +10,11 @@ from msgpack.exceptions import PackValueError
 from msgpack import ExtType
 
 
+cdef extern from "Python.h":
+
+    int PyMemoryView_Check(object obj)
+
+
 cdef extern from "pack.h":
     struct msgpack_packer:
         char* buf
@@ -132,6 +137,7 @@ cdef class Packer(object):
         cdef size_t L
         cdef int default_used = 0
         cdef bint strict_types = self.strict_types
+        cdef Py_buffer view
 
         if nest_limit < 0:
             raise PackValueError("recursion limit exceeded.")
@@ -231,6 +237,17 @@ cdef class Packer(object):
                     for v in o:
                         ret = self._pack(v, nest_limit-1)
                         if ret != 0: break
+            elif PyMemoryView_Check(o):
+                if PyObject_GetBuffer(o, &view, PyBUF_SIMPLE) != 0:
+                    raise ValueError("could not get buffer for memoryview")
+                L = view.len
+                if L > (2**32)-1:
+                    PyBuffer_Release(&view);
+                    raise ValueError("memoryview is too large")
+                ret = msgpack_pack_bin(&self.pk, L)
+                if ret == 0:
+                    ret = msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
+                PyBuffer_Release(&view);
             elif not default_used and self._default:
                 o = self._default(o)
                 default_used = 1
