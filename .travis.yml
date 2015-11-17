@@ -10,9 +10,9 @@ branches:
 
 env:
     - TOXENV=py26-c,py27-c
-    - TOXENV=py32-c,py33-c,py34-c
+    - TOXENV=py32-c,py33-c,py34-c,py35-c
     - TOXENV=py26-pure,py27-pure
-    - TOXENV=py32-pure,py33-pure,py34-pure
+    - TOXENV=py32-pure,py33-pure,py34-pure,py35-pure
     - TOXENV=pypy-pure,pypy3-pure
 
 install:
