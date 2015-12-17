@@ -128,6 +128,12 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
     for size in sizes:
         assert unpacker.unpack() == dict((i, i * 2) for i in range(size))
 
+def testSortKeys(sizes=[3, 31, 127, 1023]):
+    for size in sizes:
+        keys = range(1, 1000000000, 1000000000 // size)
+        map1 = {k: k for k in keys}
+        map2 = {k: k for k in reversed(keys)}
+        assert packb(map1, sort_keys=True) == packb(map2, sort_keys=True)
 
 class odict(dict):
     '''Reimplement OrderedDict to run test on Python 2.6'''
