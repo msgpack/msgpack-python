@@ -609,12 +609,16 @@ class Packer(object):
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enable str8 type for unicode.
+    :param bool sort_keys:
+        Sort output dictionaries by key. (default: False)
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 use_single_float=False, autoreset=True, use_bin_type=False):
+                 use_single_float=False, autoreset=True, use_bin_type=False,
+                 sort_keys=False):
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
+        self._sort_keys = sort_keys
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._buffer = StringIO()
@@ -726,8 +730,11 @@ class Packer(object):
                     self._pack(obj[i], nest_limit - 1)
                 return
             if isinstance(obj, dict):
-                return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
-                                               nest_limit - 1)
+                if self._sort_keys:
+                    pairs = sorted(dict_iteritems(obj))
+                else:
+                    pairs = dict_iteritems(obj)
+                return self._fb_pack_map_pairs(len(obj), pairs, nest_limit - 1)
             if not default_used and self._default is not None:
                 obj = self._default(obj)
                 default_used = 1
