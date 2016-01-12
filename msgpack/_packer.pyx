@@ -174,11 +174,11 @@ cdef class Packer(object):
                 o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
                 L = len(o)
                 if L > (2**32)-1:
-                    raise ValueError("dict is too large")
+                    raise ValueError("unicode string is too large")
                 rawval = o
-                ret = msgpack_pack_raw(&self.pk, len(o))
+                ret = msgpack_pack_raw(&self.pk, L)
                 if ret == 0:
-                    ret = msgpack_pack_raw_body(&self.pk, rawval, len(o))
+                    ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyDict_CheckExact(o):
                 d = <dict>o
                 L = len(d)
