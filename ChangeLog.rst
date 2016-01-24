@@ -1,6 +1,6 @@
 0.4.7
 =====
-:release date: TBD
+:release date: 2016-01-25
 
 Bugs fixed
 ----------
