@@ -36,6 +36,8 @@ if hasattr(sys, 'pypy_version_info'):
             else:
                 self.builder = StringBuilder()
         def write(self, s):
+            if isinstance(s, memoryview):
+                s = s.tobytes()
             self.builder.append(s)
         def getvalue(self):
             return self.builder.build()
@@ -682,7 +684,7 @@ class Packer(object):
                     default_used = True
                     continue
                 raise PackValueError("Integer value out of range")
-            if self._use_bin_type and check(obj, bytes):
+            if self._use_bin_type and check(obj, (bytes, memoryview)):
                 n = len(obj)
                 if n <= 0xff:
                     self._buffer.write(struct.pack('>BB', 0xc4, n))
@@ -693,7 +695,7 @@ class Packer(object):
                 else:
                     raise PackValueError("Bytes is too large")
                 return self._buffer.write(obj)
-            if check(obj, (Unicode, bytes)):
+            if check(obj, (Unicode, bytes, memoryview)):
                 if check(obj, Unicode):
                     if self._encoding is None:
                         raise TypeError(
