@@ -69,6 +69,13 @@ TYPE_EXT                = 5
 DEFAULT_RECURSE_LIMIT = 511
 
 
+def _check_type_strict(obj, t, type=type, tuple=tuple):
+    if type(t) is tuple:
+        return type(obj) in t
+    else:
+        return type(obj) is t
+
+
 def unpack(stream, **kwargs):
     """
     Unpack an object from `stream`.
@@ -609,9 +616,18 @@ class Packer(object):
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enable str8 type for unicode.
+    :param bool strict_types:
+        If set to true, types will be checked to be exact. Derived classes
+        from serializeable types will not be serialized and will be
+        treated as unsupported type and forwarded to default.
+        Additionally tuples will not be serialized as lists.
+        This is useful when trying to implement accurate serialization
+        for python types.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 use_single_float=False, autoreset=True, use_bin_type=False):
+                 use_single_float=False, autoreset=True, use_bin_type=False,
+                 strict_types=False):
+        self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
@@ -623,18 +639,24 @@ class Packer(object):
                 raise TypeError("default must be callable")
         self._default = default
 
-    def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT, isinstance=isinstance):
+    def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT,
+              check=isinstance, check_type_strict=_check_type_strict):
         default_used = False
+        if self._strict_types:
+            check = check_type_strict
+            list_types = list
+        else:
+            list_types = (list, tuple)
         while True:
             if nest_limit < 0:
                 raise PackValueError("recursion limit exceeded")
             if obj is None:
                 return self._buffer.write(b"\xc0")
-            if isinstance(obj, bool):
+            if check(obj, bool):
                 if obj:
                     return self._buffer.write(b"\xc3")
                 return self._buffer.write(b"\xc2")
-            if isinstance(obj, int_types):
+            if check(obj, int_types):
                 if 0 <= obj < 0x80:
                     return self._buffer.write(struct.pack("B", obj))
                 if -0x20 <= obj < 0:
@@ -660,7 +682,7 @@ class Packer(object):
                     default_used = True
                     continue
                 raise PackValueError("Integer value out of range")
-            if self._use_bin_type and isinstance(obj, bytes):
+            if self._use_bin_type and check(obj, bytes):
                 n = len(obj)
                 if n <= 0xff:
                     self._buffer.write(struct.pack('>BB', 0xc4, n))
@@ -671,8 +693,8 @@ class Packer(object):
                 else:
                     raise PackValueError("Bytes is too large")
                 return self._buffer.write(obj)
-            if isinstance(obj, (Unicode, bytes)):
-                if isinstance(obj, Unicode):
+            if check(obj, (Unicode, bytes)):
+                if check(obj, Unicode):
                     if self._encoding is None:
                         raise TypeError(
                             "Can't encode unicode string: "
@@ -690,11 +712,11 @@ class Packer(object):
                 else:
                     raise PackValueError("String is too large")
                 return self._buffer.write(obj)
-            if isinstance(obj, float):
+            if check(obj, float):
                 if self._use_float:
                     return self._buffer.write(struct.pack(">Bf", 0xca, obj))
                 return self._buffer.write(struct.pack(">Bd", 0xcb, obj))
-            if isinstance(obj, ExtType):
+            if check(obj, ExtType):
                 code = obj.code
                 data = obj.data
                 assert isinstance(code, int)
@@ -719,13 +741,13 @@ class Packer(object):
                 self._buffer.write(struct.pack("b", code))
                 self._buffer.write(data)
                 return
-            if isinstance(obj, (list, tuple)):
+            if check(obj, list_types):
                 n = len(obj)
                 self._fb_pack_array_header(n)
                 for i in xrange(n):
                     self._pack(obj[i], nest_limit - 1)
                 return
-            if isinstance(obj, dict):
+            if check(obj, dict):
                 return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
                                                nest_limit - 1)
             if not default_used and self._default is not None:
