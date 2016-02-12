@@ -51,6 +51,7 @@ from msgpack.exceptions import (
     OutOfData,
     UnpackValueError,
     PackValueError,
+    PackOverflowError,
     ExtraData)
 
 from msgpack import ExtType
@@ -363,17 +364,17 @@ class Unpacker(object):
             obj = self._fb_read(n, write_bytes)
             typ = TYPE_RAW
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
+                raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
             typ = TYPE_ARRAY
             if n > self._max_array_len:
-                raise ValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
+                raise UnpackValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
         elif b & 0b11110000 == 0b10000000:
             n = b & 0b00001111
             typ = TYPE_MAP
             if n > self._max_map_len:
-                raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
+                raise UnpackValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
         elif b == 0xc0:
             obj = None
         elif b == 0xc2:
@@ -384,37 +385,37 @@ class Unpacker(object):
             typ = TYPE_BIN
             n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
             if n > self._max_bin_len:
-                raise ValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
+                raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
             obj = self._fb_read(n, write_bytes)
         elif b == 0xc5:
             typ = TYPE_BIN
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             if n > self._max_bin_len:
-                raise ValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
+                raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
             obj = self._fb_read(n, write_bytes)
         elif b == 0xc6:
             typ = TYPE_BIN
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             if n > self._max_bin_len:
-                raise ValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
+                raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
             obj = self._fb_read(n, write_bytes)
         elif b == 0xc7:  # ext 8
             typ = TYPE_EXT
             L, n = struct.unpack('Bb', self._fb_read(2, write_bytes))
             if L > self._max_ext_len:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
             obj = self._fb_read(L, write_bytes)
         elif b == 0xc8:  # ext 16
             typ = TYPE_EXT
             L, n = struct.unpack('>Hb', self._fb_read(3, write_bytes))
             if L > self._max_ext_len:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
             obj = self._fb_read(L, write_bytes)
         elif b == 0xc9:  # ext 32
             typ = TYPE_EXT
             L, n = struct.unpack('>Ib', self._fb_read(5, write_bytes))
             if L > self._max_ext_len:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
             obj = self._fb_read(L, write_bytes)
         elif b == 0xca:
             obj = struct.unpack(">f", self._fb_read(4, write_bytes))[0]
@@ -439,65 +440,65 @@ class Unpacker(object):
         elif b == 0xd4:  # fixext 1
             typ = TYPE_EXT
             if self._max_ext_len < 1:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (1, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (1, self._max_ext_len))
             n, obj = struct.unpack('b1s', self._fb_read(2, write_bytes))
         elif b == 0xd5:  # fixext 2
             typ = TYPE_EXT
             if self._max_ext_len < 2:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (2, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (2, self._max_ext_len))
             n, obj = struct.unpack('b2s', self._fb_read(3, write_bytes))
         elif b == 0xd6:  # fixext 4
             typ = TYPE_EXT
             if self._max_ext_len < 4:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (4, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (4, self._max_ext_len))
             n, obj = struct.unpack('b4s', self._fb_read(5, write_bytes))
         elif b == 0xd7:  # fixext 8
             typ = TYPE_EXT
             if self._max_ext_len < 8:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (8, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (8, self._max_ext_len))
             n, obj = struct.unpack('b8s', self._fb_read(9, write_bytes))
         elif b == 0xd8:  # fixext 16
             typ = TYPE_EXT
             if self._max_ext_len < 16:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (16, self._max_ext_len))
+                raise UnpackValueError("%s exceeds max_ext_len(%s)" % (16, self._max_ext_len))
             n, obj = struct.unpack('b16s', self._fb_read(17, write_bytes))
         elif b == 0xd9:
             typ = TYPE_RAW
             n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
+                raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
             obj = self._fb_read(n, write_bytes)
         elif b == 0xda:
             typ = TYPE_RAW
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
+                raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
             obj = self._fb_read(n, write_bytes)
         elif b == 0xdb:
             typ = TYPE_RAW
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
+                raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
             obj = self._fb_read(n, write_bytes)
         elif b == 0xdc:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             if n > self._max_array_len:
-                raise ValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
+                raise UnpackValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
             typ = TYPE_ARRAY
         elif b == 0xdd:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             if n > self._max_array_len:
-                raise ValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
+                raise UnpackValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
             typ = TYPE_ARRAY
         elif b == 0xde:
             n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
             if n > self._max_map_len:
-                raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
+                raise UnpackValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
             typ = TYPE_MAP
         elif b == 0xdf:
             n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
             if n > self._max_map_len:
-                raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
+                raise UnpackValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
             typ = TYPE_MAP
         else:
             raise UnpackValueError("Unknown header: 0x%x" % b)
@@ -683,7 +684,7 @@ class Packer(object):
                     obj = self._default(obj)
                     default_used = True
                     continue
-                raise PackValueError("Integer value out of range")
+                raise PackOverflowError("Integer value out of range")
             if self._use_bin_type and check(obj, (bytes, memoryview)):
                 n = len(obj)
                 if n <= 0xff:
@@ -778,7 +779,7 @@ class Packer(object):
 
     def pack_array_header(self, n):
         if n >= 2**32:
-            raise ValueError
+            raise PackValueError
         self._fb_pack_array_header(n)
         ret = self._buffer.getvalue()
         if self._autoreset:
@@ -789,7 +790,7 @@ class Packer(object):
 
     def pack_map_header(self, n):
         if n >= 2**32:
-            raise ValueError
+            raise PackValueError
         self._fb_pack_map_header(n)
         ret = self._buffer.getvalue()
         if self._autoreset:
@@ -807,7 +808,7 @@ class Packer(object):
             raise TypeError("data must have bytes type")
         L = len(data)
         if L > 0xffffffff:
-            raise ValueError("Too large data")
+            raise PackValueError("Too large data")
         if L == 1:
             self._buffer.write(b'\xd4')
         elif L == 2:

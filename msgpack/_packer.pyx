@@ -6,7 +6,7 @@ from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *
 
-from msgpack.exceptions import PackValueError
+from msgpack.exceptions import PackValueError, PackOverflowError
 from msgpack import ExtType
 
 
@@ -166,7 +166,7 @@ cdef class Packer(object):
                         default_used = True
                         continue
                     else:
-                        raise
+                        raise PackOverflowError("Integer value out of range")
             elif PyInt_CheckExact(o) if strict_types else PyInt_Check(o):
                 longval = o
                 ret = msgpack_pack_long(&self.pk, longval)
@@ -180,7 +180,7 @@ cdef class Packer(object):
             elif PyBytes_CheckExact(o) if strict_types else PyBytes_Check(o):
                 L = len(o)
                 if L > (2**32)-1:
-                    raise ValueError("bytes is too large")
+                    raise PackValueError("bytes is too large")
                 rawval = o
                 ret = msgpack_pack_bin(&self.pk, L)
                 if ret == 0:
@@ -191,7 +191,7 @@ cdef class Packer(object):
                 o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
                 L = len(o)
                 if L > (2**32)-1:
-                    raise ValueError("unicode string is too large")
+                    raise PackValueError("unicode string is too large")
                 rawval = o
                 ret = msgpack_pack_raw(&self.pk, L)
                 if ret == 0:
@@ -211,7 +211,7 @@ cdef class Packer(object):
             elif not strict_types and PyDict_Check(o):
                 L = len(o)
                 if L > (2**32)-1:
-                    raise ValueError("dict is too large")
+                    raise PackValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
                     for k, v in o.items():
@@ -225,13 +225,13 @@ cdef class Packer(object):
                 rawval = o.data
                 L = len(o.data)
                 if L > (2**32)-1:
-                    raise ValueError("EXT data is too large")
+                    raise PackValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyList_CheckExact(o) if strict_types else (PyTuple_Check(o) or PyList_Check(o)):
                 L = len(o)
                 if L > (2**32)-1:
-                    raise ValueError("list is too large")
+                    raise PackValueError("list is too large")
                 ret = msgpack_pack_array(&self.pk, L)
                 if ret == 0:
                     for v in o:
