@@ -397,24 +397,27 @@ cdef class Unpacker(object):
                 else:
                     raise OutOfData("No more data to unpack.")
 
-            ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
-            if write_bytes is not None:
-                write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
+            try:
+                ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
+                if write_bytes is not None:
+                    write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
 
-            if ret == 1:
-                obj = unpack_data(&self.ctx)
-                unpack_init(&self.ctx)
-                return obj
-            elif ret == 0:
-                if self.file_like is not None:
-                    self.read_from_file()
-                    continue
-                if iter:
-                    raise StopIteration("No more data to unpack.")
+                if ret == 1:
+                    obj = unpack_data(&self.ctx)
+                    unpack_init(&self.ctx)
+                    return obj
+                elif ret == 0:
+                    if self.file_like is not None:
+                        self.read_from_file()
+                        continue
+                    if iter:
+                        raise StopIteration("No more data to unpack.")
+                    else:
+                        raise OutOfData("No more data to unpack.")
                 else:
-                    raise OutOfData("No more data to unpack.")
-            else:
-                raise ValueError("Unpack failed: error = %d" % (ret,))
+                    raise UnpackValueError("Unpack failed: error = %d" % (ret,))
+            except ValueError as e:
+                raise UnpackValueError(e)
 
     def read_bytes(self, Py_ssize_t nbytes):
         """Read a specified number of raw bytes from the stream"""
