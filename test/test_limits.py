@@ -4,11 +4,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import pytest
 
 from msgpack import packb, unpackb, Packer, Unpacker, ExtType, PackException, PackOverflowError, PackValueError
-from msgpack import UnpackValueError, UnpackException, MsgpackBaseException
+from msgpack import UnpackValueError, UnpackException
 
 
 @pytest.mark.parametrize("expected_exception", [OverflowError, ValueError, PackOverflowError,
-                                                PackException, PackValueError, MsgpackBaseException])
+                                                PackException, PackValueError])
 def test_integer(expected_exception):
     x = -(2 ** 63)
     assert unpackb(packb(x)) == x
@@ -21,7 +21,7 @@ def test_integer(expected_exception):
         packb(x+1)
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, PackException, PackValueError, MsgpackBaseException])
+@pytest.mark.parametrize("expected_exception", [ValueError, PackException, PackValueError])
 def test_array_header(expected_exception):
     packer = Packer()
     packer.pack_array_header(2**32-1)
@@ -29,7 +29,7 @@ def test_array_header(expected_exception):
         packer.pack_array_header(2**32)
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, PackException, PackValueError, MsgpackBaseException])
+@pytest.mark.parametrize("expected_exception", [ValueError, PackException, PackValueError])
 def test_map_header(expected_exception):
     packer = Packer()
     packer.pack_map_header(2**32-1)
@@ -37,7 +37,7 @@ def test_map_header(expected_exception):
         packer.pack_array_header(2**32)
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException, MsgpackBaseException])
+@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
 def test_max_str_len(expected_exception):
     d = 'x' * 3
     packed = packb(d)
@@ -52,7 +52,7 @@ def test_max_str_len(expected_exception):
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException, MsgpackBaseException])
+@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
 def test_max_bin_len(expected_exception):
     d = b'x' * 3
     packed = packb(d, use_bin_type=True)
@@ -67,7 +67,7 @@ def test_max_bin_len(expected_exception):
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException, MsgpackBaseException])
+@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
 def test_max_array_len(expected_exception):
     d = [1,2,3]
     packed = packb(d)
@@ -82,7 +82,7 @@ def test_max_array_len(expected_exception):
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException, MsgpackBaseException])
+@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
 def test_max_map_len(expected_exception):
     d = {1: 2, 3: 4, 5: 6}
     packed = packb(d)
@@ -97,7 +97,7 @@ def test_max_map_len(expected_exception):
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException, MsgpackBaseException])
+@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
 def test_max_ext_len(expected_exception):
     d = ExtType(42, b"abc")
     packed = packb(d)

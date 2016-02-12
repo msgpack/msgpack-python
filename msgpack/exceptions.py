@@ -1,8 +1,4 @@
-class MsgpackBaseException(Exception):
-    pass
-
-
-class UnpackException(MsgpackBaseException):
+class UnpackException(Exception):
     pass
 
 
@@ -26,8 +22,10 @@ class ExtraData(ValueError):
     def __str__(self):
         return "unpack(b) received extra data."
 
-class PackException(MsgpackBaseException):
+
+class PackException(Exception):
     pass
+
 
 class PackValueError(PackException, ValueError):
     pass
