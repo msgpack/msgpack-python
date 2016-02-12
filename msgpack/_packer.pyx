@@ -200,7 +200,7 @@ cdef class Packer(object):
                 d = <dict>o
                 L = len(d)
                 if L > (2**32)-1:
-                    raise ValueError("dict is too large")
+                    raise PackValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
                     for k, v in d.iteritems():
@@ -239,11 +239,11 @@ cdef class Packer(object):
                         if ret != 0: break
             elif PyMemoryView_Check(o):
                 if PyObject_GetBuffer(o, &view, PyBUF_SIMPLE) != 0:
-                    raise ValueError("could not get buffer for memoryview")
+                    raise PackValueError("could not get buffer for memoryview")
                 L = view.len
                 if L > (2**32)-1:
                     PyBuffer_Release(&view);
-                    raise ValueError("memoryview is too large")
+                    raise PackValueError("memoryview is too large")
                 ret = msgpack_pack_bin(&self.pk, L)
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
@@ -274,7 +274,7 @@ cdef class Packer(object):
 
     def pack_array_header(self, size_t size):
         if size > (2**32-1):
-            raise ValueError
+            raise PackValueError
         cdef int ret = msgpack_pack_array(&self.pk, size)
         if ret == -1:
             raise MemoryError
@@ -287,7 +287,7 @@ cdef class Packer(object):
 
     def pack_map_header(self, size_t size):
         if size > (2**32-1):
-            raise ValueError
+            raise PackValueError
         cdef int ret = msgpack_pack_map(&self.pk, size)
         if ret == -1:
             raise MemoryError
