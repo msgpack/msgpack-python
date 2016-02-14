@@ -1,5 +1,5 @@
 class UnpackException(Exception):
-    pass
+    """Deprecated.  Use Exception instead to catch all exception during unpacking."""
 
 
 class BufferFull(UnpackException):
@@ -11,7 +11,7 @@ class OutOfData(UnpackException):
 
 
 class UnpackValueError(UnpackException, ValueError):
-    pass
+    """Deprecated.  Use ValueError instead."""
 
 
 class ExtraData(UnpackValueError):
