@@ -3,32 +3,35 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import pytest
 
-from msgpack import packb, unpackb, Packer, Unpacker, ExtType
+from msgpack import (
+    packb, unpackb, Packer, Unpacker, ExtType,
+    PackOverflowError, PackValueError, UnpackValueError,
+)
 
 
 def test_integer():
     x = -(2 ** 63)
     assert unpackb(packb(x)) == x
-    with pytest.raises((OverflowError, ValueError)):
+    with pytest.raises(PackOverflowError):
         packb(x-1)
 
     x = 2 ** 64 - 1
     assert unpackb(packb(x)) == x
-    with pytest.raises((OverflowError, ValueError)):
+    with pytest.raises(PackOverflowError):
         packb(x+1)
 
 
 def test_array_header():
     packer = Packer()
     packer.pack_array_header(2**32-1)
-    with pytest.raises((OverflowError, ValueError)):
+    with pytest.raises(PackValueError):
         packer.pack_array_header(2**32)
 
 
 def test_map_header():
     packer = Packer()
     packer.pack_map_header(2**32-1)
-    with pytest.raises((OverflowError, ValueError)):
+    with pytest.raises(PackValueError):
         packer.pack_array_header(2**32)
 
 
@@ -41,7 +44,7 @@ def test_max_str_len():
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_str_len=2, encoding='utf-8')
-    with pytest.raises(ValueError):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
@@ -55,7 +58,7 @@ def test_max_bin_len():
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_bin_len=2)
-    with pytest.raises(ValueError):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
@@ -69,7 +72,7 @@ def test_max_array_len():
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_array_len=2)
-    with pytest.raises(ValueError):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
@@ -83,7 +86,7 @@ def test_max_map_len():
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_map_len=2)
-    with pytest.raises(ValueError):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
@@ -97,7 +100,7 @@ def test_max_ext_len():
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_ext_len=2)
-    with pytest.raises(ValueError):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
