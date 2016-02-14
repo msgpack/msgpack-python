@@ -3,42 +3,39 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import pytest
 
-from msgpack import packb, unpackb, Packer, Unpacker, ExtType, PackException, PackOverflowError, PackValueError
-from msgpack import UnpackValueError, UnpackException
+from msgpack import (
+    packb, unpackb, Packer, Unpacker, ExtType,
+    PackOverflowError, PackValueError, UnpackValueError,
+)
 
 
-@pytest.mark.parametrize("expected_exception", [OverflowError, ValueError, PackOverflowError,
-                                                PackException, PackValueError])
-def test_integer(expected_exception):
+def test_integer():
     x = -(2 ** 63)
     assert unpackb(packb(x)) == x
-    with pytest.raises(expected_exception):
+    with pytest.raises(PackOverflowError):
         packb(x-1)
 
     x = 2 ** 64 - 1
     assert unpackb(packb(x)) == x
-    with pytest.raises(expected_exception):
+    with pytest.raises(PackOverflowError):
         packb(x+1)
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, PackException, PackValueError])
-def test_array_header(expected_exception):
+def test_array_header():
     packer = Packer()
     packer.pack_array_header(2**32-1)
-    with pytest.raises(expected_exception):
+    with pytest.raises(PackValueError):
         packer.pack_array_header(2**32)
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, PackException, PackValueError])
-def test_map_header(expected_exception):
+def test_map_header():
     packer = Packer()
     packer.pack_map_header(2**32-1)
-    with pytest.raises(expected_exception):
+    with pytest.raises(PackValueError):
         packer.pack_array_header(2**32)
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
-def test_max_str_len(expected_exception):
+def test_max_str_len():
     d = 'x' * 3
     packed = packb(d)
 
@@ -47,13 +44,12 @@ def test_max_str_len(expected_exception):
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_str_len=2, encoding='utf-8')
-    with pytest.raises(expected_exception):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
-def test_max_bin_len(expected_exception):
+def test_max_bin_len():
     d = b'x' * 3
     packed = packb(d, use_bin_type=True)
 
@@ -62,13 +58,12 @@ def test_max_bin_len(expected_exception):
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_bin_len=2)
-    with pytest.raises(expected_exception):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
-def test_max_array_len(expected_exception):
+def test_max_array_len():
     d = [1,2,3]
     packed = packb(d)
 
@@ -77,13 +72,12 @@ def test_max_array_len(expected_exception):
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_array_len=2)
-    with pytest.raises(expected_exception):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
-def test_max_map_len(expected_exception):
+def test_max_map_len():
     d = {1: 2, 3: 4, 5: 6}
     packed = packb(d)
 
@@ -92,13 +86,12 @@ def test_max_map_len(expected_exception):
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_map_len=2)
-    with pytest.raises(expected_exception):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
 
-@pytest.mark.parametrize("expected_exception", [ValueError, UnpackValueError, UnpackException])
-def test_max_ext_len(expected_exception):
+def test_max_ext_len():
     d = ExtType(42, b"abc")
     packed = packb(d)
 
@@ -107,7 +100,7 @@ def test_max_ext_len(expected_exception):
     assert unpacker.unpack() == d
 
     unpacker = Unpacker(max_ext_len=2)
-    with pytest.raises(expected_exception):
+    with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
 
