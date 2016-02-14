@@ -24,12 +24,18 @@ class ExtraData(UnpackValueError):
 
 
 class PackException(Exception):
-    pass
+    """Deprecated.  Use Exception instead to catch all exception during packing."""
 
 
 class PackValueError(PackException, ValueError):
-    pass
+    """PackValueError is raised when type of input data is supported but it's value is unsupported.
+
+    Deprecated.  Use ValueError instead.
+    """
 
 
 class PackOverflowError(PackValueError, OverflowError):
-    pass
+    """PackOverflowError is raised when integer value is out of range of msgpack support [-2**31, 2**32).
+
+    Deprecated.  Use ValueError instead.
+    """

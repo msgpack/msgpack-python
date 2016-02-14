@@ -11,11 +11,11 @@ from libc.string cimport *
 from libc.limits cimport *
 
 from msgpack.exceptions import (
-        BufferFull,
-        OutOfData,
-        UnpackValueError,
-        ExtraData,
-        )
+    BufferFull,
+    OutOfData,
+    UnpackValueError,
+    ExtraData,
+)
 from msgpack import ExtType
 
 
