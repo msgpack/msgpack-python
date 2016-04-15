@@ -16,8 +16,7 @@ env:
     - TOXENV=pypy-pure,pypy3-pure
 
 install:
-    - pip install tox
-    - pip install cython --install-option=--cython-with-refnanny --install-option=--no-cython-compile
+    - pip install tox cython
     - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
 
 script: tox
