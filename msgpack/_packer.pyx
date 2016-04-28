@@ -39,6 +39,7 @@ cdef extern from "pack.h":
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
+cdef size_t ITEM_LIMIT = (2**32)-1
 
 
 cdef class Packer(object):
@@ -178,7 +179,7 @@ cdef class Packer(object):
                    ret = msgpack_pack_double(&self.pk, dval)
             elif PyBytes_CheckExact(o) if strict_types else PyBytes_Check(o):
                 L = len(o)
-                if L > (2**32)-1:
+                if L > ITEM_LIMIT:
                     raise PackValueError("bytes is too large")
                 rawval = o
                 ret = msgpack_pack_bin(&self.pk, L)
@@ -189,7 +190,7 @@ cdef class Packer(object):
                     raise TypeError("Can't encode unicode string: no encoding is specified")
                 o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
                 L = len(o)
-                if L > (2**32)-1:
+                if L > ITEM_LIMIT:
                     raise PackValueError("unicode string is too large")
                 rawval = o
                 ret = msgpack_pack_raw(&self.pk, L)
@@ -198,7 +199,7 @@ cdef class Packer(object):
             elif PyDict_CheckExact(o):
                 d = <dict>o
                 L = len(d)
-                if L > (2**32)-1:
+                if L > ITEM_LIMIT:
                     raise PackValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
@@ -209,7 +210,7 @@ cdef class Packer(object):
                         if ret != 0: break
             elif not strict_types and PyDict_Check(o):
                 L = len(o)
-                if L > (2**32)-1:
+                if L > ITEM_LIMIT:
                     raise PackValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
@@ -223,13 +224,13 @@ cdef class Packer(object):
                 longval = o.code
                 rawval = o.data
                 L = len(o.data)
-                if L > (2**32)-1:
+                if L > ITEM_LIMIT:
                     raise PackValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyList_CheckExact(o) if strict_types else (PyTuple_Check(o) or PyList_Check(o)):
                 L = len(o)
-                if L > (2**32)-1:
+                if L > ITEM_LIMIT:
                     raise PackValueError("list is too large")
                 ret = msgpack_pack_array(&self.pk, L)
                 if ret == 0:
@@ -240,7 +241,7 @@ cdef class Packer(object):
                 if PyObject_GetBuffer(o, &view, PyBUF_SIMPLE) != 0:
                     raise PackValueError("could not get buffer for memoryview")
                 L = view.len
-                if L > (2**32)-1:
+                if L > ITEM_LIMIT:
                     PyBuffer_Release(&view);
                     raise PackValueError("memoryview is too large")
                 ret = msgpack_pack_bin(&self.pk, L)
@@ -271,8 +272,8 @@ cdef class Packer(object):
         msgpack_pack_ext(&self.pk, typecode, len(data))
         msgpack_pack_raw_body(&self.pk, data, len(data))
 
-    def pack_array_header(self, long long size):
-        if size > (2**32-1):
+    def pack_array_header(self, size_t size):
+        if size > ITEM_LIMIT:
             raise PackValueError
         cdef int ret = msgpack_pack_array(&self.pk, size)
         if ret == -1:
@@ -284,8 +285,8 @@ cdef class Packer(object):
             self.pk.length = 0
             return buf
 
-    def pack_map_header(self, long long size):
-        if size > (2**32-1):
+    def pack_map_header(self, size_t size):
+        if size > ITEM_LIMIT:
             raise PackValueError
         cdef int ret = msgpack_pack_map(&self.pk, size)
         if ret == -1:

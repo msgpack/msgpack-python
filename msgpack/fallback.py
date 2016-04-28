@@ -685,7 +685,7 @@ class Packer(object):
                     default_used = True
                     continue
                 raise PackOverflowError("Integer value out of range")
-            if self._use_bin_type and check(obj, (bytes, memoryview)):
+            if self._use_bin_type and check(obj, bytes):
                 n = len(obj)
                 if n <= 0xff:
                     self._buffer.write(struct.pack('>BB', 0xc4, n))
@@ -696,7 +696,7 @@ class Packer(object):
                 else:
                     raise PackValueError("Bytes is too large")
                 return self._buffer.write(obj)
-            if check(obj, (Unicode, bytes, memoryview)):
+            if check(obj, (Unicode, bytes)):
                 if check(obj, Unicode):
                     if self._encoding is None:
                         raise TypeError(
@@ -715,6 +715,28 @@ class Packer(object):
                 else:
                     raise PackValueError("String is too large")
                 return self._buffer.write(obj)
+            if check(obj, memoryview):
+                n = len(obj) * obj.itemsize
+                if self._use_bin_type:
+                    if n <= 0xff:
+                        self._buffer.write(struct.pack('>BB', 0xc4, n))
+                    elif n <= 0xffff:
+                        self._buffer.write(struct.pack(">BH", 0xc5, n))
+                    elif n <= 0xffffffff:
+                        self._buffer.write(struct.pack(">BI", 0xc6, n))
+                    else:
+                        raise PackValueError("memoryview is too large")
+                    return self._buffer.write(obj)
+                else:
+                    if n <= 0x1f:
+                        self._buffer.write(struct.pack('B', 0xa0 + n))
+                    elif n <= 0xffff:
+                        self._buffer.write(struct.pack(">BH", 0xda, n))
+                    elif n <= 0xffffffff:
+                        self._buffer.write(struct.pack(">BI", 0xdb, n))
+                    else:
+                        raise PackValueError("memoryview is too large")
+                    return self._buffer.write(obj)
             if check(obj, float):
                 if self._use_float:
                     return self._buffer.write(struct.pack(">Bf", 0xca, obj))
