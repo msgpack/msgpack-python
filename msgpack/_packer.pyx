@@ -88,7 +88,7 @@ cdef class Packer(object):
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
-        self.pk.buf = <char*> malloc(buf_size);
+        self.pk.buf = <char*> PyMem_Malloc(buf_size)
         if self.pk.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
         self.pk.buf_size = buf_size
@@ -97,8 +97,6 @@ cdef class Packer(object):
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, bint autoreset=1, bint use_bin_type=0,
                  bint strict_types=0):
-        """
-        """
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
@@ -123,7 +121,8 @@ cdef class Packer(object):
             self.unicode_errors = PyBytes_AsString(self._berrors)
 
     def __dealloc__(self):
-        free(self.pk.buf);
+        PyMem_Free(self.pk.buf)
+        self.pk.buf = NULL
 
     cdef int _pack(self, object o, int nest_limit=DEFAULT_RECURSE_LIMIT) except -1:
         cdef long long llval
