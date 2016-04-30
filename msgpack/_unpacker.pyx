@@ -1,7 +1,20 @@
 # coding: utf-8
 #cython: embedsignature=True
 
-from cpython cimport *
+from cpython.bytes cimport (
+    PyBytes_AsString,
+    PyBytes_FromStringAndSize,
+    PyBytes_Size,
+)
+from cpython.buffer cimport (
+    Py_buffer,
+    PyBuffer_Release,
+    PyObject_GetBuffer,
+    PyBUF_SIMPLE,
+)
+from cpython.mem cimport PyMem_Malloc, PyMem_Free
+from cpython.object cimport PyCallable_Check
+
 cdef extern from "Python.h":
     ctypedef struct PyObject
     cdef int PyObject_AsReadBuffer(object o, const void** buff, Py_ssize_t* buf_len) except -1
@@ -256,7 +269,7 @@ cdef class Unpacker(object):
         self.buf = NULL
 
     def __dealloc__(self):
-        free(self.buf)
+        PyMem_Free(self.buf)
         self.buf = NULL
 
     def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1,
@@ -289,7 +302,7 @@ cdef class Unpacker(object):
             read_size = min(max_buffer_size, 1024**2)
         self.max_buffer_size = max_buffer_size
         self.read_size = read_size
-        self.buf = <char*>malloc(read_size)
+        self.buf = <char*>PyMem_Malloc(read_size)
         if self.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
         self.buf_size = read_size
@@ -352,13 +365,13 @@ cdef class Unpacker(object):
                 if new_size > self.max_buffer_size:
                     raise BufferFull
                 new_size = min(new_size*2, self.max_buffer_size)
-                new_buf = <char*>malloc(new_size)
+                new_buf = <char*>PyMem_Malloc(new_size)
                 if new_buf == NULL:
                     # self.buf still holds old buffer and will be freed during
                     # obj destruction
                     raise MemoryError("Unable to enlarge internal buffer.")
                 memcpy(new_buf, buf + head, tail - head)
-                free(buf)
+                PyMem_Free(buf)
 
                 buf = new_buf
                 buf_size = new_size
