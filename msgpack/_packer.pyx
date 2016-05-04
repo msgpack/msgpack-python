@@ -2,9 +2,6 @@
 #cython: embedsignature=True
 
 from cpython cimport *
-from libc.stdlib cimport *
-from libc.string cimport *
-from libc.limits cimport *
 
 from msgpack.exceptions import PackValueError, PackOverflowError
 from msgpack import ExtType
