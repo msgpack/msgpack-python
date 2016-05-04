@@ -58,19 +58,23 @@ def __run_test(format, nbytes, expected_header, expected_prefix, use_bin_type):
 
 
 def test_fixstr_from_byte():
+    __run_test('B', 1, b'\xa1', b'', False)
     __run_test('B', 31, b'\xbf', b'', False)
 
 
 def test_fixstr_from_float():
+    __run_test('f', 4, b'\xa4', b'', False)
     __run_test('f', 28, b'\xbc', b'', False)
 
 
 def test_str16_from_byte():
     __run_test('B', 2**8, b'\xda', b'\x01\x00', False)
+    __run_test('B', 2**16-1, b'\xda', b'\xff\xff', False)
 
 
 def test_str16_from_float():
     __run_test('f', 2**8, b'\xda', b'\x01\x00', False)
+    __run_test('f', 2**16-4, b'\xda', b'\xff\xfc', False)
 
 
 def test_str32_from_byte():
@@ -83,18 +87,22 @@ def test_str32_from_float():
 
 def test_bin8_from_byte():
     __run_test('B', 1, b'\xc4', b'\x01', True)
+    __run_test('B', 2**8-1, b'\xc4', b'\xff', True)
 
 
 def test_bin8_from_float():
     __run_test('f', 4, b'\xc4', b'\x04', True)
+    __run_test('f', 2**8-4, b'\xc4', b'\xfc', True)
 
 
 def test_bin16_from_byte():
     __run_test('B', 2**8, b'\xc5', b'\x01\x00', True)
+    __run_test('B', 2**16-1, b'\xc5', b'\xff\xff', True)
 
 
 def test_bin16_from_float():
     __run_test('f', 2**8, b'\xc5', b'\x01\x00', True)
+    __run_test('f', 2**16-4, b'\xc5', b'\xff\xfc', True)
 
 
 def test_bin32_from_byte():
