@@ -685,35 +685,28 @@ class Packer(object):
                     default_used = True
                     continue
                 raise PackOverflowError("Integer value out of range")
-            if self._use_bin_type and check(obj, (bytes, memoryview)):
+            if check(obj, bytes):
                 n = len(obj)
-                if n <= 0xff:
-                    self._buffer.write(struct.pack('>BB', 0xc4, n))
-                elif n <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xc5, n))
-                elif n <= 0xffffffff:
-                    self._buffer.write(struct.pack(">BI", 0xc6, n))
-                else:
+                if n >= 2**32:
                     raise PackValueError("Bytes is too large")
+                self._fb_pack_bin_header(n)
                 return self._buffer.write(obj)
-            if check(obj, (Unicode, bytes, memoryview)):
-                if check(obj, Unicode):
-                    if self._encoding is None:
-                        raise TypeError(
-                            "Can't encode unicode string: "
-                            "no encoding is specified")
-                    obj = obj.encode(self._encoding, self._unicode_errors)
+            if check(obj, Unicode):
+                if self._encoding is None:
+                    raise TypeError(
+                        "Can't encode unicode string: "
+                        "no encoding is specified")
+                obj = obj.encode(self._encoding, self._unicode_errors)
                 n = len(obj)
-                if n <= 0x1f:
-                    self._buffer.write(struct.pack('B', 0xa0 + n))
-                elif self._use_bin_type and n <= 0xff:
-                    self._buffer.write(struct.pack('>BB', 0xd9, n))
-                elif n <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xda, n))
-                elif n <= 0xffffffff:
-                    self._buffer.write(struct.pack(">BI", 0xdb, n))
-                else:
+                if n >= 2**32:
                     raise PackValueError("String is too large")
+                self._fb_pack_raw_header(n)
+                return self._buffer.write(obj)
+            if check(obj, memoryview):
+                n = len(obj) * obj.itemsize
+                if n >= 2**32:
+                    raise PackValueError("Memoryview is too large")
+                self._fb_pack_bin_header(n)
                 return self._buffer.write(obj)
             if check(obj, float):
                 if self._use_float:
@@ -851,6 +844,30 @@ class Packer(object):
         for (k, v) in pairs:
             self._pack(k, nest_limit - 1)
             self._pack(v, nest_limit - 1)
+
+    def _fb_pack_raw_header(self, n):
+        if n <= 0x1f:
+            self._buffer.write(struct.pack('B', 0xa0 + n))
+        elif self._use_bin_type and n <= 0xff:
+            self._buffer.write(struct.pack('>BB', 0xd9, n))
+        elif n <= 0xffff:
+            self._buffer.write(struct.pack(">BH", 0xda, n))
+        elif n <= 0xffffffff:
+            self._buffer.write(struct.pack(">BI", 0xdb, n))
+        else:
+            raise PackValueError('Raw is too large')
+
+    def _fb_pack_bin_header(self, n):
+        if not self._use_bin_type:
+            return self._fb_pack_raw_header(n)
+        elif n <= 0xff:
+            return self._buffer.write(struct.pack('>BB', 0xc4, n))
+        elif n <= 0xffff:
+            return self._buffer.write(struct.pack(">BH", 0xc5, n))
+        elif n <= 0xffffffff:
+            return self._buffer.write(struct.pack(">BI", 0xc6, n))
+        else:
+            raise PackValueError('Bin is too large')
 
     def bytes(self):
         return self._buffer.getvalue()
