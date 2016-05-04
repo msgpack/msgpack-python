@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-
 from array import array
 from msgpack import packb, unpackb
 import sys
@@ -33,7 +32,7 @@ else:
         return a.tobytes()
 
 
-def __run_test(format, nbytes, expected_header, expected_prefix, use_bin_type):
+def _runtest(format, nbytes, expected_header, expected_prefix, use_bin_type):
     # create a new array
     original_array = array(format)
     original_array.fromlist([255] * (nbytes // original_array.itemsize))
@@ -58,56 +57,56 @@ def __run_test(format, nbytes, expected_header, expected_prefix, use_bin_type):
 
 
 def test_fixstr_from_byte():
-    __run_test('B', 1, b'\xa1', b'', False)
-    __run_test('B', 31, b'\xbf', b'', False)
+    _runtest('B', 1, b'\xa1', b'', False)
+    _runtest('B', 31, b'\xbf', b'', False)
 
 
 def test_fixstr_from_float():
-    __run_test('f', 4, b'\xa4', b'', False)
-    __run_test('f', 28, b'\xbc', b'', False)
+    _runtest('f', 4, b'\xa4', b'', False)
+    _runtest('f', 28, b'\xbc', b'', False)
 
 
 def test_str16_from_byte():
-    __run_test('B', 2**8, b'\xda', b'\x01\x00', False)
-    __run_test('B', 2**16-1, b'\xda', b'\xff\xff', False)
+    _runtest('B', 2**8, b'\xda', b'\x01\x00', False)
+    _runtest('B', 2**16-1, b'\xda', b'\xff\xff', False)
 
 
 def test_str16_from_float():
-    __run_test('f', 2**8, b'\xda', b'\x01\x00', False)
-    __run_test('f', 2**16-4, b'\xda', b'\xff\xfc', False)
+    _runtest('f', 2**8, b'\xda', b'\x01\x00', False)
+    _runtest('f', 2**16-4, b'\xda', b'\xff\xfc', False)
 
 
 def test_str32_from_byte():
-    __run_test('B', 2**16, b'\xdb', b'\x00\x01\x00\x00', False)
+    _runtest('B', 2**16, b'\xdb', b'\x00\x01\x00\x00', False)
 
 
 def test_str32_from_float():
-    __run_test('f', 2**16, b'\xdb', b'\x00\x01\x00\x00', False)
+    _runtest('f', 2**16, b'\xdb', b'\x00\x01\x00\x00', False)
 
 
 def test_bin8_from_byte():
-    __run_test('B', 1, b'\xc4', b'\x01', True)
-    __run_test('B', 2**8-1, b'\xc4', b'\xff', True)
+    _runtest('B', 1, b'\xc4', b'\x01', True)
+    _runtest('B', 2**8-1, b'\xc4', b'\xff', True)
 
 
 def test_bin8_from_float():
-    __run_test('f', 4, b'\xc4', b'\x04', True)
-    __run_test('f', 2**8-4, b'\xc4', b'\xfc', True)
+    _runtest('f', 4, b'\xc4', b'\x04', True)
+    _runtest('f', 2**8-4, b'\xc4', b'\xfc', True)
 
 
 def test_bin16_from_byte():
-    __run_test('B', 2**8, b'\xc5', b'\x01\x00', True)
-    __run_test('B', 2**16-1, b'\xc5', b'\xff\xff', True)
+    _runtest('B', 2**8, b'\xc5', b'\x01\x00', True)
+    _runtest('B', 2**16-1, b'\xc5', b'\xff\xff', True)
 
 
 def test_bin16_from_float():
-    __run_test('f', 2**8, b'\xc5', b'\x01\x00', True)
-    __run_test('f', 2**16-4, b'\xc5', b'\xff\xfc', True)
+    _runtest('f', 2**8, b'\xc5', b'\x01\x00', True)
+    _runtest('f', 2**16-4, b'\xc5', b'\xff\xfc', True)
 
 
 def test_bin32_from_byte():
-    __run_test('B', 2**16, b'\xc6', b'\x00\x01\x00\x00', True)
+    _runtest('B', 2**16, b'\xc6', b'\x00\x01\x00\x00', True)
 
 
 def test_bin32_from_float():
-    __run_test('f', 2**16, b'\xc6', b'\x00\x01\x00\x00', True)
+    _runtest('f', 2**16, b'\xc6', b'\x00\x01\x00\x00', True)
