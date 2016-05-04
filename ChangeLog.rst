@@ -1,3 +1,29 @@
+0.5.0
+=====
+:release date: TBD
+
+0.5 is important step toward 1.0.  There are some deprecations.
+Please read changes carefully.
+
+Changes
+-------
+
+* Drop Python 2.6 and 3.2 support
+
+* Deprecate useless custom exceptions.  Use ValueError instead of PackValueError,
+  Exception instead of PackException and UnpackException, etc...
+  See msgpack/exceptions.py
+
+* Add `strict_types` option to packer.  It can be used to serialize subclass of
+  builtin types.  For example, when packing object which type is subclass of dict,
+  `default()` is called.
+
+* Pure Python implementation supports packing memoryview object.
+
+Bugs fixed
+----------
+
+
 0.4.7
 =====
 :release date: 2016-01-25
