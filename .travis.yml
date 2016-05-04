@@ -1,23 +1,37 @@
 sudo: false
+language: python
+python:
+  - 3.5
 cache:
   directories:
     - $HOME/.cache/pip
-language: python
-python:
-    - 3.5
 
 branches:
-    only:
-        - master
+  only:
+    - master
 
 env:
-    - TOXENV=py27-c,py33-c,py34-c,py35-c
-    - TOXENV=py27-pure,py33-pure,py34-pure,py35-pure
-    - TOXENV=pypy-pure,pypy3-pure
+  - TOXENV=py27-c,py33-c,py34-c,py35-c
+  - TOXENV=py27-pure,py33-pure,py34-pure,py35-pure
+  - TOXENV=pypy-pure,pypy3-pure
+
+matrix:
+  include:
+    - sudo: required
+      python:
+        - 3.4
+      services:
+        - docker
+      install:
+        - echo hello
+      script:
+        - docker ps
 
 install:
-    - pip install -U pip
-    - pip install tox cython
-    - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
+  - pip install -U pip
+  - pip install tox cython
+  - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
 
 script: tox
+
+# vim: sw=2 ts=2
