@@ -19,10 +19,15 @@ matrix:
     - sudo: required
       services:
         - docker
+      env:
+        - DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
       install:
-        - echo hello
+        - pip install -U pip
+        - pip install cython
+        - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
+        - docker pull $DOCKER_IMAGE
       script:
-        - docker ps
+        - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
 
 install:
   - pip install -U pip
