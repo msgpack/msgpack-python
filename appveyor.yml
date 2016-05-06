@@ -8,12 +8,12 @@ environment:
     # isn't covered by this document) at the time of writing.
 
     - PYTHON: "C:\\Python35-x64"
-    - PYTHON: "C:\\Python27"
-    - PYTHON: "C:\\Python34"
-    - PYTHON: "C:\\Python35"
-    - PYTHON: "C:\\Python27-x64"
-    - PYTHON: "C:\\Python34-x64"
-      DISTUTILS_USE_SDK: "1"
+    # - PYTHON: "C:\\Python27"
+    # - PYTHON: "C:\\Python34"
+    # - PYTHON: "C:\\Python35"
+    # - PYTHON: "C:\\Python27-x64"
+    # - PYTHON: "C:\\Python34-x64"
+    # - DISTUTILS_USE_SDK: "1"
 
 install:
   # We need wheel installed to build wheels
@@ -33,7 +33,7 @@ test_script:
   - "build.cmd %PYTHON%\\python.exe setup.py install"
   - "%PYTHON%\\python.exe -c \"import sys; print(hex(sys.maxsize))\""
   - "%PYTHON%\\python.exe -c \"from msgpack import _packer, _unpacker\""
-  - "%PYTHON%\\Scripts\\py.test test"
+  - "%PYTHON%\\Scripts\\py.test -sv test"
   - "build.cmd %PYTHON%\\python.exe setup.py bdist_wheel"
 
 after_test:
