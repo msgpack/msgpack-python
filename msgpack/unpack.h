@@ -270,6 +270,10 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
 #else
     py = PyObject_CallFunction(u->ext_hook, "(iy#)", typecode, pos, length-1);
 #endif
+    fprintf(stderr, "ext hook is called: %p\n", py);
+    if (py) {
+        PyObject_Print(py, stderr, 0);
+    }
     if (!py)
         return -1;
     *o = py;
