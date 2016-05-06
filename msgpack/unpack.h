@@ -263,17 +263,12 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
         PyErr_Format(PyExc_ValueError, "%u exceeds max_ext_len(%zd)", length, u->max_ext_len);
         return -1;
     }
-    fprintf(stderr, "ext hook: code=%d, length=%u\n", typecode, length);
     // length also includes the typecode, so the actual data is length-1
 #if PY_MAJOR_VERSION == 2
     py = PyObject_CallFunction(u->ext_hook, "(is#)", typecode, pos, length-1);
 #else
     py = PyObject_CallFunction(u->ext_hook, "(iy#)", typecode, pos, length-1);
 #endif
-    fprintf(stderr, "ext hook is called: %p\n", py);
-    if (py) {
-        PyObject_Print(py, stderr, 0);
-    }
     if (!py)
         return -1;
     *o = py;
