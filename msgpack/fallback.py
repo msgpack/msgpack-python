@@ -1,8 +1,8 @@
 """Fallback pure Python implementation of msgpack"""
 
 import sys
-import array
 import struct
+import warnings
 
 if sys.version_info[0] == 3:
     PY3 = True
@@ -46,6 +46,7 @@ else:
     from io import BytesIO as StringIO
     newlist_hint = lambda size: []
 
+
 from msgpack.exceptions import (
     BufferFull,
     OutOfData,
@@ -77,6 +78,24 @@ def _check_type_strict(obj, t, type=type, tuple=tuple):
         return type(obj) in t
     else:
         return type(obj) is t
+
+
+def _get_data_from_buffer(obj):
+    try:
+        view = memoryview(obj)
+    except TypeError:
+        # try to use legacy buffer protocol if 2.7, otherwise re-raise
+        if not PY3:
+            view = memoryview(buffer(obj))
+            warnings.warn("using old buffer interface to unpack %s; "
+                          "this leads to unpacking errors if slicing is used and "
+                          "will be removed in a future version" % type(obj),
+                          RuntimeWarning)
+        else:
+            raise
+    if view.itemsize != 1:
+        raise ValueError("cannot unpack from multi-byte object")
+    return view
 
 
 def unpack(stream, **kwargs):
@@ -239,17 +258,11 @@ class Unpacker(object):
             raise TypeError("`ext_hook` is not callable")
 
     def feed(self, next_bytes):
-        if isinstance(next_bytes, array.array):
-            next_bytes = next_bytes.tostring()
-        if not isinstance(next_bytes, (bytes, bytearray)):
-            raise TypeError("next_bytes should be bytes, bytearray or array.array")
         assert self._feeding
-
-        if (len(self._buffer) - self._buff_i + len(next_bytes) > self._max_buffer_size):
+        view = _get_data_from_buffer(next_bytes)
+        if (len(self._buffer) - self._buff_i + len(view) > self._max_buffer_size):
             raise BufferFull
-        # bytes + bytearray -> bytearray
-        # So cast before append
-        self._buffer += next_bytes
+        self._buffer += view
 
     def _consume(self):
         """ Gets rid of the used parts of the buffer. """
@@ -308,7 +321,6 @@ class Unpacker(object):
         n = 0
         obj = None
         self._reserve(1)
-        #b = struct.unpack_from("B", self._buffer, self._buff_i)[0]
         b = self._buffer[self._buff_i]
         self._buff_i += 1
         if b & 0b10000000 == 0:
@@ -340,7 +352,6 @@ class Unpacker(object):
         elif b == 0xc4:
             typ = TYPE_BIN
             self._reserve(1)
-            #n = struct.unpack_from("B", self._buffer, self._buff_i)[0]
             n = self._buffer[self._buff_i]
             self._buff_i += 1
             if n > self._max_bin_len:
@@ -396,7 +407,6 @@ class Unpacker(object):
             self._buff_i += 8
         elif b == 0xcc:
             self._reserve(1)
-            #obj = struct.unpack_from("B", self._buffer, self._buff_i)[0]
             obj = self._buffer[self._buff_i]
             self._buff_i += 1
         elif b == 0xcd:
@@ -465,7 +475,6 @@ class Unpacker(object):
         elif b == 0xd9:
             typ = TYPE_RAW
             self._reserve(1)
-            #n, = struct.unpack_from("B", self._buffer, self._buff_i)
             n = self._buffer[self._buff_i]
             self._buff_i += 1
             if n > self._max_str_len:
