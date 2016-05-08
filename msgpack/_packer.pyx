@@ -2,6 +2,7 @@
 #cython: embedsignature=True
 
 from cpython cimport *
+from cpython.exc cimport (PyErr_WarnEx)
 
 from msgpack.exceptions import PackValueError, PackOverflowError
 from msgpack import ExtType
@@ -54,18 +55,25 @@ cdef class Packer(object):
     :param callable default:
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
+
     :param str encoding:
         Convert unicode to bytes with this encoding. (default: 'utf-8')
+
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
+
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
+
     :param bool autoreset:
         Reset buffer after each pack and return it's content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
+
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enable str8 type for unicode.
+        Default value: False for now, but will be True in future version.
+
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
@@ -93,12 +101,17 @@ cdef class Packer(object):
         self.pk.length = 0
 
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 use_single_float=False, bint autoreset=1, bint use_bin_type=0,
+                 use_single_float=False, bint autoreset=1, use_bin_type=None,
                  bint strict_types=0):
+        cdef bint bintype = use_bin_type
+        if use_bin_type is None:
+            PyErr_WarnEx(Warning,
+                         "use_bin_type option is not specified. Default value of the option will be changed in future version.",
+                         1)
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
-        self.pk.use_bin_type = use_bin_type
+        self.pk.use_bin_type = bintype
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
