@@ -20,3 +20,9 @@ python3: cython
 
 test:
 	py.test test
+
+.PHONY: clean
+clean:
+	rm -rf build
+	rm msgpack/*.so
+	rm -rf msgpack/__pycache__

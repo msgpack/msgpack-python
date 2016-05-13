@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import io
 import os
 import sys
 from glob import glob
@@ -97,9 +98,8 @@ del libraries, macros
 
 
 desc = 'MessagePack (de)serializer.'
-f = open('README.rst')
-long_desc = f.read()
-f.close()
+with io.open('README.rst', encoding='utf-8') as f:
+    long_desc = f.read()
 del f
 
 setup(name='msgpack-python',
@@ -112,7 +112,6 @@ setup(name='msgpack-python',
       description=desc,
       long_description=long_desc,
       url='http://msgpack.org/',
-      download_url='http://pypi.python.org/pypi/msgpack/',
       classifiers=[
           'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 3',
