@@ -100,11 +100,11 @@ def unpackb(packed, **kwargs):
     unpacker = Unpacker(None, **kwargs)
     unpacker.feed(packed)
     try:
-        ret = unpacker._fb_unpack()
+        ret = unpacker._unpack()
     except OutOfData:
         raise UnpackValueError("Data is not enough.")
-    if unpacker._fb_got_extradata():
-        raise ExtraData(ret, unpacker._fb_get_extradata())
+    if unpacker._got_extradata():
+        raise ExtraData(ret, unpacker._get_extradata())
     return ret
 
 
@@ -188,12 +188,12 @@ class Unpacker(object):
                  max_map_len=2147483647,
                  max_ext_len=2147483647):
         if file_like is None:
-            self._fb_feeding = True
+            self._feeding = True
         else:
             if not callable(file_like.read):
                 raise TypeError("`file_like.read` must be callable")
             self.file_like = file_like
-            self._fb_feeding = False
+            self._feeding = False
 
         #: array of bytes feeded.
         self._buffer = b""
@@ -243,7 +243,7 @@ class Unpacker(object):
             next_bytes = next_bytes.tostring()
         if not isinstance(next_bytes, (bytes, bytearray)):
             raise TypeError("next_bytes should be bytes, bytearray or array.array")
-        assert self._fb_feeding
+        assert self._feeding
 
         if (len(self._buffer) - self._buff_i + len(next_bytes) > self._max_buffer_size):
             raise BufferFull
@@ -251,20 +251,20 @@ class Unpacker(object):
         # So cast before append
         self._buffer += bytes(next_bytes)
 
-    def _fb_consume(self):
+    def _consume(self):
         """ Gets rid of the used parts of the buffer. """
         self._buf_checkpoint = self._buff_i
 
-    def _fb_got_extradata(self):
+    def _got_extradata(self):
         return self._buff_i < len(self._buffer)
 
-    def _fb_get_extradata(self):
+    def _get_extradata(self):
         return self._buffer[self._buff_i:]
 
     def read_bytes(self, n):
-        return self._fb_read(n)
+        return self._read(n)
 
-    def _fb_read(self, n, write_bytes=None):
+    def _read(self, n):
         # (int, Optional[Callable]) -> bytearray
         remain_bytes = len(self._buffer) - self._buff_i - n
 
@@ -272,11 +272,9 @@ class Unpacker(object):
         if remain_bytes >= 0:
             ret = self._buffer[self._buff_i:self._buff_i+n]
             self._buff_i += n
-            if write_bytes is not None:
-                write_bytes(ret)
             return ret
 
-        if self._fb_feeding:
+        if self._feeding:
             self._buff_i = self._buf_checkpoint
             raise OutOfData
 
@@ -310,15 +308,13 @@ class Unpacker(object):
             ret = self._buffer[self._buff_i:self._buff_i+n]
             self._buff_i += n
 
-        if write_bytes is not None:
-            write_bytes(ret)
         return ret
 
-    def _read_header(self, execute=EX_CONSTRUCT, write_bytes=None):
+    def _read_header(self, execute=EX_CONSTRUCT):
         typ = TYPE_IMMEDIATE
         n = 0
         obj = None
-        c = self._fb_read(1, write_bytes)
+        c = self._read(1)
         b = ord(c)
         if   b & 0b10000000 == 0:
             obj = b
@@ -326,7 +322,7 @@ class Unpacker(object):
             obj = struct.unpack("b", c)[0]
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
-            obj = self._fb_read(n, write_bytes)
+            obj = self._read(n)
             typ = TYPE_RAW
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
@@ -348,120 +344,120 @@ class Unpacker(object):
             obj = True
         elif b == 0xc4:
             typ = TYPE_BIN
-            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            n = struct.unpack("B", self._read(1))[0]
             if n > self._max_bin_len:
                 raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
-            obj = self._fb_read(n, write_bytes)
+            obj = self._read(n)
         elif b == 0xc5:
             typ = TYPE_BIN
-            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            n = struct.unpack(">H", self._read(2))[0]
             if n > self._max_bin_len:
                 raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
-            obj = self._fb_read(n, write_bytes)
+            obj = self._read(n)
         elif b == 0xc6:
             typ = TYPE_BIN
-            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            n = struct.unpack(">I", self._read(4))[0]
             if n > self._max_bin_len:
                 raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
-            obj = self._fb_read(n, write_bytes)
+            obj = self._read(n)
         elif b == 0xc7:  # ext 8
             typ = TYPE_EXT
-            L, n = struct.unpack('Bb', self._fb_read(2, write_bytes))
+            L, n = struct.unpack('Bb', self._read(2))
             if L > self._max_ext_len:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
-            obj = self._fb_read(L, write_bytes)
+            obj = self._read(L)
         elif b == 0xc8:  # ext 16
             typ = TYPE_EXT
-            L, n = struct.unpack('>Hb', self._fb_read(3, write_bytes))
+            L, n = struct.unpack('>Hb', self._read(3))
             if L > self._max_ext_len:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
-            obj = self._fb_read(L, write_bytes)
+            obj = self._read(L)
         elif b == 0xc9:  # ext 32
             typ = TYPE_EXT
-            L, n = struct.unpack('>Ib', self._fb_read(5, write_bytes))
+            L, n = struct.unpack('>Ib', self._read(5))
             if L > self._max_ext_len:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
-            obj = self._fb_read(L, write_bytes)
+            obj = self._read(L)
         elif b == 0xca:
-            obj = struct.unpack(">f", self._fb_read(4, write_bytes))[0]
+            obj = struct.unpack(">f", self._read(4))[0]
         elif b == 0xcb:
-            obj = struct.unpack(">d", self._fb_read(8, write_bytes))[0]
+            obj = struct.unpack(">d", self._read(8))[0]
         elif b == 0xcc:
-            obj = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            obj = struct.unpack("B", self._read(1))[0]
         elif b == 0xcd:
-            obj = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            obj = struct.unpack(">H", self._read(2))[0]
         elif b == 0xce:
-            obj = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            obj = struct.unpack(">I", self._read(4))[0]
         elif b == 0xcf:
-            obj = struct.unpack(">Q", self._fb_read(8, write_bytes))[0]
+            obj = struct.unpack(">Q", self._read(8))[0]
         elif b == 0xd0:
-            obj = struct.unpack("b", self._fb_read(1, write_bytes))[0]
+            obj = struct.unpack("b", self._read(1))[0]
         elif b == 0xd1:
-            obj = struct.unpack(">h", self._fb_read(2, write_bytes))[0]
+            obj = struct.unpack(">h", self._read(2))[0]
         elif b == 0xd2:
-            obj = struct.unpack(">i", self._fb_read(4, write_bytes))[0]
+            obj = struct.unpack(">i", self._read(4))[0]
         elif b == 0xd3:
-            obj = struct.unpack(">q", self._fb_read(8, write_bytes))[0]
+            obj = struct.unpack(">q", self._read(8))[0]
         elif b == 0xd4:  # fixext 1
             typ = TYPE_EXT
             if self._max_ext_len < 1:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (1, self._max_ext_len))
-            n, obj = struct.unpack('b1s', self._fb_read(2, write_bytes))
+            n, obj = struct.unpack('b1s', self._read(2))
         elif b == 0xd5:  # fixext 2
             typ = TYPE_EXT
             if self._max_ext_len < 2:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (2, self._max_ext_len))
-            n, obj = struct.unpack('b2s', self._fb_read(3, write_bytes))
+            n, obj = struct.unpack('b2s', self._read(3))
         elif b == 0xd6:  # fixext 4
             typ = TYPE_EXT
             if self._max_ext_len < 4:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (4, self._max_ext_len))
-            n, obj = struct.unpack('b4s', self._fb_read(5, write_bytes))
+            n, obj = struct.unpack('b4s', self._read(5))
         elif b == 0xd7:  # fixext 8
             typ = TYPE_EXT
             if self._max_ext_len < 8:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (8, self._max_ext_len))
-            n, obj = struct.unpack('b8s', self._fb_read(9, write_bytes))
+            n, obj = struct.unpack('b8s', self._read(9))
         elif b == 0xd8:  # fixext 16
             typ = TYPE_EXT
             if self._max_ext_len < 16:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (16, self._max_ext_len))
-            n, obj = struct.unpack('b16s', self._fb_read(17, write_bytes))
+            n, obj = struct.unpack('b16s', self._read(17))
         elif b == 0xd9:
             typ = TYPE_RAW
-            n = struct.unpack("B", self._fb_read(1, write_bytes))[0]
+            n = struct.unpack("B", self._read(1))[0]
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
-            obj = self._fb_read(n, write_bytes)
+            obj = self._read(n)
         elif b == 0xda:
             typ = TYPE_RAW
-            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            n = struct.unpack(">H", self._read(2))[0]
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
-            obj = self._fb_read(n, write_bytes)
+            obj = self._read(n)
         elif b == 0xdb:
             typ = TYPE_RAW
-            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            n = struct.unpack(">I", self._read(4))[0]
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
-            obj = self._fb_read(n, write_bytes)
+            obj = self._read(n)
         elif b == 0xdc:
-            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            n = struct.unpack(">H", self._read(2))[0]
             if n > self._max_array_len:
                 raise UnpackValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
             typ = TYPE_ARRAY
         elif b == 0xdd:
-            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            n = struct.unpack(">I", self._read(4))[0]
             if n > self._max_array_len:
                 raise UnpackValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
             typ = TYPE_ARRAY
         elif b == 0xde:
-            n = struct.unpack(">H", self._fb_read(2, write_bytes))[0]
+            n = struct.unpack(">H", self._read(2))[0]
             if n > self._max_map_len:
                 raise UnpackValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
             typ = TYPE_MAP
         elif b == 0xdf:
-            n = struct.unpack(">I", self._fb_read(4, write_bytes))[0]
+            n = struct.unpack(">I", self._read(4))[0]
             if n > self._max_map_len:
                 raise UnpackValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
             typ = TYPE_MAP
@@ -469,8 +465,8 @@ class Unpacker(object):
             raise UnpackValueError("Unknown header: 0x%x" % b)
         return typ, n, obj
 
-    def _fb_unpack(self, execute=EX_CONSTRUCT, write_bytes=None):
-        typ, n, obj = self._read_header(execute, write_bytes)
+    def _unpack(self, execute=EX_CONSTRUCT):
+        typ, n, obj = self._read_header(execute)
 
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
@@ -485,11 +481,11 @@ class Unpacker(object):
             if execute == EX_SKIP:
                 for i in xrange(n):
                     # TODO check whether we need to call `list_hook`
-                    self._fb_unpack(EX_SKIP, write_bytes)
+                    self._unpack(EX_SKIP)
                 return
             ret = newlist_hint(n)
             for i in xrange(n):
-                ret.append(self._fb_unpack(EX_CONSTRUCT, write_bytes))
+                ret.append(self._unpack(EX_CONSTRUCT))
             if self._list_hook is not None:
                 ret = self._list_hook(ret)
             # TODO is the interaction between `list_hook` and `use_list` ok?
@@ -498,19 +494,19 @@ class Unpacker(object):
             if execute == EX_SKIP:
                 for i in xrange(n):
                     # TODO check whether we need to call hooks
-                    self._fb_unpack(EX_SKIP, write_bytes)
-                    self._fb_unpack(EX_SKIP, write_bytes)
+                    self._unpack(EX_SKIP)
+                    self._unpack(EX_SKIP)
                 return
             if self._object_pairs_hook is not None:
                 ret = self._object_pairs_hook(
-                    (self._fb_unpack(EX_CONSTRUCT, write_bytes),
-                     self._fb_unpack(EX_CONSTRUCT, write_bytes))
+                    (self._unpack(EX_CONSTRUCT),
+                     self._unpack(EX_CONSTRUCT))
                     for _ in xrange(n))
             else:
                 ret = {}
                 for _ in xrange(n):
-                    key = self._fb_unpack(EX_CONSTRUCT, write_bytes)
-                    ret[key] = self._fb_unpack(EX_CONSTRUCT, write_bytes)
+                    key = self._unpack(EX_CONSTRUCT)
+                    ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
                     ret = self._object_hook(ret)
             return ret
@@ -532,32 +528,40 @@ class Unpacker(object):
 
     def __next__(self):
         try:
-            ret = self._fb_unpack(EX_CONSTRUCT, None)
-            self._fb_consume()
+            ret = self._unpack(EX_CONSTRUCT)
+            self._consume()
             return ret
         except OutOfData:
-            self._fb_consume()
+            self._consume()
             raise StopIteration
 
     next = __next__
 
     def skip(self, write_bytes=None):
-        self._fb_unpack(EX_SKIP, write_bytes)
-        self._fb_consume()
+        self._unpack(EX_SKIP)
+        if write_bytes is not None:
+            write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
+        self._consume()
 
     def unpack(self, write_bytes=None):
-        ret = self._fb_unpack(EX_CONSTRUCT, write_bytes)
-        self._fb_consume()
+        ret = self._unpack(EX_CONSTRUCT)
+        if write_bytes is not None:
+            write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
+        self._consume()
         return ret
 
     def read_array_header(self, write_bytes=None):
-        ret = self._fb_unpack(EX_READ_ARRAY_HEADER, write_bytes)
-        self._fb_consume()
+        ret = self._unpack(EX_READ_ARRAY_HEADER)
+        if write_bytes is not None:
+            write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
+        self._consume()
         return ret
 
     def read_map_header(self, write_bytes=None):
-        ret = self._fb_unpack(EX_READ_MAP_HEADER, write_bytes)
-        self._fb_consume()
+        ret = self._unpack(EX_READ_MAP_HEADER)
+        if write_bytes is not None:
+            write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
+        self._consume()
         return ret
 
 
@@ -658,7 +662,7 @@ class Packer(object):
                 n = len(obj)
                 if n >= 2**32:
                     raise PackValueError("Bytes is too large")
-                self._fb_pack_bin_header(n)
+                self._pack_bin_header(n)
                 return self._buffer.write(obj)
             if check(obj, Unicode):
                 if self._encoding is None:
@@ -669,13 +673,13 @@ class Packer(object):
                 n = len(obj)
                 if n >= 2**32:
                     raise PackValueError("String is too large")
-                self._fb_pack_raw_header(n)
+                self._pack_raw_header(n)
                 return self._buffer.write(obj)
             if check(obj, memoryview):
                 n = len(obj) * obj.itemsize
                 if n >= 2**32:
                     raise PackValueError("Memoryview is too large")
-                self._fb_pack_bin_header(n)
+                self._pack_bin_header(n)
                 return self._buffer.write(obj)
             if check(obj, float):
                 if self._use_float:
@@ -708,12 +712,12 @@ class Packer(object):
                 return
             if check(obj, list_types):
                 n = len(obj)
-                self._fb_pack_array_header(n)
+                self._pack_array_header(n)
                 for i in xrange(n):
                     self._pack(obj[i], nest_limit - 1)
                 return
             if check(obj, dict):
-                return self._fb_pack_map_pairs(len(obj), dict_iteritems(obj),
+                return self._pack_map_pairs(len(obj), dict_iteritems(obj),
                                                nest_limit - 1)
             if not default_used and self._default is not None:
                 obj = self._default(obj)
@@ -731,7 +735,7 @@ class Packer(object):
         return ret
 
     def pack_map_pairs(self, pairs):
-        self._fb_pack_map_pairs(len(pairs), pairs)
+        self._pack_map_pairs(len(pairs), pairs)
         ret = self._buffer.getvalue()
         if self._autoreset:
             self._buffer = StringIO()
@@ -742,7 +746,7 @@ class Packer(object):
     def pack_array_header(self, n):
         if n >= 2**32:
             raise PackValueError
-        self._fb_pack_array_header(n)
+        self._pack_array_header(n)
         ret = self._buffer.getvalue()
         if self._autoreset:
             self._buffer = StringIO()
@@ -753,7 +757,7 @@ class Packer(object):
     def pack_map_header(self, n):
         if n >= 2**32:
             raise PackValueError
-        self._fb_pack_map_header(n)
+        self._pack_map_header(n)
         ret = self._buffer.getvalue()
         if self._autoreset:
             self._buffer = StringIO()
@@ -790,7 +794,7 @@ class Packer(object):
         self._buffer.write(struct.pack('B', typecode))
         self._buffer.write(data)
 
-    def _fb_pack_array_header(self, n):
+    def _pack_array_header(self, n):
         if n <= 0x0f:
             return self._buffer.write(struct.pack('B', 0x90 + n))
         if n <= 0xffff:
@@ -799,7 +803,7 @@ class Packer(object):
             return self._buffer.write(struct.pack(">BI", 0xdd, n))
         raise PackValueError("Array is too large")
 
-    def _fb_pack_map_header(self, n):
+    def _pack_map_header(self, n):
         if n <= 0x0f:
             return self._buffer.write(struct.pack('B', 0x80 + n))
         if n <= 0xffff:
@@ -808,13 +812,13 @@ class Packer(object):
             return self._buffer.write(struct.pack(">BI", 0xdf, n))
         raise PackValueError("Dict is too large")
 
-    def _fb_pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
-        self._fb_pack_map_header(n)
+    def _pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
+        self._pack_map_header(n)
         for (k, v) in pairs:
             self._pack(k, nest_limit - 1)
             self._pack(v, nest_limit - 1)
 
-    def _fb_pack_raw_header(self, n):
+    def _pack_raw_header(self, n):
         if n <= 0x1f:
             self._buffer.write(struct.pack('B', 0xa0 + n))
         elif self._use_bin_type and n <= 0xff:
@@ -826,9 +830,9 @@ class Packer(object):
         else:
             raise PackValueError('Raw is too large')
 
-    def _fb_pack_bin_header(self, n):
+    def _pack_bin_header(self, n):
         if not self._use_bin_type:
-            return self._fb_pack_raw_header(n)
+            return self._pack_raw_header(n)
         elif n <= 0xff:
             return self._buffer.write(struct.pack('>BB', 0xc4, n))
         elif n <= 0xffff:
