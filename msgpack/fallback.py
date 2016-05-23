@@ -265,14 +265,18 @@ class Unpacker(object):
         return self._read(n)
 
     def _read(self, n):
-        # (int, Optional[Callable]) -> bytearray
+        # (int) -> bytearray
+        self._reserve(n)
+        i = self._buff_i
+        self._buff_i = i+n
+        return self._buffer[i:i+n]
+
+    def _reserve(self, n):
         remain_bytes = len(self._buffer) - self._buff_i - n
 
         # Fast path: buffer has n bytes already
         if remain_bytes >= 0:
-            ret = self._buffer[self._buff_i:self._buff_i+n]
-            self._buff_i += n
-            return ret
+            return
 
         if self._feeding:
             self._buff_i = self._buf_checkpoint
@@ -299,33 +303,23 @@ class Unpacker(object):
             self._buff_i = 0  # rollback
             raise OutOfData
 
-        if len(self._buffer) == n:
-            # checkpoint == 0
-            ret = self._buffer
-            self._buffer = b""
-            self._buff_i = 0
-        else:
-            ret = self._buffer[self._buff_i:self._buff_i+n]
-            self._buff_i += n
-
-        return ret
-
     def _read_header(self, execute=EX_CONSTRUCT):
         typ = TYPE_IMMEDIATE
         n = 0
         obj = None
-        c = self._read(1)
-        b = ord(c)
-        if   b & 0b10000000 == 0:
+        self._reserve(1)
+        b = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+        self._buff_i += 1
+        if b & 0b10000000 == 0:
             obj = b
         elif b & 0b11100000 == 0b11100000:
-            obj = struct.unpack("b", c)[0]
+            obj = -1 - (b ^ 0xff)
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
-            obj = self._read(n)
             typ = TYPE_RAW
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
+            obj = self._read(n)
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
             typ = TYPE_ARRAY
@@ -344,120 +338,176 @@ class Unpacker(object):
             obj = True
         elif b == 0xc4:
             typ = TYPE_BIN
-            n = struct.unpack("B", self._read(1))[0]
+            self._reserve(1)
+            n = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+            self._buff_i += 1
             if n > self._max_bin_len:
                 raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
             obj = self._read(n)
         elif b == 0xc5:
             typ = TYPE_BIN
-            n = struct.unpack(">H", self._read(2))[0]
+            self._reserve(2)
+            n = struct.unpack_from(">H", self._buffer, self._buff_i)[0]
+            self._buff_i += 2
             if n > self._max_bin_len:
                 raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
             obj = self._read(n)
         elif b == 0xc6:
             typ = TYPE_BIN
-            n = struct.unpack(">I", self._read(4))[0]
+            self._reserve(4)
+            n = struct.unpack_from(">I", self._buffer, self._buff_i)[0]
+            self._buff_i += 4
             if n > self._max_bin_len:
                 raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
             obj = self._read(n)
         elif b == 0xc7:  # ext 8
             typ = TYPE_EXT
-            L, n = struct.unpack('Bb', self._read(2))
+            self._reserve(2)
+            L, n = struct.unpack_from('Bb', self._buffer, self._buff_i)
+            self._buff_i += 2
             if L > self._max_ext_len:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
             obj = self._read(L)
         elif b == 0xc8:  # ext 16
             typ = TYPE_EXT
-            L, n = struct.unpack('>Hb', self._read(3))
+            self._reserve(3)
+            L, n = struct.unpack_from('>Hb', self._buffer, self._buff_i)
+            self._buff_i += 3
             if L > self._max_ext_len:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
             obj = self._read(L)
         elif b == 0xc9:  # ext 32
             typ = TYPE_EXT
-            L, n = struct.unpack('>Ib', self._read(5))
+            self._reserve(5)
+            L, n = struct.unpack_from('>Ib', self._buffer, self._buff_i)
+            self._buff_i += 5
             if L > self._max_ext_len:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
             obj = self._read(L)
         elif b == 0xca:
-            obj = struct.unpack(">f", self._read(4))[0]
+            self._reserve(4)
+            obj = struct.unpack_from(">f", self._buffer, self._buff_i)[0]
+            self._buff_i += 4
         elif b == 0xcb:
-            obj = struct.unpack(">d", self._read(8))[0]
+            self._reserve(8)
+            obj = struct.unpack_from(">d", self._buffer, self._buff_i)[0]
+            self._buff_i += 8
         elif b == 0xcc:
-            obj = struct.unpack("B", self._read(1))[0]
+            self._reserve(1)
+            obj = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+            self._buff_i += 1
         elif b == 0xcd:
-            obj = struct.unpack(">H", self._read(2))[0]
+            self._reserve(2)
+            obj = struct.unpack_from(">H", self._buffer, self._buff_i)[0]
+            self._buff_i += 2
         elif b == 0xce:
-            obj = struct.unpack(">I", self._read(4))[0]
+            self._reserve(4)
+            obj = struct.unpack_from(">I", self._buffer, self._buff_i)[0]
+            self._buff_i += 4
         elif b == 0xcf:
-            obj = struct.unpack(">Q", self._read(8))[0]
+            self._reserve(8)
+            obj = struct.unpack_from(">Q", self._buffer, self._buff_i)[0]
+            self._buff_i += 8
         elif b == 0xd0:
-            obj = struct.unpack("b", self._read(1))[0]
+            self._reserve(1)
+            obj = struct.unpack_from("b", self._buffer, self._buff_i)[0]
+            self._buff_i += 1
         elif b == 0xd1:
-            obj = struct.unpack(">h", self._read(2))[0]
+            self._reserve(2)
+            obj = struct.unpack_from(">h", self._buffer, self._buff_i)[0]
+            self._buff_i += 2
         elif b == 0xd2:
-            obj = struct.unpack(">i", self._read(4))[0]
+            self._reserve(4)
+            obj = struct.unpack_from(">i", self._buffer, self._buff_i)[0]
+            self._buff_i += 4
         elif b == 0xd3:
-            obj = struct.unpack(">q", self._read(8))[0]
+            self._reserve(8)
+            obj = struct.unpack_from(">q", self._buffer, self._buff_i)[0]
+            self._buff_i += 8
         elif b == 0xd4:  # fixext 1
             typ = TYPE_EXT
             if self._max_ext_len < 1:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (1, self._max_ext_len))
-            n, obj = struct.unpack('b1s', self._read(2))
+            self._reserve(2)
+            n, obj = struct.unpack_from("b1s", self._buffer, self._buff_i)
+            self._buff_i += 2
         elif b == 0xd5:  # fixext 2
             typ = TYPE_EXT
             if self._max_ext_len < 2:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (2, self._max_ext_len))
-            n, obj = struct.unpack('b2s', self._read(3))
+            self._reserve(3)
+            n, obj = struct.unpack_from("b2s", self._buffer, self._buff_i)
+            self._buff_i += 3
         elif b == 0xd6:  # fixext 4
             typ = TYPE_EXT
             if self._max_ext_len < 4:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (4, self._max_ext_len))
-            n, obj = struct.unpack('b4s', self._read(5))
+            self._reserve(5)
+            n, obj = struct.unpack_from("b4s", self._buffer, self._buff_i)
+            self._buff_i += 5
         elif b == 0xd7:  # fixext 8
             typ = TYPE_EXT
             if self._max_ext_len < 8:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (8, self._max_ext_len))
-            n, obj = struct.unpack('b8s', self._read(9))
+            self._reserve(9)
+            n, obj = struct.unpack_from("b8s", self._buffer, self._buff_i)
+            self._buff_i += 9
         elif b == 0xd8:  # fixext 16
             typ = TYPE_EXT
             if self._max_ext_len < 16:
                 raise UnpackValueError("%s exceeds max_ext_len(%s)" % (16, self._max_ext_len))
-            n, obj = struct.unpack('b16s', self._read(17))
+            self._reserve(17)
+            n, obj = struct.unpack_from("b16s", self._buffer, self._buff_i)
+            self._buff_i += 17
         elif b == 0xd9:
             typ = TYPE_RAW
-            n = struct.unpack("B", self._read(1))[0]
+            self._reserve(1)
+            n, = struct.unpack_from("B", self._buffer, self._buff_i)
+            self._buff_i += 1
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
             obj = self._read(n)
         elif b == 0xda:
             typ = TYPE_RAW
-            n = struct.unpack(">H", self._read(2))[0]
+            self._reserve(2)
+            n, = struct.unpack_from(">H", self._buffer, self._buff_i)
+            self._buff_i += 2
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
             obj = self._read(n)
         elif b == 0xdb:
             typ = TYPE_RAW
-            n = struct.unpack(">I", self._read(4))[0]
+            self._reserve(4)
+            n, = struct.unpack_from(">I", self._buffer, self._buff_i)
+            self._buff_i += 4
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
             obj = self._read(n)
         elif b == 0xdc:
-            n = struct.unpack(">H", self._read(2))[0]
+            typ = TYPE_ARRAY
+            self._reserve(2)
+            n, = struct.unpack_from(">H", self._buffer, self._buff_i)
+            self._buff_i += 2
             if n > self._max_array_len:
                 raise UnpackValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
-            typ = TYPE_ARRAY
         elif b == 0xdd:
-            n = struct.unpack(">I", self._read(4))[0]
+            typ = TYPE_ARRAY
+            self._reserve(4)
+            n, = struct.unpack_from(">I", self._buffer, self._buff_i)
+            self._buff_i += 4
             if n > self._max_array_len:
                 raise UnpackValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
-            typ = TYPE_ARRAY
         elif b == 0xde:
-            n = struct.unpack(">H", self._read(2))[0]
+            self._reserve(2)
+            n, = struct.unpack_from(">H", self._buffer, self._buff_i)
+            self._buff_i += 2
             if n > self._max_map_len:
                 raise UnpackValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
             typ = TYPE_MAP
         elif b == 0xdf:
-            n = struct.unpack(">I", self._read(4))[0]
+            self._reserve(4)
+            n, = struct.unpack_from(">I", self._buffer, self._buff_i)
+            self._buff_i += 4
             if n > self._max_map_len:
                 raise UnpackValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
             typ = TYPE_MAP
