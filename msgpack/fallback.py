@@ -196,7 +196,7 @@ class Unpacker(object):
             self._feeding = False
 
         #: array of bytes feeded.
-        self._buffer = b""
+        self._buffer = bytearray()
         #: Which position we currently reads
         self._buff_i = 0
 
@@ -249,7 +249,7 @@ class Unpacker(object):
             raise BufferFull
         # bytes + bytearray -> bytearray
         # So cast before append
-        self._buffer += bytes(next_bytes)
+        self._buffer += next_bytes
 
     def _consume(self):
         """ Gets rid of the used parts of the buffer. """
@@ -284,7 +284,7 @@ class Unpacker(object):
 
         # Strip buffer before checkpoint before reading file.
         if self._buf_checkpoint > 0:
-            self._buffer = self._buffer[self._buf_checkpoint:]
+            del self._buffer[:self._buf_checkpoint]
             self._buff_i -= self._buf_checkpoint
             self._buf_checkpoint = 0
 
@@ -308,7 +308,8 @@ class Unpacker(object):
         n = 0
         obj = None
         self._reserve(1)
-        b = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+        #b = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+        b = self._buffer[self._buff_i]
         self._buff_i += 1
         if b & 0b10000000 == 0:
             obj = b
@@ -339,7 +340,8 @@ class Unpacker(object):
         elif b == 0xc4:
             typ = TYPE_BIN
             self._reserve(1)
-            n = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+            #n = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+            n = self._buffer[self._buff_i]
             self._buff_i += 1
             if n > self._max_bin_len:
                 raise UnpackValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
@@ -394,7 +396,8 @@ class Unpacker(object):
             self._buff_i += 8
         elif b == 0xcc:
             self._reserve(1)
-            obj = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+            #obj = struct.unpack_from("B", self._buffer, self._buff_i)[0]
+            obj = self._buffer[self._buff_i]
             self._buff_i += 1
         elif b == 0xcd:
             self._reserve(2)
@@ -462,7 +465,8 @@ class Unpacker(object):
         elif b == 0xd9:
             typ = TYPE_RAW
             self._reserve(1)
-            n, = struct.unpack_from("B", self._buffer, self._buff_i)
+            #n, = struct.unpack_from("B", self._buffer, self._buff_i)
+            n = self._buffer[self._buff_i]
             self._buff_i += 1
             if n > self._max_str_len:
                 raise UnpackValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
@@ -565,11 +569,13 @@ class Unpacker(object):
         if typ == TYPE_RAW:
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
+            else:
+                obj = bytes(obj)
             return obj
         if typ == TYPE_EXT:
-            return self._ext_hook(n, obj)
+            return self._ext_hook(n, bytes(obj))
         if typ == TYPE_BIN:
-            return obj
+            return bytes(obj)
         assert typ == TYPE_IMMEDIATE
         return obj
 
