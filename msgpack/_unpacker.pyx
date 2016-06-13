@@ -8,16 +8,23 @@ from cpython.bytes cimport (
 )
 from cpython.buffer cimport (
     Py_buffer,
-    PyBuffer_Release,
+    PyObject_CheckBuffer,
     PyObject_GetBuffer,
+    PyBuffer_Release,
+    PyBuffer_IsContiguous,
+    PyBUF_READ,
     PyBUF_SIMPLE,
+    PyBUF_FULL_RO,
 )
 from cpython.mem cimport PyMem_Malloc, PyMem_Free
 from cpython.object cimport PyCallable_Check
+from cpython.ref cimport Py_DECREF
+from cpython.exc cimport PyErr_WarnEx
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
     cdef int PyObject_AsReadBuffer(object o, const void** buff, Py_ssize_t* buf_len) except -1
+    object PyMemoryView_GetContiguous(object obj, int buffertype, char order)
 
 from libc.stdlib cimport *
 from libc.string cimport *
@@ -110,6 +117,42 @@ cdef inline init_ctx(unpack_context *ctx,
 def default_read_extended_type(typecode, data):
     raise NotImplementedError("Cannot decode extended type with typecode=%d" % typecode)
 
+cdef inline int get_data_from_buffer(object obj,
+                                     Py_buffer *view,
+                                     char **buf,
+                                     Py_ssize_t *buffer_len,
+                                     int *new_protocol) except 0:
+    cdef object contiguous
+    cdef Py_buffer tmp
+    if PyObject_CheckBuffer(obj):
+        new_protocol[0] = 1
+        if PyObject_GetBuffer(obj, view, PyBUF_FULL_RO) == -1:
+            raise
+        if view.itemsize != 1:
+            PyBuffer_Release(view)
+            raise BufferError("cannot unpack from multi-byte object")
+        if PyBuffer_IsContiguous(view, 'A') == 0:
+            PyBuffer_Release(view)
+            # create a contiguous copy and get buffer
+            contiguous = PyMemoryView_GetContiguous(obj, PyBUF_READ, 'C')
+            PyObject_GetBuffer(contiguous, view, PyBUF_SIMPLE)
+            # view must hold the only reference to contiguous,
+            # so memory is freed when view is released
+            Py_DECREF(contiguous)
+        buffer_len[0] = view.len
+        buf[0] = <char*> view.buf
+        return 1
+    else:
+        new_protocol[0] = 0
+        if PyObject_AsReadBuffer(obj, <const void**> buf, buffer_len) == -1:
+            raise BufferError("could not get memoryview")
+        PyErr_WarnEx(RuntimeWarning,
+                     "using old buffer interface to unpack %s; "
+                     "this leads to unpacking errors if slicing is used and "
+                     "will be removed in a future version" % type(obj),
+                     1)
+        return 1
+
 def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=1, encoding=None, unicode_errors="strict",
             object_pairs_hook=None, ext_hook=ExtType,
@@ -129,27 +172,34 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef Py_ssize_t off = 0
     cdef int ret
 
-    cdef char* buf
+    cdef Py_buffer view
+    cdef char* buf = NULL
     cdef Py_ssize_t buf_len
     cdef char* cenc = NULL
     cdef char* cerr = NULL
+    cdef int new_protocol = 0
 
-    PyObject_AsReadBuffer(packed, <const void**>&buf, &buf_len)
+    get_data_from_buffer(packed, &view, &buf, &buf_len, &new_protocol)
 
-    if encoding is not None:
-        if isinstance(encoding, unicode):
-            encoding = encoding.encode('ascii')
-        cenc = PyBytes_AsString(encoding)
+    try:
+        if encoding is not None:
+            if isinstance(encoding, unicode):
+                encoding = encoding.encode('ascii')
+            cenc = PyBytes_AsString(encoding)
 
-    if unicode_errors is not None:
-        if isinstance(unicode_errors, unicode):
-            unicode_errors = unicode_errors.encode('ascii')
-        cerr = PyBytes_AsString(unicode_errors)
+        if unicode_errors is not None:
+            if isinstance(unicode_errors, unicode):
+                unicode_errors = unicode_errors.encode('ascii')
+            cerr = PyBytes_AsString(unicode_errors)
 
-    init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
-             use_list, cenc, cerr,
-             max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
-    ret = unpack_construct(&ctx, buf, buf_len, &off)
+        init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
+                 use_list, cenc, cerr,
+                 max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
+        ret = unpack_construct(&ctx, buf, buf_len, &off)
+    finally:
+        if new_protocol:
+            PyBuffer_Release(&view);
+
     if ret == 1:
         obj = unpack_data(&ctx)
         if off < buf_len:
@@ -335,14 +385,20 @@ cdef class Unpacker(object):
     def feed(self, object next_bytes):
         """Append `next_bytes` to internal buffer."""
         cdef Py_buffer pybuff
+        cdef int new_protocol = 0
+        cdef char* buf
+        cdef Py_ssize_t buf_len
+
         if self.file_like is not None:
             raise AssertionError(
                     "unpacker.feed() is not be able to use with `file_like`.")
-        PyObject_GetBuffer(next_bytes, &pybuff, PyBUF_SIMPLE)
+
+        get_data_from_buffer(next_bytes, &pybuff, &buf, &buf_len, &new_protocol)
         try:
-            self.append_buffer(<char*>pybuff.buf, pybuff.len)
+            self.append_buffer(buf, buf_len)
         finally:
-            PyBuffer_Release(&pybuff)
+            if new_protocol:
+                PyBuffer_Release(&pybuff)
 
     cdef append_buffer(self, void* _buf, Py_ssize_t _buf_len):
         cdef:
