@@ -1,6 +1,15 @@
+0.4.8
+=====
+:release date: 2016-07-29
+
+Bugs fixed
+----------
+
+* Calling ext_hook with wrong length. (Only on Windows, maybe. #203)
+
 0.4.7
 =====
-:release date: TBD
+:release date: 2016-01-25
 
 Bugs fixed
 ----------
