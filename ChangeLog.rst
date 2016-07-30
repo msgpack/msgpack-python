@@ -1,6 +1,5 @@
 0.5.0
-=====
-:release date: TBD
+======
 
 0.5 is important step toward 1.0.  There are some deprecations.
 Please read changes carefully.
@@ -20,8 +19,15 @@ Changes
 
 * Pure Python implementation supports packing memoryview object.
 
+
+0.4.8
+=====
+:release date: 2016-07-29
+
 Bugs fixed
 ----------
+
+* Calling ext_hook with wrong length. (Only on Windows, maybe. #203)
 
 
 0.4.7
