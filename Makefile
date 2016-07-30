@@ -20,3 +20,7 @@ python3: cython
 
 test:
 	py.test test
+
+build-manylinux1-wheel:
+	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux1_i686   bash docker/buildwheel.sh
+	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux1_x86_64 bash docker/buildwheel.sh
