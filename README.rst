@@ -216,6 +216,75 @@ You can change this by using `use_bin_type=True` option in Packer and `encoding=
     >>> msgpack.unpackb(packed, encoding='utf-8')
     ['spam', u'egg']
 
+It's worth noting that ``encoding`` (for ``packb()`` and ``unpackb()`` alike), ``use_bin_type``, and other
+parameters have nothing to do with encoding of the string representation of the packed string itself,
+but rather with the encoding of the final unpacked item.
+
+For example:
+
+.. code-block:: pycon
+
+    # Packing:
+    >>> import msgpack
+    >>> beyonce = u"Beyoncé"
+    >>> beyonce  # unicode
+    u'Beyonc\xe9'
+    >>> beyonce.encode('utf-8')  # regular string
+    'Beyonc\xc3\xa9'
+    # Packed result is a regular string
+    >>> msgpack.packb(beyonce.encode('utf-8'))
+    '\xa8Beyonc\xc3\xa9'
+    # Packed result is still a regular string
+    >>> msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8')
+    '\xa8Beyonc\xc3\xa9'
+    # Packed result is still a regular string
+    >>> msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8', use_bin_type=True)
+    '\xc4\x08Beyonc\xc3\xa9'
+    
+    # Packed result is definitely not utf-8 encoded
+    >>> msgpack.packb(beyonce.encode('utf-8')).decode('utf-8')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "/path/to/lib/python2.7/encodings/utf_8.py", line 16, in decode
+        return codecs.utf_8_decode(input, errors, True)
+    UnicodeDecodeError: 'utf8' codec can't decode byte 0xa8 in position 0: invalid start byte
+    
+    # Still not utf-8 encoded
+    >>> msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8').decode('utf-8')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "/path/to/lib/python2.7/encodings/utf_8.py", line 16, in decode
+        return codecs.utf_8_decode(input, errors, True)
+    UnicodeDecodeError: 'utf8' codec can't decode byte 0xa8 in position 0: invalid start byte
+    
+    # Still not utf-8 encoded
+    >>> msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8', use_bin_type=True).decode('utf-8')
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "/path/to/lib/python2.7/encodings/utf_8.py", line 16, in decode
+        return codecs.utf_8_decode(input, errors, True)
+    UnicodeDecodeError: 'utf8' codec can't decode byte 0xc4 in position 0: invalid continuation byte
+    
+    # Encoding actually has to do with getting the unpacked result back with the proper encoding:
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8')))
+    'Beyonc\xc3\xa9'
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8')), encoding='utf-8')
+    u'Beyonc\xe9'
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8'))
+    'Beyonc\xc3\xa9'
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8'), encoding='utf-8')
+    u'Beyonc\xe9'
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8', use_bin_type=True))
+    'Beyonc\xc3\xa9'
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8'), encoding='utf-8', use_bin_type=True), encoding='utf-8')
+    'Beyonc\xc3\xa9'
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8'), use_bin_type=True))
+    'Beyonc\xc3\xa9'
+    >>> msgpack.unpackb(msgpack.packb(beyonce.encode('utf-8'), use_bin_type=True), encoding='utf-8')
+    'Beyonc\xc3\xa9'
+
+
+
 ext type
 ^^^^^^^^
 
