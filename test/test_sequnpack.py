@@ -96,3 +96,57 @@ def test_issue124():
     unpacker.feed(b"!")
     assert tuple(unpacker) == (b'!',)
     assert tuple(unpacker) == ()
+
+
+def test_offset():
+    unpacker= Unpacker()
+    unpacker.feed(b'\x81\x01\x02')
+    assert unpacker.offset == 0
+    assert unpacker.unpack() == {1: 2}
+    assert unpacker.offset == 0
+    unpacker.feed(b'\x81\x03\x04')
+    assert unpacker.offset == 0
+    assert unpacker.unpack() == {3: 4}
+    assert unpacker.offset == 3
+
+
+def test_offset2():
+    unpacker = Unpacker()
+    unpacker.feed(b'\x81\x01\x02\x81')
+    assert unpacker.offset == 0
+    assert unpacker.unpack() == {1: 2}
+    assert unpacker.offset == 0
+    with raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(b'\x03\x04\x81')
+    assert unpacker.offset == 0
+    assert unpacker.unpack() == {3: 4}
+    assert unpacker.offset == 3
+    with raises(OutOfData):
+        unpacker.unpack()
+    assert unpacker.offset == 3
+    unpacker.feed(b'\x05\x06')
+    assert unpacker.offset == 3
+    assert unpacker.unpack() == {5: 6}
+    assert unpacker.offset == 6
+
+
+def test_offset3():
+    unpacker = Unpacker()
+    unpacker.feed(b'\x81\x01\x02\x81')
+    for obj in unpacker:
+        assert obj == {1: 2}
+        assert unpacker.offset == 0
+    assert unpacker.offset == 0
+    for obj in unpacker:
+        assert False
+    unpacker.feed(b'\x03\x04\x81')
+    assert unpacker.offset == 0
+    for obj in unpacker:
+        assert obj == {3: 4}
+        assert unpacker.offset == 3
+    unpacker.feed(b'\x05\x06')
+    assert unpacker.offset == 3
+    for obj in unpacker:
+        assert obj == {5: 6}
+        assert unpacker.offset == 6
