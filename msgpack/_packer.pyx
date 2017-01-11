@@ -58,11 +58,11 @@ cdef class Packer(object):
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
-        Reset buffer after each pack and return it's content as `bytes`. (default: True).
+        Reset buffer after each pack and return its content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
-        It also enable str8 type for unicode.
+        It also enables str8 type for unicode.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -75,7 +75,7 @@ cdef class Packer(object):
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
-        self.pk.buf = <char*> malloc(buf_size);
+        self.pk.buf = <char*> malloc(buf_size)
         if self.pk.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
         self.pk.buf_size = buf_size
@@ -108,7 +108,7 @@ cdef class Packer(object):
             self.unicode_errors = PyBytes_AsString(self._berrors)
 
     def __dealloc__(self):
-        free(self.pk.buf);
+        free(self.pk.buf)
 
     cdef int _pack(self, object o, int nest_limit=DEFAULT_RECURSE_LIMIT) except -1:
         cdef long long llval
@@ -274,7 +274,7 @@ cdef class Packer(object):
         """
         Pack *pairs* as msgpack map type.
 
-        *pairs* should sequence of pair.
+        *pairs* should be a sequence of pairs.
         (`len(pairs)` and `for k, v in pairs:` should be supported.)
         """
         cdef int ret = msgpack_pack_map(&self.pk, len(pairs))

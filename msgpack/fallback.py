@@ -138,7 +138,7 @@ class Unpacker(object):
     :param int max_buffer_size:
         Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
         Raises `BufferFull` exception when it is insufficient.
-        You shoud set this parameter when unpacking data from untrusted source.
+        You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
         Limits max length of str. (default: 2**31-1)
@@ -188,13 +188,13 @@ class Unpacker(object):
             self.file_like = file_like
             self._fb_feeding = False
 
-        #: array of bytes feeded.
+        #: array of bytes fed.
         self._fb_buffers = []
         #: Which buffer we currently reads
         self._fb_buf_i = 0
         #: Which position we currently reads
         self._fb_buf_o = 0
-        #: Total size of _fb_bufferes
+        #: Total size of _fb_buffers
         self._fb_buf_n = 0
 
         # When Unpacker is used as an iterable, between the calls to next(),
@@ -203,7 +203,7 @@ class Unpacker(object):
         # the correct moments, we have to keep track of how sloppy we were.
         # Furthermore, when the buffer is incomplete (that is: in the case
         # we raise an OutOfData) we need to rollback the buffer to the correct
-        # state, which _fb_slopiness records.
+        # state, which _fb_sloppiness records.
         self._fb_sloppiness = 0
 
         self._max_buffer_size = max_buffer_size or 2**31-1
@@ -303,7 +303,7 @@ class Unpacker(object):
 
     def _fb_read(self, n, write_bytes=None):
         buffs = self._fb_buffers
-        # We have a redundant codepath for the most common case, such that
+        # We have a redundant code path for the most common case, such that
         # pypy optimizes it properly.  This is the case that the read fits
         # in the current buffer.
         if (write_bytes is None and self._fb_buf_i < len(buffs) and
@@ -598,17 +598,17 @@ class Packer(object):
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
     :param str encoding:
-            Convert unicode to bytes with this encoding. (default: 'utf-8')
+        Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
-        Reset buffer after each pack and return it's content as `bytes`. (default: True).
+        Reset buffer after each pack and return its content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
-        It also enable str8 type for unicode.
+        It also enables str8 type for unicode.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, autoreset=True, use_bin_type=False):
