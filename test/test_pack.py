@@ -130,7 +130,7 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
 
 
 class odict(dict):
-    '''Reimplement OrderedDict to run test on Python 2.6'''
+    """Reimplement OrderedDict to run test on Python 2.6"""
     def __init__(self, seq):
         self._seq = seq
         dict.__init__(self, seq)
