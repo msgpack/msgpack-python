@@ -164,7 +164,7 @@ class Unpacker(object):
     :param int max_buffer_size:
         Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
         Raises `BufferFull` exception when it is insufficient.
-        You shoud set this parameter when unpacking data from untrusted source.
+        You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
         Limits max length of str. (default: 2**31-1)
@@ -214,7 +214,7 @@ class Unpacker(object):
             self.file_like = file_like
             self._feeding = False
 
-        #: array of bytes feeded.
+        #: array of bytes fed.
         self._buffer = bytearray()
         #: Which position we currently reads
         self._buff_i = 0
@@ -646,17 +646,17 @@ class Packer(object):
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
     :param str encoding:
-            Convert unicode to bytes with this encoding. (default: 'utf-8')
+        Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
-        Reset buffer after each pack and return it's content as `bytes`. (default: True).
+        Reset buffer after each pack and return its content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
-        It also enable str8 type for unicode.
+        It also enables str8 type for unicode.
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be

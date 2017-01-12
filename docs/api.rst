@@ -28,7 +28,7 @@ API reference
 .. autoclass:: ExtType
 
 exceptions
------------
+----------
 
 These exceptions are accessible via `msgpack` package.
 (For example, `msgpack.OutOfData` is shortcut for `msgpack.exceptions.OutOfData`)

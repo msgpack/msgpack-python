@@ -1,6 +1,6 @@
-=======================
+======================
 MessagePack for Python
-=======================
+======================
 
 :author: INADA Naoki
 :version: 0.4.6
@@ -11,21 +11,22 @@ MessagePack for Python
    
 
 What's this
-------------
+-----------
 
-`MessagePack <http://msgpack.org/>`_ is a fast, compact binary serialization format, suitable for
-similar data to JSON. This package provides CPython bindings for reading and
-writing MessagePack data.
+`MessagePack <http://msgpack.org/>`_ is an efficient binary serialization format.
+It lets you exchange data among multiple languages like JSON.
+But it's faster and smaller.
+This package provides CPython bindings for reading and writing MessagePack data.
 
 Install
----------
+-------
 
 ::
 
    $ pip install msgpack-python
 
 PyPy
-^^^^^
+^^^^
 
 msgpack-python provides pure python implementation.  PyPy can use this.
 
@@ -44,7 +45,7 @@ Community Edition or Express Edition can be used to build extension module.
 
 
 How to use
------------
+----------
 
 One-shot pack & unpack
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -134,7 +135,7 @@ It is also possible to pack/unpack custom data types. Here is an example for
 key-value pairs.
 
 Extended types
-^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^
 
 It is also possible to pack/unpack custom data types using the **ext** type.
 
@@ -166,7 +167,7 @@ Advanced unpacking control
 
 As an alternative to iteration, ``Unpacker`` objects provide ``unpack``,
 ``skip``, ``read_array_header`` and ``read_map_header`` methods. The former two
-read an entire message from the stream, respectively deserialising and returning
+read an entire message from the stream, respectively de-serialising and returning
 the result, or ignoring it. The latter two methods return the number of elements
 in the upcoming container, so that each element in an array, or key-value pair
 in a map, can be unpacked or skipped individually.
@@ -243,7 +244,7 @@ instead of `StopIteration`.
 `StopIteration` is used for iterator protocol only.
 
 Note about performance
-------------------------
+----------------------
 
 GC
 ^^
@@ -253,7 +254,7 @@ This means unpacking may cause useless GC.
 You can use ``gc.disable()`` when unpacking large message.
 
 use_list option
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^
 List is the default sequence type of Python.
 But tuple is lighter than list.
 You can use ``use_list=False`` while unpacking when performance is important.
@@ -264,7 +265,7 @@ Another way to unpacking such object is using ``object_pairs_hook``.
 
 
 Development
-------------
+-----------
 
 Test
 ^^^^

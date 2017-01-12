@@ -61,11 +61,11 @@ cdef class Packer(object):
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
     :param bool autoreset:
-        Reset buffer after each pack and return it's content as `bytes`. (default: True).
+        Reset buffer after each pack and return its content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
-        It also enable str8 type for unicode.
+        It also enables str8 type for unicode.
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
@@ -299,7 +299,7 @@ cdef class Packer(object):
         """
         Pack *pairs* as msgpack map type.
 
-        *pairs* should sequence of pair.
+        *pairs* should be a sequence of pairs.
         (`len(pairs)` and `for k, v in pairs:` should be supported.)
         """
         cdef int ret = msgpack_pack_map(&self.pk, len(pairs))
