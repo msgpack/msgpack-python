@@ -33,13 +33,14 @@ matrix:
 
 install:
   - pip install -U pip
-  - pip install tox cython
+  - pip install cython
   - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
+  - pip install -e .
 
 script:
   - python -c 'import sys; print(hex(sys.maxsize))'
   - python -c 'from msgpack import _packer, _unpacker'
-  - py.test
-  - MSGPACK_PUREPYTHON=x py.test
+  - py.test -v test
+  - MSGPACK_PUREPYTHON=x py.test -v test
 
 # vim: sw=2 ts=2
