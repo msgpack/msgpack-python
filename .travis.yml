@@ -17,6 +17,7 @@ branches:
 matrix:
   include:
     - sudo: required
+      language: c
       services:
         - docker
       env:
@@ -30,7 +31,7 @@ matrix:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
     - python: "pypy"
       install:
-        - python -c 'import sys; print(hex(sys.maxsize))'
+        - pip install -e .
       script:
         - py.test -v test
 
