@@ -3,8 +3,6 @@ MessagePack for Python
 ======================
 
 :author: INADA Naoki
-:version: 0.4.6
-:date: 2015-03-13
 
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.svg
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
