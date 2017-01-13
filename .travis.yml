@@ -10,7 +10,6 @@ python:
   - "3.5"
   - "3.6"
   - "3.7-dev"
-  - "pypy"
 
 branches:
   only:
@@ -30,6 +29,12 @@ matrix:
         - docker pull $DOCKER_IMAGE
       script:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
+    - python: "pypy"
+      install:
+        - python -c 'import sys; print(hex(sys.maxsize))'
+      script:
+        - py.test -v test
+
 
 install:
   - pip install -U pip
