@@ -2,11 +2,12 @@
 MessagePack for Python
 ======================
 
-:author: INADA Naoki
-
 .. image:: https://secure.travis-ci.org/msgpack/msgpack-python.svg
    :target: https://travis-ci.org/#!/msgpack/msgpack-python
-   
+
+.. image:: https://readthedocs.org/projects/msgpack-python/badge/?version=latest
+   :target: http://msgpack-python.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 What's this
 -----------
