@@ -1,22 +1,23 @@
 sudo: false
 language: python
-python: 3.5
-cache:
-  directories:
-    - $HOME/.cache/pip
+cache: pip
+
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7-dev"
 
 branches:
   only:
     - master
 
-env:
-  - TOXENV=py27-c,py33-c,py34-c,py35-c
-  - TOXENV=py27-pure,py33-pure,py34-pure,py35-pure
-  - TOXENV=pypy-pure,pypy3-pure
-
 matrix:
   include:
     - sudo: required
+      language: c
       services:
         - docker
       env:
@@ -28,12 +29,23 @@ matrix:
         - docker pull $DOCKER_IMAGE
       script:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
+    - python: "pypy"
+      install:
+        - pip install -e .
+      script:
+        - py.test -v test
+
 
 install:
   - pip install -U pip
-  - pip install tox cython
+  - pip install cython
   - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
+  - pip install -e .
 
-script: tox
+script:
+  - python -c 'import sys; print(hex(sys.maxsize))'
+  - python -c 'from msgpack import _packer, _unpacker'
+  - py.test -v test
+  - MSGPACK_PUREPYTHON=x py.test -v test
 
 # vim: sw=2 ts=2
