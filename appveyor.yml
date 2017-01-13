@@ -18,6 +18,7 @@ environment:
 install:
   # We need wheel installed to build wheels
   - "%PYTHON%\\python.exe -m pip install -U pip wheel pytest cython"
+  - "%PYTHON%\\Scripts\\cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx"
 
 build: off
 
