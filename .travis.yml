@@ -1,18 +1,20 @@
 sudo: false
+dist: trusty
 language: python
-python: 3.5
-cache:
-  directories:
-    - $HOME/.cache/pip
+cache: pip
+
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7-dev"
+  - "pypy"
 
 branches:
   only:
     - master
-
-env:
-  - TOXENV=py27-c,py33-c,py34-c,py35-c
-  - TOXENV=py27-pure,py33-pure,py34-pure,py35-pure
-  - TOXENV=pypy-pure,pypy3-pure
 
 matrix:
   include:
@@ -34,6 +36,10 @@ install:
   - pip install tox cython
   - cython --cplus msgpack/_packer.pyx msgpack/_unpacker.pyx
 
-script: tox
+script:
+  - python -c 'import sys; print(hex(sys.maxsize))'
+  - python -c 'from msgpack import _packer, _unpacker'
+  - py.test
+  - MSGPACK_PUREPYTHON=x py.test
 
 # vim: sw=2 ts=2
