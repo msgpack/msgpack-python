@@ -306,7 +306,7 @@ cdef class Unpacker(object):
     """
     cdef unpack_context ctx
     cdef char* buf
-    cdef Py_ssize_t buf_size, buf_head, buf_tail
+    cdef Py_ssize_t buf_size, buf_head, buf_tail, buf_offset, unpack_size
     cdef object file_like
     cdef object file_like_read
     cdef Py_ssize_t read_size
@@ -358,6 +358,8 @@ cdef class Unpacker(object):
         self.buf_size = read_size
         self.buf_head = 0
         self.buf_tail = 0
+        self.buf_offset = 0
+        self.unpack_size = 0
 
         if encoding is not None:
             if isinstance(encoding, unicode):
@@ -381,6 +383,11 @@ cdef class Unpacker(object):
                  ext_hook, use_list, cenc, cerr,
                  max_str_len, max_bin_len, max_array_len,
                  max_map_len, max_ext_len)
+
+    @property
+    def offset(self):
+        print('-- %d\t%d\t%d' % (self.buf_head, self.buf_offset, self.unpack_size))
+        return self.buf_head + self.buf_offset - self.unpack_size
 
     def feed(self, object next_bytes):
         """Append `next_bytes` to internal buffer."""
@@ -410,6 +417,8 @@ cdef class Unpacker(object):
             Py_ssize_t new_size
 
         if tail + _buf_len > buf_size:
+            print("a_b, t+bl>bs, head=%d" % head)
+            self.buf_offset += head
             if ((tail - head) + _buf_len) <= buf_size:
                 # move to front.
                 memmove(buf, buf + head, tail - head)
@@ -506,7 +515,10 @@ cdef class Unpacker(object):
 
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(unpack_construct, write_bytes)
+        offset_before = self.offset
+        ret = self._unpack(unpack_construct, write_bytes)
+        self.unpack_size = self.offset - offset_before
+        return ret
 
     def skip(self, object write_bytes=None):
         """Read and ignore one object, returning None
@@ -516,7 +528,10 @@ cdef class Unpacker(object):
 
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(unpack_skip, write_bytes)
+        offset_before = self.offset
+        ret = self._unpack(unpack_skip, write_bytes)
+        self.unpack_size = self.offset - offset_before
+        return ret
 
     def read_array_header(self, object write_bytes=None):
         """assuming the next object is an array, return its size n, such that
@@ -538,7 +553,10 @@ cdef class Unpacker(object):
         return self
 
     def __next__(self):
-        return self._unpack(unpack_construct, None, 1)
+        offset_before = self.offset
+        ret = self._unpack(unpack_construct, None, 1)
+        self.unpack_size = self.offset - offset_before
+        return ret
 
     # for debug.
     #def _buf(self):

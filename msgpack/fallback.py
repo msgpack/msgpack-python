@@ -218,6 +218,10 @@ class Unpacker(object):
         self._buffer = bytearray()
         #: Which position we currently reads
         self._buff_i = 0
+        #: Virtual offset of the buffer in the complete stream
+        self._buff_offset = 0
+        #: Length of the last top-level object that was unpacked
+        self._unpack_size = 0
 
         # When Unpacker is used as an iterable, between the calls to next(),
         # the buffer is not "consumed" completely, for efficiency sake.
@@ -256,6 +260,10 @@ class Unpacker(object):
                             "exclusive")
         if not callable(ext_hook):
             raise TypeError("`ext_hook` is not callable")
+
+    @property
+    def offset(self):
+        return self._buff_i + self._buff_offset - self._unpack_size
 
     def feed(self, next_bytes):
         assert self._feeding
@@ -299,6 +307,7 @@ class Unpacker(object):
         if self._buf_checkpoint > 0:
             del self._buffer[:self._buf_checkpoint]
             self._buff_i -= self._buf_checkpoint
+            self._buff_offset += self._buf_checkpoint
             self._buf_checkpoint = 0
 
         # Read from file
@@ -593,7 +602,9 @@ class Unpacker(object):
 
     def __next__(self):
         try:
+            offset_before = self.offset
             ret = self._unpack(EX_CONSTRUCT)
+            self._unpack_size = self.offset - offset_before
             self._consume()
             return ret
         except OutOfData:
@@ -609,7 +620,9 @@ class Unpacker(object):
         self._consume()
 
     def unpack(self, write_bytes=None):
+        offset_before = self.offset
         ret = self._unpack(EX_CONSTRUCT)
+        self._unpack_size = self.offset - offset_before
         if write_bytes is not None:
             write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
         self._consume()
