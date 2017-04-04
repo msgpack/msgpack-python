@@ -377,6 +377,9 @@ cdef class Unpacker(object):
                 raise TypeError("unicode_errors should be bytes or unicode")
             cerr = PyBytes_AsString(self.unicode_errors)
 
+        if file_like:
+            self.read_from_file()  # initialize buffer (issue #83)
+
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
                  ext_hook, use_list, cenc, cerr,
                  max_str_len, max_bin_len, max_array_len,
