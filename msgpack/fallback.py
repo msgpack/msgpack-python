@@ -629,6 +629,11 @@ class Unpacker(object):
         self._consume()
         return ret
 
+    def reset(self):
+        self._fb_buffers = []
+        self._fb_buf_i = 0
+        self._fb_buf_o = 0
+        self._fb_buf_n = 0
 
 class Packer(object):
     """

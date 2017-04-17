@@ -27,3 +27,14 @@ def test_write_bytes_multi_buffer():
     unpacked = unpacker.unpack(f.write)
     assert unpacked == long_val
     assert f.getvalue() == expected
+
+
+def test_unpack_reset():
+    unpacker = Unpacker()
+    unpacker.feed(b'abc')
+    unpacker.reset()
+    unpacker.feed(b'efg')
+    f = io.BytesIO()
+    assert unpacker.unpack(f.write) == ord('e')
+    assert f.getvalue() == b'e'
+    
