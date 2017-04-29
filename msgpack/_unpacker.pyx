@@ -29,6 +29,7 @@ cdef extern from "Python.h":
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *
+ctypedef unsigned long long uint64_t
 
 from msgpack.exceptions import (
     BufferFull,
@@ -314,6 +315,7 @@ cdef class Unpacker(object):
     cdef object object_hook, object_pairs_hook, list_hook, ext_hook
     cdef object encoding, unicode_errors
     cdef Py_ssize_t max_buffer_size
+    cdef uint64_t stream_offset
 
     def __cinit__(self):
         self.buf = NULL
@@ -358,6 +360,7 @@ cdef class Unpacker(object):
         self.buf_size = read_size
         self.buf_head = 0
         self.buf_tail = 0
+        self.stream_offset = 0
 
         if encoding is not None:
             if isinstance(encoding, unicode):
@@ -468,6 +471,7 @@ cdef class Unpacker(object):
 
             try:
                 ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
+                self.stream_offset += self.buf_head - prev_head
                 if write_bytes is not None:
                     write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
 
@@ -533,6 +537,9 @@ cdef class Unpacker(object):
         Raises `OutOfData` when there are no more bytes to unpack.
         """
         return self._unpack(read_map_header, write_bytes)
+
+    def tell(self):
+        return self.stream_offset
 
     def __iter__(self):
         return self

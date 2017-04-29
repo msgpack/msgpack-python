@@ -244,6 +244,7 @@ class Unpacker(object):
         self._max_array_len = max_array_len
         self._max_map_len = max_map_len
         self._max_ext_len = max_ext_len
+        self._stream_offset = 0
 
         if list_hook is not None and not callable(list_hook):
             raise TypeError('`list_hook` is not callable')
@@ -266,6 +267,7 @@ class Unpacker(object):
 
     def _consume(self):
         """ Gets rid of the used parts of the buffer. """
+        self._stream_offset += self._buff_i - self._buf_checkpoint
         self._buf_checkpoint = self._buff_i
 
     def _got_extradata(self):
@@ -628,6 +630,9 @@ class Unpacker(object):
             write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
         self._consume()
         return ret
+
+    def tell(self):
+        return self._stream_offset
 
 
 class Packer(object):
