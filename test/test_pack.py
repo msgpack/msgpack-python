@@ -58,6 +58,13 @@ def testPackBytes():
     for td in test_data:
         check(td)
 
+def testPackByteArrays():
+    test_data = [
+        bytearray(b""), bytearray(b"abcd"), (bytearray(b"defgh"),),
+        ]
+    for td in test_data:
+        check(td)
+
 def testIgnoreUnicodeErrors():
     re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
     assert re == "abcdef"

@@ -10,6 +10,8 @@ from msgpack import ExtType
 cdef extern from "Python.h":
 
     int PyMemoryView_Check(object obj)
+    int PyByteArray_Check(object obj)
+    int PyByteArray_CheckExact(object obj)
 
 
 cdef extern from "pack.h":
@@ -37,6 +39,14 @@ cdef extern from "pack.h":
 
 cdef int DEFAULT_RECURSE_LIMIT=511
 cdef size_t ITEM_LIMIT = (2**32)-1
+
+
+cdef inline int PyBytesLike_Check(object o):
+    return PyBytes_Check(o) or PyByteArray_Check(o)
+
+
+cdef inline int PyBytesLike_CheckExact(object o):
+    return PyBytes_CheckExact(o) or PyByteArray_CheckExact(o)
 
 
 cdef class Packer(object):
@@ -174,10 +184,10 @@ cdef class Packer(object):
                 else:
                    dval = o
                    ret = msgpack_pack_double(&self.pk, dval)
-            elif PyBytes_CheckExact(o) if strict_types else PyBytes_Check(o):
+            elif PyBytesLike_CheckExact(o) if strict_types else PyBytesLike_Check(o):
                 L = len(o)
                 if L > ITEM_LIMIT:
-                    raise PackValueError("bytes is too large")
+                    raise PackValueError("%s is too large" % type(o).__name__)
                 rawval = o
                 ret = msgpack_pack_bin(&self.pk, L)
                 if ret == 0:
