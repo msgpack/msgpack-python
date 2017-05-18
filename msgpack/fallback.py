@@ -38,6 +38,8 @@ if hasattr(sys, 'pypy_version_info'):
         def write(self, s):
             if isinstance(s, memoryview):
                 s = s.tobytes()
+            elif isinstance(s, bytearray):
+                s = bytes(s)
             self.builder.append(s)
         def getvalue(self):
             return self.builder.build()
@@ -728,10 +730,10 @@ class Packer(object):
                     default_used = True
                     continue
                 raise PackOverflowError("Integer value out of range")
-            if check(obj, bytes):
+            if check(obj, (bytes, bytearray)):
                 n = len(obj)
                 if n >= 2**32:
-                    raise PackValueError("Bytes is too large")
+                    raise PackValueError("%s is too large" % type(obj).__name__)
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
             if check(obj, Unicode):
