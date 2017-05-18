@@ -216,6 +216,52 @@ You can change this by using `use_bin_type=True` option in Packer and `encoding=
     >>> msgpack.unpackb(packed, encoding='utf-8')
     ['spam', u'egg']
 
+It's worth noting that ``encoding`` (for ``packb()`` and ``unpackb()`` alike), ``use_bin_type``, and other
+parameters have nothing to do with encoding of the packed representation of the string itself,
+but rather with the encoding of the final unpacked item. In other words, the packed representation
+of the item is always going to be a string, seemingly encoded using `latin1` encoding:
+
+.. code-block:: pycon
+
+    # -*- coding: utf-8 -*-
+    
+    import msgpack
+    
+    for input in (u"Beyoncé", u"Beyoncé".encode('utf-8')):
+        print "---"
+        print "Input: %s (type=%s)" % (input, type(input))
+        for encoding in ('utf-8', 'latin1'):
+            for params in [{}, {'encoding': 'utf-8'}, {'use_bin_type': True}, {'encoding': 'utf-8', 'use_bin_type': True}]:
+                try:
+                    msgpack.packb(input, **params).decode(encoding)
+                    result = True
+                except UnicodeDecodeError:
+                    result = False
+                print "Success=%s\tencoding=%s params: %s" % (result, encoding, params)
+    
+    ---
+    Input: Beyoncé (type=<type 'unicode'>)
+    Success=False   encoding=utf-8 params: {}
+    Success=False   encoding=utf-8 params: {'encoding': 'utf-8'}
+    Success=False   encoding=utf-8 params: {'use_bin_type': True}
+    Success=False   encoding=utf-8 params: {'use_bin_type': True, 'encoding': 'utf-8'}
+    Success=True    encoding=latin1 params: {}
+    Success=True    encoding=latin1 params: {'encoding': 'utf-8'}
+    Success=True    encoding=latin1 params: {'use_bin_type': True}
+    Success=True    encoding=latin1 params: {'use_bin_type': True, 'encoding': 'utf-8'}
+    ---
+    Input: Beyoncé (type=<type 'str'>)
+    Success=False   encoding=utf-8 params: {}
+    Success=False   encoding=utf-8 params: {'encoding': 'utf-8'}
+    Success=False   encoding=utf-8 params: {'use_bin_type': True}
+    Success=False   encoding=utf-8 params: {'use_bin_type': True, 'encoding': 'utf-8'}
+    Success=True    encoding=latin1 params: {}
+    Success=True    encoding=latin1 params: {'encoding': 'utf-8'}
+    Success=True    encoding=latin1 params: {'use_bin_type': True}
+    Success=True    encoding=latin1 params: {'use_bin_type': True, 'encoding': 'utf-8'}
+
+
+
 ext type
 ^^^^^^^^
 
