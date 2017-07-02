@@ -17,6 +17,15 @@ class ExtType(namedtuple('ExtType', 'code data')):
         return super(ExtType, cls).__new__(cls, code, data)
 
 
+class Passthrough(object):
+    """Class to pass raw msgpack data into a packer."""
+    def __init__(self, data):
+        self.data = data
+
+    def __bytes__(self):
+        return self.data
+
+
 import os
 if os.environ.get('MSGPACK_PUREPYTHON'):
     from msgpack.fallback import Packer, unpack, unpackb, Unpacker

@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import struct
 from pytest import raises, xfail
 
-from msgpack import packb, unpackb, Unpacker, Packer
+from msgpack import packb, unpackb, Unpacker, Packer, Passthrough
 
 from io import BytesIO
 
@@ -166,3 +166,19 @@ def test_pairlist():
     packed = packer.pack_map_pairs(pairlist)
     unpacked = unpackb(packed, object_pairs_hook=list)
     assert pairlist == unpacked
+
+
+def test_passthrough():
+    map = {1: Passthrough(b'\x93\xa3foo\xa3bar\xa3baz')}
+    packed = packb(map, passthrough=Passthrough)
+    assert packed == b'\x81\x01' + b'\x93\xa3foo\xa3bar\xa3baz'
+    unpacked = unpackb(packed)
+    assert unpacked == {1: [b'foo', b'bar', b'baz']}
+
+
+def test_passthrough_trailing():
+    listing = [b'foo', Passthrough(b'\xa3bar'), b'baz']
+    packed = packb(listing, passthrough=Passthrough)
+    assert packed == b'\x93\xa3foo\xa3bar\xa3baz'
+    unpacked = unpackb(packed)
+    assert unpacked == [b'foo', b'bar', b'baz']

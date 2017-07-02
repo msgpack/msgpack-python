@@ -4,7 +4,7 @@
 from cpython cimport *
 
 from msgpack.exceptions import PackValueError, PackOverflowError
-from msgpack import ExtType
+from msgpack import ExtType, Passthrough
 
 
 cdef extern from "Python.h":
@@ -36,6 +36,7 @@ cdef extern from "pack.h":
     int msgpack_pack_bin(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
+    int msgpack_pack_write(msgpack_packer* pk, const char *data, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
 cdef size_t ITEM_LIMIT = (2**32)-1
@@ -63,7 +64,7 @@ cdef class Packer(object):
 
     :param callable default:
         Convert user type to builtin type that Packer supports.
-        See also simplejson's document.
+        See also simplejson's documentation.
     :param str encoding:
         Convert unicode to bytes with this encoding. (default: 'utf-8')
     :param str unicode_errors:
@@ -83,6 +84,10 @@ cdef class Packer(object):
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
         for python types.
+    :param class passthrough:
+        Class used for data passthrough. Instances are expected to implement the `__bytes__`
+        protocol. Returned data is written directly to output with no conversion or wrapping,
+        so it has to be a valid msgpack object. A sample class is supplied in `msgpack.Passthrough`.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -93,6 +98,7 @@ cdef class Packer(object):
     cdef bint strict_types
     cdef bool use_float
     cdef bint autoreset
+    cdef object _passthrough
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
@@ -104,7 +110,7 @@ cdef class Packer(object):
 
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, bint autoreset=1, bint use_bin_type=0,
-                 bint strict_types=0):
+                 bint strict_types=0, passthrough=None):
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
@@ -113,6 +119,10 @@ cdef class Packer(object):
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
         self._default = default
+        if passthrough is not None:
+            if not PyType_Check(passthrough):
+                raise TypeError("passthrough must be a class.")
+        self._passthrough = passthrough
         if encoding is None:
             self.encoding = NULL
             self.unicode_errors = NULL
@@ -255,6 +265,14 @@ cdef class Packer(object):
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
                 PyBuffer_Release(&view);
+            elif self._passthrough is not None and isinstance(o, self._passthrough):
+                # Use the __bytes__ protocol directly as specified above.
+                # Compared to bytes(o) this is portable to Python 2, and does
+                # not incur an additional copy.
+                if PyObject_GetBuffer(o.__bytes__(), &view, PyBUF_SIMPLE) != 0:
+                    raise PackValueError("could not get buffer")
+                ret = msgpack_pack_write(&self.pk, <char*>view.buf, view.len)
+                PyBuffer_Release(&view)
             elif not default_used and self._default:
                 o = self._default(o)
                 default_used = 1
