@@ -655,10 +655,14 @@ class Packer(object):
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
         for python types.
+    :param class passthrough:
+        Class used for data passthrough. Instances are expected to implement the `__bytes__`
+        protocol. Returned data is written directly to output with no conversion or wrapping,
+        so it has to be a valid msgpack object. A sample class is supplied in `msgpack.Passthrough`.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, autoreset=True, use_bin_type=False,
-                 strict_types=False):
+                 strict_types=False, passthrough=None):
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
@@ -670,6 +674,10 @@ class Packer(object):
             if not callable(default):
                 raise TypeError("default must be callable")
         self._default = default
+        if passthrough is not None:
+            if not isinstance(passthrough, type):
+                raise TypeError("passthrough must be a class")
+        self._passthrough = passthrough
 
     def _pack(self, obj, nest_limit=DEFAULT_RECURSE_LIMIT,
               check=isinstance, check_type_strict=_check_type_strict):
@@ -775,6 +783,9 @@ class Packer(object):
             if check(obj, dict):
                 return self._pack_map_pairs(len(obj), dict_iteritems(obj),
                                                nest_limit - 1)
+            if self._passthrough is not None and check(obj, self._passthrough):
+                self._buffer.write(obj.__bytes__())
+                return
             if not default_used and self._default is not None:
                 obj = self._default(obj)
                 default_used = 1
