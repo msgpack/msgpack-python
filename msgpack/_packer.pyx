@@ -80,9 +80,14 @@ cdef class Packer(object):
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
         treated as unsupported type and forwarded to default.
-        Additionally tuples will not be serialized as lists.
+        Additionally tuples and lists are serialized as separate types.
         This is useful when trying to implement accurate serialization
         for python types.
+    :param bool use_list:
+        Only used when strict_types is true.
+        If true, only pack Python lists to msgpack arrays.
+        Otherwise, only pack Python tuples to msgpack arrays. (default: True)
+        The other Python type is handled by the default callback.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -104,9 +109,10 @@ cdef class Packer(object):
 
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, bint autoreset=1, bint use_bin_type=0,
-                 bint strict_types=0):
+                 bint strict_types=0, bint use_list=1):
         self.use_float = use_single_float
         self.strict_types = strict_types
+        self.use_list = use_list
         self.autoreset = autoreset
         self.pk.use_bin_type = use_bin_type
         if default is not None:
@@ -144,6 +150,7 @@ cdef class Packer(object):
         cdef size_t L
         cdef int default_used = 0
         cdef bint strict_types = self.strict_types
+        cdef bint use_list = self.use_list
         cdef Py_buffer view
 
         if nest_limit < 0:
@@ -235,7 +242,7 @@ cdef class Packer(object):
                     raise PackValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-            elif PyList_CheckExact(o) if strict_types else (PyTuple_Check(o) or PyList_Check(o)):
+            elif (PyTuple_Check(o) or PyList_Check(o)) if not strict_types else PyList_CheckExact(o) if use_list else PyTuple_CheckExact(o):
                 L = len(o)
                 if L > ITEM_LIMIT:
                     raise PackValueError("list is too large")
