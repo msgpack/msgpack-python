@@ -668,9 +668,14 @@ class Packer(object):
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
         treated as unsupported type and forwarded to default.
-        Additionally tuples will not be serialized as lists.
+        Additionally tuples and lists are serialized as separate types.
         This is useful when trying to implement accurate serialization
         for python types.
+    :param bool use_list:
+        Only used when strict_types is true.
+        If true, only pack Python lists to msgpack arrays.
+        Otherwise, only pack Python tuples to msgpack arrays. (default: True)
+        The other Python type is handled by the default callback.
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, autoreset=True, use_bin_type=False,
@@ -692,7 +697,7 @@ class Packer(object):
         default_used = False
         if self._strict_types:
             check = check_type_strict
-            list_types = list
+            list_types = list if self._use_list else tuple
         else:
             list_types = (list, tuple)
         while True:
