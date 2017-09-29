@@ -795,7 +795,7 @@ class Packer(object):
                 obj = self._default(obj)
                 default_used = 1
                 continue
-            raise TypeError("Cannot serialize %r" % obj)
+            raise TypeError("Cannot serialize %r" % (obj, ))
 
     def pack(self, obj):
         self._pack(obj)
