@@ -3,7 +3,7 @@ MessagePack for Python
 ======================
 
 .. image:: https://travis-ci.org/msgpack/msgpack-python.svg?branch=master
-    :target: https://travis-ci.org/msgpack/msgpack-python
+   :target: https://travis-ci.org/msgpack/msgpack-python
    :alt: Build Status
 
 .. image:: https://readthedocs.org/projects/msgpack-python/badge/?version=latest
