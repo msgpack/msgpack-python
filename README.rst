@@ -2,17 +2,18 @@
 MessagePack for Python
 ======================
 
-.. image:: https://secure.travis-ci.org/msgpack/msgpack-python.svg
-   :target: https://travis-ci.org/#!/msgpack/msgpack-python
+.. image:: https://travis-ci.org/msgpack/msgpack-python.svg?branch=master
+    :target: https://travis-ci.org/msgpack/msgpack-python
+   :alt: Build Status
 
 .. image:: https://readthedocs.org/projects/msgpack-python/badge/?version=latest
-   :target: http://msgpack-python.readthedocs.io/en/latest/?badge=latest
+   :target: https://msgpack-python.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
 What's this
 -----------
 
-`MessagePack <http://msgpack.org/>`_ is an efficient binary serialization format.
+`MessagePack <https://msgpack.org/>`_ is an efficient binary serialization format.
 It lets you exchange data among multiple languages like JSON.
 But it's faster and smaller.
 This package provides CPython bindings for reading and writing MessagePack data.
