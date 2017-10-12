@@ -10,10 +10,6 @@ python:
   - "3.6"
   - "3.7-dev"
 
-branches:
-  only:
-    - master
-
 matrix:
   include:
     - sudo: required
