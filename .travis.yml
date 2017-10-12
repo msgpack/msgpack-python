@@ -13,7 +13,7 @@ python:
 matrix:
   include:
     - sudo: required
-      language: c
+      language: python
       services:
         - docker
       env:
