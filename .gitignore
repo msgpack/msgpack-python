@@ -12,3 +12,4 @@ msgpack/*.cpp
 /venv
 /tags
 /docs/_build
+.cache

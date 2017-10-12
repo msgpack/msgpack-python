@@ -7,6 +7,7 @@ from pytest import raises, xfail
 
 from msgpack import packb, unpackb, Unpacker, Packer
 
+from collections import OrderedDict
 from io import BytesIO
 
 def check(data, use_list=False):
@@ -136,24 +137,9 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
         assert unpacker.unpack() == dict((i, i * 2) for i in range(size))
 
 
-class odict(dict):
-    """Reimplement OrderedDict to run test on Python 2.6"""
-    def __init__(self, seq):
-        self._seq = seq
-        dict.__init__(self, seq)
-
-    def items(self):
-        return self._seq[:]
-
-    def iteritems(self):
-        return iter(self._seq)
-
-    def keys(self):
-        return [x[0] for x in self._seq]
-
 def test_odict():
     seq = [(b'one', 1), (b'two', 2), (b'three', 3), (b'four', 4)]
-    od = odict(seq)
+    od = OrderedDict(seq)
     assert unpackb(packb(od), use_list=1) == dict(seq)
     def pair_hook(seq):
         return list(seq)
