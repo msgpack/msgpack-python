@@ -28,14 +28,14 @@ Install
 PyPy
 ^^^^
 
-msgpack-python provides pure python implementation.  PyPy can use this.
+msgpack-python provides a pure Python implementation.  PyPy can use this.
 
 Windows
 ^^^^^^^
 
-When you can't use binary distribution, you need to install Visual Studio
+When you can't use a binary distribution, you need to install Visual Studio
 or Windows SDK on Windows.
-Without extension, using pure python implementation on CPython runs slowly.
+Without extension, using pure Python implementation on CPython runs slowly.
 
 For Python 2.7, `Microsoft Visual C++ Compiler for Python 2.7 <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_
 is recommended solution.
@@ -51,11 +51,11 @@ One-shot pack & unpack
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Use ``packb`` for packing and ``unpackb`` for unpacking.
-msgpack provides ``dumps`` and ``loads`` as alias for compatibility with
+msgpack provides ``dumps`` and ``loads`` as an alias for compatibility with
 ``json`` and ``pickle``.
 
-``pack`` and ``dump`` packs to file-like object.
-``unpack`` and ``load`` unpacks from file-like object.
+``pack`` and ``dump`` packs to a file-like object.
+``unpack`` and ``load`` unpacks from a file-like object.
 
 .. code-block:: pycon
 
@@ -65,14 +65,15 @@ msgpack provides ``dumps`` and ``loads`` as alias for compatibility with
    >>> msgpack.unpackb(_)
    [1, 2, 3]
 
-``unpack`` unpacks msgpack's array to Python's list, but can unpack to tuple:
+``unpack`` unpacks msgpack's array to Python's list, but can also unpack to tuple:
 
 .. code-block:: pycon
 
    >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
    (1, 2, 3)
 
-You should always pass the ``use_list`` keyword argument. See performance issues relating to `use_list option`_ below.
+You should always specify the ``use_list`` keyword argument for backward compatibility.
+See performance issues relating to `use_list option`_ below.
 
 Read the docstring for other options.
 
@@ -198,29 +199,43 @@ Notes
 string and binary type
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In old days, msgpack doesn't distinguish string and binary types like Python 1.
-The type for represent string and binary types is named **raw**.
+Early versions of msgpack didn't distinguish string and binary types (like Python 1).
+The type for representing both string and binary types was named **raw**.
 
-msgpack can distinguish string and binary type for now.  But it is not like Python 2.
-Python 2 added unicode string.  But msgpack renamed **raw** to **str** and added **bin** type.
-It is because keep compatibility with data created by old libs. **raw** was used for text more than binary.
+For backward compatibility reasons, msgpack-python will still default all
+strings to byte strings, unless you specify the `use_bin_type=True` option in
+the packer. If you do so, it will use a non-standard type called **bin** to
+serialize byte arrays, and **raw** becomes to mean **str**. If you want to
+distinguish **bin** and **raw** in the unpacker, specify `encoding='utf-8'`.
 
-Currently, while msgpack-python supports new **bin** type, default setting doesn't use it and
-decodes **raw** as `bytes` instead of `unicode` (`str` in Python 3).
-
-You can change this by using `use_bin_type=True` option in Packer and `encoding="utf-8"` option in Unpacker.
+Note that Python 2 defaults to byte-arrays over Unicode strings:
 
 .. code-block:: pycon
 
     >>> import msgpack
-    >>> packed = msgpack.packb([b'spam', u'egg'], use_bin_type=True)
-    >>> msgpack.unpackb(packed, encoding='utf-8')
-    ['spam', u'egg']
+    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs']))
+    ['spam', 'eggs']
+    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True),
+                        encoding='utf-8')
+    ['spam', u'eggs']
+
+This is the same code in Python 3 (same behaviour, but Python 3 has a
+different default):
+
+.. code-block:: pycon
+
+    >>> import msgpack
+    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs']))
+    [b'spam', b'eggs']
+    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True),
+                        encoding='utf-8')
+    [b'spam', 'eggs']
+
 
 ext type
 ^^^^^^^^
 
-To use **ext** type, pass ``msgpack.ExtType`` object to packer.
+To use the **ext** type, pass ``msgpack.ExtType`` object to packer.
 
 .. code-block:: pycon
 
@@ -234,7 +249,7 @@ You can use it with ``default`` and ``ext_hook``. See below.
 Note for msgpack-python 0.2.x users
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The msgpack-python 0.3 have some incompatible changes.
+The msgpack-python release 0.3 has some incompatible changes.
 
 The default value of ``use_list`` keyword argument is ``True`` from 0.3.
 You should pass the argument explicitly for backward compatibility.
