@@ -82,7 +82,7 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize
 
     const unsigned char* p = (unsigned char*)data + *off;
     const unsigned char* const pe = (unsigned char*)data + len;
-    const void* n = NULL;
+    const void* n = p;
 
     unsigned int trail = ctx->trail;
     unsigned int cs = ctx->cs;
