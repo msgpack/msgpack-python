@@ -112,6 +112,7 @@ setup(name='msgpack-python',
       description=desc,
       long_description=long_desc,
       url='http://msgpack.org/',
+      license='Apache 2.0',
       classifiers=[
           'Programming Language :: Python :: 2',
           'Programming Language :: Python :: 2.7',
