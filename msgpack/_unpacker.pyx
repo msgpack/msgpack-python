@@ -458,6 +458,9 @@ cdef class Unpacker(object):
         cdef object obj
         cdef Py_ssize_t prev_head
 
+        if write_bytes is not None:
+            PyErr_WarnEx(DeprecationWarning, "`write_bytes` option is deprecated. Use `.tell()` instead.", 1)
+
         if self.buf_head >= self.buf_tail and self.file_like is not None:
             self.read_from_file()
 
