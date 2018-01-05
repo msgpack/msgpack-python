@@ -60,7 +60,7 @@ msgpack provides ``dumps`` and ``loads`` as an alias for compatibility with
 .. code-block:: pycon
 
    >>> import msgpack
-   >>> msgpack.packb([1, 2, 3])
+   >>> msgpack.packb([1, 2, 3], use_bin_type=True)
    '\x93\x01\x02\x03'
    >>> msgpack.unpackb(_)
    [1, 2, 3]
@@ -91,13 +91,13 @@ stream (or from bytes provided through its ``feed`` method).
 
    buf = BytesIO()
    for i in range(100):
-      buf.write(msgpack.packb(range(i)))
+      buf.write(msgpack.packb(range(i), use_bin_type=True))
 
    buf.seek(0)
 
    unpacker = msgpack.Unpacker(buf)
    for unpacked in unpacker:
-       print unpacked
+       print(unpacked)
 
 
 Packing/unpacking of custom data type
@@ -109,7 +109,6 @@ It is also possible to pack/unpack custom data types. Here is an example for
 .. code-block:: python
 
     import datetime
-
     import msgpack
 
     useful_dict = {
@@ -128,7 +127,7 @@ It is also possible to pack/unpack custom data types. Here is an example for
         return obj
 
 
-    packed_dict = msgpack.packb(useful_dict, default=encode_datetime)
+    packed_dict = msgpack.packb(useful_dict, default=encode_datetime, use_bin_type=True)
     this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime)
 
 ``Unpacker``'s ``object_hook`` callback receives a dict; the
@@ -207,6 +206,10 @@ strings to byte strings, unless you specify the `use_bin_type=True` option in
 the packer. If you do so, it will use a non-standard type called **bin** to
 serialize byte arrays, and **raw** becomes to mean **str**. If you want to
 distinguish **bin** and **raw** in the unpacker, specify `encoding='utf-8'`.
+
+**In future version, default value of ``use_bin_type`` will be changed to ``False``.
+To avoid this change will break your code, you must specify it explicitly
+even when you want to use old format.**
 
 Note that Python 2 defaults to byte-arrays over Unicode strings:
 
