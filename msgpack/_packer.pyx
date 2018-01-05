@@ -2,6 +2,7 @@
 #cython: embedsignature=True
 
 from cpython cimport *
+from cpython.exc cimport PyErr_WarnEx
 
 from msgpack.exceptions import PackValueError, PackOverflowError
 from msgpack import ExtType
@@ -76,6 +77,8 @@ cdef class Packer(object):
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enables str8 type for unicode.
+        Current default value is false, but it will be changed to true
+        in future version.  You should specify it explicitly.
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
@@ -103,12 +106,17 @@ cdef class Packer(object):
         self.pk.length = 0
 
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 use_single_float=False, bint autoreset=1, bint use_bin_type=0,
+                 use_single_float=False, bint autoreset=1, use_bin_type=None,
                  bint strict_types=0):
+        if use_bin_type is None:
+            PyErr_WarnEx(
+                FutureWarning,
+                "use_bin_type option is not specified. Default value of the option will be changed in future version.",
+                1)
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
-        self.pk.use_bin_type = use_bin_type
+        self.pk.use_bin_type = <bint>use_bin_type
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
