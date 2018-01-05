@@ -1,0 +1,41 @@
+
+import os.path
+import sys
+
+def make_ext(modname, pyxfilename):
+	from distutils.extension import Extension
+
+	if sys.byteorder == 'big':
+		macros = [('__BIG_ENDIAN__', '1')]
+	else:
+		macros = [('__LITTLE_ENDIAN__', '1')]
+
+	ret = Extension(name=modname,
+					sources=[
+							pyxfilename,
+						],
+					libraries=[
+						],
+					include_dirs = [
+							'.',
+							'./msgpack/',
+						],
+					language='C++',
+					extra_compile_args=[
+						"-march=native",
+						"-mtune=native",
+						"-O3",
+						],
+					extra_link_args=[
+						"-march=native",
+						"-mtune=native",
+						"-O3",
+						],
+						define_macros=macros,
+					)
+
+	return ret
+
+
+def make_setup_args():
+	return dict(script_args=['--verbose'])

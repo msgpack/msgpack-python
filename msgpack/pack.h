@@ -48,7 +48,11 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
     if (len + l > bs) {
         bs = (len + l) * 2;
         buf = (char*)PyMem_Realloc(buf, bs);
-        if (!buf) return -1;
+        if (!buf)
+        {
+            PyErr_SetString(PyExc_MemoryError, "Out of memory exception!");
+            return -1;
+        }
     }
     memcpy(buf + len, data, l);
     len += l;
