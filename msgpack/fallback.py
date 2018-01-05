@@ -609,12 +609,14 @@ class Unpacker(object):
     def skip(self, write_bytes=None):
         self._unpack(EX_SKIP)
         if write_bytes is not None:
+            warnings.warn("`write_bytes` option is deprecated.  Use `.tell()` instead.", DeprecationWarning)
             write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
         self._consume()
 
     def unpack(self, write_bytes=None):
         ret = self._unpack(EX_CONSTRUCT)
         if write_bytes is not None:
+            warnings.warn("`write_bytes` option is deprecated.  Use `.tell()` instead.", DeprecationWarning)
             write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
         self._consume()
         return ret
@@ -622,6 +624,7 @@ class Unpacker(object):
     def read_array_header(self, write_bytes=None):
         ret = self._unpack(EX_READ_ARRAY_HEADER)
         if write_bytes is not None:
+            warnings.warn("`write_bytes` option is deprecated.  Use `.tell()` instead.", DeprecationWarning)
             write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
         self._consume()
         return ret
@@ -629,6 +632,7 @@ class Unpacker(object):
     def read_map_header(self, write_bytes=None):
         ret = self._unpack(EX_READ_MAP_HEADER)
         if write_bytes is not None:
+            warnings.warn("`write_bytes` option is deprecated.  Use `.tell()` instead.", DeprecationWarning)
             write_bytes(self._buffer[self._buf_checkpoint:self._buff_i])
         self._consume()
         return ret
