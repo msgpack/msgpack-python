@@ -23,12 +23,12 @@ Install
 
 ::
 
-   $ pip install msgpack-python
+   $ pip install msgpack
 
 PyPy
 ^^^^
 
-msgpack-python provides a pure Python implementation.  PyPy can use this.
+msgpack provides a pure Python implementation.  PyPy can use this.
 
 Windows
 ^^^^^^^
@@ -249,17 +249,6 @@ To use the **ext** type, pass ``msgpack.ExtType`` object to packer.
 
 You can use it with ``default`` and ``ext_hook``. See below.
 
-Note for msgpack-python 0.2.x users
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The msgpack-python release 0.3 has some incompatible changes.
-
-The default value of ``use_list`` keyword argument is ``True`` from 0.3.
-You should pass the argument explicitly for backward compatibility.
-
-`Unpacker.unpack()` and some unpack methods now raises `OutOfData`
-instead of `StopIteration`.
-`StopIteration` is used for iterator protocol only.
 
 Note about performance
 ----------------------
