@@ -102,7 +102,7 @@ with io.open('README.rst', encoding='utf-8') as f:
     long_desc = f.read()
 del f
 
-setup(name='msgpack-python',
+setup(name='msgpack',
       author='INADA Naoki',
       author_email='songofacandy@gmail.com',
       version=version_str,
@@ -124,5 +124,5 @@ setup(name='msgpack-python',
           'Programming Language :: Python :: Implementation :: PyPy',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: Apache Software License',
-          ]
-      )
+      ],
+)
