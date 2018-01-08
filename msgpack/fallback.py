@@ -145,6 +145,12 @@ class Unpacker(object):
         If true, unpack msgpack array to Python list.
         Otherwise, unpack to Python tuple. (default: True)
 
+    :param bool raw_as_bytes:
+        If true, unpack msgpack raw to Python bytes.  Otherwise, unpack to Python str
+        (or unicode on Python 2) by decoding with UTF-8 encoding.
+        Currently, the default is true, but it will be changed to false in near future.
+        So you must specify it explicitly.
+
     :param callable object_hook:
         When specified, it should be callable.
         Unpacker calls it with a dict argument after unpacking msgpack map.
@@ -199,7 +205,7 @@ class Unpacker(object):
                 process(o)
     """
 
-    def __init__(self, file_like=None, read_size=0, use_list=True,
+    def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=None,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors='strict', max_buffer_size=0,
                  ext_hook=ExtType,
@@ -208,6 +214,22 @@ class Unpacker(object):
                  max_array_len=2147483647,
                  max_map_len=2147483647,
                  max_ext_len=2147483647):
+        if encoding is not None:
+            warnings.warn(
+                "encoding is deprecated, Use raw_as_bytes=False instead.",
+                DeprecationWarning)
+
+        if raw_as_bytes is None:
+            warnings.warn(
+                "raw_as_bytes option is not specified. Default value of the option will be changed in future version.",
+                FutureWarning)
+            raw_as_bytes = True
+        else:
+            raw_as_bytes = bool(raw_as_bytes)
+            if encoding is not None:
+                raise TypeError("raw_as_bytes and encoding are mutually exclusive")
+            encoding = "utf_8"
+
         if file_like is None:
             self._feeding = True
         else:

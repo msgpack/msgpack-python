@@ -20,9 +20,10 @@
 #include "unpack_define.h"
 
 typedef struct unpack_user {
-    int use_list;
-    PyObject *object_hook;
+    bool use_list;
+    bool raw_as_bytes;
     bool has_pairs_hook;
+    PyObject *object_hook;
     PyObject *list_hook;
     PyObject *ext_hook;
     const char *encoding;
