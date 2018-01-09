@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from msgpack import packb, unpackb
+from msgpack import packb as _packb, unpackb
+
+
+def packb(obj, **kw):
+    kw.setdefault('use_bin_type', True)
+    return _packb(obj, **kw)
 
 
 def test_unpack_buffer():

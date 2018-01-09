@@ -6,7 +6,7 @@ from msgpack import ExtType
 
 def test_pack_ext_type():
     def p(s):
-        packer = msgpack.Packer()
+        packer = msgpack.Packer(use_bin_type=True)
         packer.pack_ext_type(0x42, s)
         return packer.bytes()
     assert p(b'A')        == b'\xd4\x42A'          # fixext 1
@@ -52,7 +52,7 @@ def test_extension_type():
         return obj
 
     obj = [42, b'hello', array.array('d', [1.1, 2.2, 3.3])]
-    s = msgpack.packb(obj, default=default)
+    s = msgpack.packb(obj, default=default, use_bin_type=True)
     obj2 = msgpack.unpackb(s, ext_hook=ext_hook)
     assert obj == obj2
 
@@ -69,8 +69,8 @@ def test_overriding_hooks():
 
     obj = {"testval": long(1823746192837461928374619)}
     refobj = {"testval": default(obj["testval"])}
-    refout = msgpack.packb(refobj)
+    refout = msgpack.packb(refobj, use_bin_type=True)
     assert isinstance(refout, (str, bytes))
-    testout = msgpack.packb(obj, default=default)
+    testout = msgpack.packb(obj, default=default, use_bin_type=True)
 
     assert refout == testout
