@@ -160,7 +160,7 @@ class Unpacker(object):
         If it is None (default), msgpack raw is deserialized to Python bytes.
 
     :param str unicode_errors:
-        Used for decoding msgpack raw with *encoding*.
+        (deprecated) Used for decoding msgpack raw with *encoding*.
         (default: `'strict'`)
 
     :param int max_buffer_size:
@@ -656,18 +656,18 @@ class Packer(object):
     :param callable default:
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
-    :param str encoding:
-        Convert unicode to bytes with this encoding. (default: 'utf-8')
-    :param str unicode_errors:
-        Error handler for encoding unicode. (default: 'strict')
+
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
+
     :param bool autoreset:
         Reset buffer after each pack and return its content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
+
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enables str8 type for unicode.
+
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
@@ -675,6 +675,12 @@ class Packer(object):
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
         for python types.
+
+    :param str encoding:
+        (deprecated) Convert unicode to bytes with this encoding. (default: 'utf-8')
+
+    :param str unicode_errors:
+        (deprecated) Error handler for encoding unicode. (default: 'strict')
     """
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
                  use_single_float=False, autoreset=True, use_bin_type=False,
