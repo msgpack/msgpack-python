@@ -222,7 +222,7 @@ the packer. If you do so, it will use a non-standard type called **bin** to
 serialize byte arrays, and **raw** becomes to mean **str**. If you want to
 distinguish **bin** and **raw** in the unpacker, specify `encoding='utf-8'`.
 
-**In future version, default value of ``use_bin_type`` will be changed to ``False``.
+**In future version, default value of ``use_bin_type`` will be changed to ``True``.
 To avoid this change will break your code, you must specify it explicitly
 even when you want to use old format.**
 
