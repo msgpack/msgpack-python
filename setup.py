@@ -9,6 +9,9 @@ from setuptools import setup, Extension
 
 from distutils.command.build_ext import build_ext
 
+# for building transitional package.
+TRANSITIONAL = False
+
 class NoCython(Exception):
     pass
 
@@ -102,7 +105,13 @@ with io.open('README.rst', encoding='utf-8') as f:
     long_desc = f.read()
 del f
 
-setup(name='msgpack',
+name = 'msgpack'
+
+if TRANSITIONAL:
+    name = 'msgpack-python'
+    long_desc = "This package is deprecated.  Install msgpack instead."
+
+setup(name=name,
       author='INADA Naoki',
       author_email='songofacandy@gmail.com',
       version=version_str,

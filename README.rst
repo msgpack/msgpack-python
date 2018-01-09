@@ -10,8 +10,8 @@ MessagePack for Python
    :target: https://msgpack-python.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-Upgrading from msgpack-0.4
---------------------------
+IMPORTANT: Upgrading from msgpack-0.4
+--------------------------------------
 
 TL;DR: When upgrading from msgpack-0.4 or earlier, don't do `pip install -U msgpack-python`.
 Do `pip uninstall msgpack-python; pip install msgpack` instead.
