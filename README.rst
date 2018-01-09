@@ -10,6 +10,20 @@ MessagePack for Python
    :target: https://msgpack-python.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+Upgrading from msgpack-0.4
+--------------------------
+
+TL;DR: When upgrading from msgpack-0.4 or earlier, don't do `pip install -U msgpack-python`.
+Do `pip uninstall msgpack-python; pip install msgpack` instead.
+
+Package name on PyPI was changed to msgpack from 0.5.
+I upload transitional package (msgpack-python 0.5 which depending on msgpack)
+for smooth transition from msgpack-python to msgpack.
+
+Sadly, this doesn't work for upgrade install.  After `pip install -U msgpack-python`,
+msgpack is removed and `import msgpack` fail.
+
+
 What's this
 -----------
 
