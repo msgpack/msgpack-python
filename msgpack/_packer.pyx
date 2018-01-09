@@ -2,7 +2,7 @@
 #cython: embedsignature=True
 
 from cpython cimport *
-from cpython.exc cimport PyErr_WarnEx
+#from cpython.exc cimport PyErr_WarnEx
 
 from msgpack.exceptions import PackValueError, PackOverflowError
 from msgpack import ExtType
@@ -65,20 +65,20 @@ cdef class Packer(object):
     :param callable default:
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
-    :param str encoding:
-        Convert unicode to bytes with this encoding. (default: 'utf-8')
-    :param str unicode_errors:
-        Error handler for encoding unicode. (default: 'strict')
+
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
+
     :param bool autoreset:
         Reset buffer after each pack and return its content as `bytes`. (default: True).
         If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
+
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enables str8 type for unicode.
         Current default value is false, but it will be changed to true
         in future version.  You should specify it explicitly.
+
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
         from serializeable types will not be serialized and will be
@@ -86,6 +86,11 @@ cdef class Packer(object):
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
         for python types.
+
+    :param str encoding:
+        (deprecated) Convert unicode to bytes with this encoding. (default: 'utf-8')
+    :param str unicode_errors:
+        (deprecated) Error handler for encoding unicode. (default: 'strict')
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -106,17 +111,12 @@ cdef class Packer(object):
         self.pk.length = 0
 
     def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
-                 use_single_float=False, bint autoreset=1, use_bin_type=None,
-                 bint strict_types=0):
-        if use_bin_type is None:
-            PyErr_WarnEx(
-                FutureWarning,
-                "use_bin_type option is not specified. Default value of the option will be changed in future version.",
-                1)
+                 bint use_single_float=False, bint autoreset=True, bint use_bin_type=False,
+                 bint strict_types=False):
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
-        self.pk.use_bin_type = <bint>use_bin_type
+        self.pk.use_bin_type = use_bin_type
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
