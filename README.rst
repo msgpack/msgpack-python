@@ -148,6 +148,7 @@ It is also possible to pack/unpack custom data types. Here is an example for
 ``object_pairs_hook`` callback may instead be used to receive a list of
 key-value pairs.
 
+
 Extended types
 ^^^^^^^^^^^^^^
 
@@ -170,7 +171,7 @@ It is also possible to pack/unpack custom data types using the **ext** type.
     ...     return ExtType(code, data)
     ...
     >>> data = array.array('d', [1.2, 3.4])
-    >>> packed = msgpack.packb(data, default=default)
+    >>> packed = msgpack.packb(data, default=default, use_bin_type=True)
     >>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook)
     >>> data == unpacked
     True
@@ -294,7 +295,7 @@ Test
 MessagePack uses `pytest` for testing.
 Run test with following command:
 
-    $ py.test
+    $ pytest -v test
 
 
 ..
