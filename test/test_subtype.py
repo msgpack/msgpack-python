@@ -16,6 +16,6 @@ class MyTuple(tuple):
 MyNamedTuple = namedtuple('MyNamedTuple', 'x y')
 
 def test_types():
-    assert packb(MyDict()) == packb(dict())
-    assert packb(MyList()) == packb(list())
-    assert packb(MyNamedTuple(1, 2)) == packb((1, 2))
+    assert packb(MyDict(), use_bin_type=True) == packb(dict(), use_bin_type=True)
+    assert packb(MyList(), use_bin_type=True) == packb(list(), use_bin_type=True)
+    assert packb(MyNamedTuple(1, 2), use_bin_type=True) == packb((1, 2), use_bin_type=True)

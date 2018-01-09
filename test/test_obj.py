@@ -2,7 +2,12 @@
 # coding: utf-8
 
 from pytest import raises
-from msgpack import packb, unpackb
+from msgpack import packb as _packb, unpackb
+
+def packb(obj, **kw):
+    kw.setdefault('use_bin_type', True)
+    return _packb(obj, **kw)
+
 
 def _decode_complex(obj):
     if b'__complex__' in obj:

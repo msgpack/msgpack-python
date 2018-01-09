@@ -14,7 +14,7 @@ def gen_binary_data(idx):
 def test_exceeding_unpacker_read_size():
     dumpf = io.BytesIO()
 
-    packer = msgpack.Packer()
+    packer = msgpack.Packer(use_bin_type=True)
 
     NUMBER_OF_STRINGS = 6
     read_size = 16

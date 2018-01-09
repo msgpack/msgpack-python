@@ -1,6 +1,11 @@
 """Test Unpacker's read_array_header and read_map_header methods"""
-from msgpack import packb, Unpacker, OutOfData
+from msgpack import packb as _packb, Unpacker, OutOfData
 UnexpectedTypeException = ValueError
+
+def packb(*args, **kw):
+    kw.setdefault('use_bin_type', True)
+    return _packb(*args, **kw)
+
 
 def test_read_array_header():
     unpacker = Unpacker()

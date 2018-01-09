@@ -20,7 +20,7 @@ def test_write_bytes():
 
 def test_write_bytes_multi_buffer():
     long_val = (5) * 100
-    expected = packb(long_val)
+    expected = packb(long_val, use_bin_type=True)
     unpacker = Unpacker(io.BytesIO(expected), read_size=3, max_buffer_size=3)
 
     f = io.BytesIO()

@@ -5,7 +5,7 @@ from pytest import raises, mark
 
 
 def test_unpack_array_header_from_file():
-    f = BytesIO(packb([1,2,3,4]))
+    f = BytesIO(packb([1,2,3,4], use_bin_type=True))
     unpacker = Unpacker(f)
     assert unpacker.read_array_header() == 4
     assert unpacker.unpack() == 1
@@ -31,8 +31,8 @@ def test_unpacker_hook_refcnt():
 
     assert sys.getrefcount(hook) >= basecnt + 2
 
-    up.feed(packb([{}]))
-    up.feed(packb([{}]))
+    up.feed(packb([{}], use_bin_type=True))
+    up.feed(packb([{}], use_bin_type=True))
     assert up.unpack() == [{}]
     assert up.unpack() == [{}]
     assert result == [{}, [{}], {}, [{}]]
@@ -57,11 +57,11 @@ def test_unpacker_ext_hook():
                 return ExtType(code, data)
 
     unpacker = MyUnpacker()
-    unpacker.feed(packb({'a': 1}, encoding='utf-8'))
+    unpacker.feed(packb({'a': 1}, use_bin_type=True, encoding='utf-8'))
     assert unpacker.unpack() == {'a': 1}
-    unpacker.feed(packb({'a': ExtType(1, b'123')}, encoding='utf-8'))
+    unpacker.feed(packb({'a': ExtType(1, b'123')}, use_bin_type=True, encoding='utf-8'))
     assert unpacker.unpack() == {'a': 123}
-    unpacker.feed(packb({'a': ExtType(2, b'321')}, encoding='utf-8'))
+    unpacker.feed(packb({'a': ExtType(2, b'321')}, use_bin_type=True, encoding='utf-8'))
     assert unpacker.unpack() == {'a': ExtType(2, b'321')}
 
 
