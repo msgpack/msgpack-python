@@ -4,10 +4,17 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import pytest
 
 from msgpack import (
-    packb, unpackb, Packer, Unpacker, ExtType,
+    packb as _packb, unpackb, Packer as _Packer, Unpacker, ExtType,
     PackOverflowError, PackValueError, UnpackValueError,
 )
 
+def packb(obj, **kw):
+    kw.setdefault('use_bin_type', True)
+    return _packb(obj, **kw)
+
+def Packer(**kw):
+    kw.setdefault('use_bin_type', True)
+    return _Packer(**kw)
 
 def test_integer():
     x = -(2 ** 63)
