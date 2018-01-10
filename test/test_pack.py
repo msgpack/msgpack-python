@@ -5,10 +5,20 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import struct
 from pytest import raises, xfail
 
-from msgpack import packb, unpackb, Unpacker, Packer
+from msgpack import packb as _packb, unpackb, Unpacker, Packer as _Packer
 
 from collections import OrderedDict
 from io import BytesIO
+
+
+def packb(data, **kw):
+    kw.setdefault('use_bin_type', True)
+    return _packb(data, **kw)
+
+def Packer(**kw):
+    kw.setdefault('use_bin_type', True)
+    return _Packer(**kw)
+
 
 def check(data, use_list=False):
     re = unpackb(packb(data), use_list=use_list)
@@ -67,12 +77,12 @@ def testPackByteArrays():
         check(td)
 
 def testIgnoreUnicodeErrors():
-    re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
+    re = unpackb(packb(b'abc\xeddef', use_bin_type=False), encoding='utf-8', unicode_errors='ignore', use_list=1)
     assert re == "abcdef"
 
 def testStrictUnicodeUnpack():
     with raises(UnicodeDecodeError):
-        unpackb(packb(b'abc\xeddef'), encoding='utf-8', use_list=1)
+        unpackb(packb(b'abc\xeddef', use_bin_type=False), encoding='utf-8', use_list=1)
 
 def testStrictUnicodePack():
     with raises(UnicodeEncodeError):

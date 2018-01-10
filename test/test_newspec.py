@@ -68,7 +68,7 @@ def test_bin32():
 
 def test_ext():
     def check(ext, packed):
-        assert packb(ext) == packed
+        assert packb(ext, use_bin_type=True) == packed
         assert unpackb(packed) == ext
     check(ExtType(0x42, b'Z'), b'\xd4\x42Z') # fixext 1
     check(ExtType(0x42, b'ZZ'), b'\xd5\x42ZZ') # fixext 2

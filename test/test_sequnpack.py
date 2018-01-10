@@ -108,7 +108,7 @@ def test_unpack_tell():
                  {i: bytes(i)*i for i in range(32)}]
     offsets = []
     for m in messages:
-        pack(m, stream)
+        pack(m, stream, use_bin_type=True)
         offsets.append(stream.tell())
     stream.seek(0)
     unpacker = Unpacker(stream)

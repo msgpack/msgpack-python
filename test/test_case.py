@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from msgpack import packb, unpackb
+from msgpack import packb as _packb, unpackb
+
+
+def packb(obj, **kw):
+    kw.setdefault('use_bin_type', True)
+    return _packb(obj, **kw)
 
 
 def check(length, obj):
@@ -39,7 +44,10 @@ def test_9():
 
 
 def check_raw(overhead, num):
-    check(num + overhead, b" " * num)
+    v = packb(b" "*num, use_bin_type=False)
+    assert len(v) == num+overhead, \
+        "b' '*%d length should be %r but get %r" % (num, length, len(v))
+    assert unpackb(v, encoding='utf-8') == " "*num
 
 def test_fixraw():
     check_raw(1, 0)

@@ -2,9 +2,13 @@
 # coding: utf-8
 
 from pytest import raises
-from msgpack import packb, unpackb
+from msgpack import packb as _packb, unpackb
 
 import datetime
+
+def packb(obj, **kw):
+    kw.setdefault('use_bin_type', True)
+    return _packb(obj, **kw)
 
 
 class DummyException(Exception):
