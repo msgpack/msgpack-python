@@ -158,7 +158,7 @@ cdef inline int get_data_from_buffer(object obj,
         return 1
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
-            bint use_list=1, raw_as_bytes=None, encoding=None, unicode_errors="strict",
+            bint use_list=True, int raw_as_bytes=-1, encoding=None, unicode_errors="strict",
             object_pairs_hook=None, ext_hook=ExtType,
             Py_ssize_t max_str_len=2147483647, # 2**32-1
             Py_ssize_t max_bin_len=2147483647,
@@ -184,31 +184,28 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef int new_protocol = 0
     cdef bint _raw_as_bytes
 
-    if encoding is not None:
-        PyErr_WarnEx(
-            DeprecationWarning,
-            "encoding is deprecated, Use raw_as_bytes=False instead.",
-            1)
-        if isinstance(encoding, unicode):
-            encoding = encoding.encode('ascii')
-        cenc = PyBytes_AsString(encoding)
-
-    if unicode_errors is not None:
-        if isinstance(unicode_errors, unicode):
-            unicode_errors = unicode_errors.encode('ascii')
-        cerr = PyBytes_AsString(unicode_errors)
-
-    if raw_as_bytes is None:
-        PyErr_WarnEx(
-            FutureWarning,
-            "raw_as_bytes option is not specified. Default value of the option will be changed in future version.",
-            1)
+    if raw_as_bytes == -1:
         _raw_as_bytes = 1
     else:
         if encoding is not None:
             raise TypeError("raw_as_bytes and encoding are mutually exclusive")
         _raw_as_bytes = raw_as_bytes
-        encoding = "utf_8"
+
+    if encoding is not None:
+        #PyErr_WarnEx(
+        #    DeprecationWarning,
+        #    "encoding is deprecated, Use raw_as_bytes=False instead.",
+        #    1)
+        _raw_as_bytes = 0
+        if isinstance(encoding, unicode):
+            encoding = encoding.encode('ascii')
+        cenc = PyBytes_AsString(encoding)
+
+    if unicode_errors is not None:
+        #PyErr_WarnEx(DeprecationWarning, "unicode_errors is deprecated", 1)
+        if isinstance(unicode_errors, unicode):
+            unicode_errors = unicode_errors.encode('ascii')
+        cerr = PyBytes_AsString(unicode_errors)
 
     get_data_from_buffer(packed, &view, &buf, &buf_len, &new_protocol)
     try:
@@ -350,7 +347,7 @@ cdef class Unpacker(object):
         PyMem_Free(self.buf)
         self.buf = NULL
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1, raw_as_bytes=None,
+    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1, bint raw_as_bytes=-1,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  object ext_hook=ExtType,
@@ -364,11 +361,11 @@ cdef class Unpacker(object):
 
         cdef bint _raw_as_bytes
 
-        if raw_as_bytes is None:
-            PyErr_WarnEx(
-                FutureWarning,
-                "raw_as_bytes option is not specified. Default value of the option will be changed in future version.",
-                1)
+        if raw_as_bytes < 0:
+            #PyErr_WarnEx(
+            #    FutureWarning,
+            #    "raw_as_bytes option is not specified. Default value of the option will be changed in future version.",
+            #    1)
             _raw_as_bytes = 1
         else:
             _raw_as_bytes = raw_as_bytes
