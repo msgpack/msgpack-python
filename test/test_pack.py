@@ -82,10 +82,6 @@ def testIgnoreErrorsPack():  # deprecated
     re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), raw_as_bytes=False, use_list=1)
     assert re == "abcdef"
 
-def testNoEncoding():
-    with raises(TypeError):
-        packb("abc", encoding=None)
-
 def testDecodeBinary():
     re = unpackb(packb(b"abc"), encoding=None, use_list=1)
     assert re == b"abc"

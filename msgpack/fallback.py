@@ -211,21 +211,25 @@ class Unpacker(object):
 
     def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
-                 encoding=None, unicode_errors='strict', max_buffer_size=0,
+                 encoding=None, unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
                  max_str_len=2147483647, # 2**32-1
                  max_bin_len=2147483647,
                  max_array_len=2147483647,
                  max_map_len=2147483647,
                  max_ext_len=2147483647):
+
         if encoding is not None:
             warnings.warn(
                 "encoding is deprecated, Use raw_as_bytes=False instead.",
                 PendingDeprecationWarning)
+
         if unicode_errors is not None:
             warnings.warn(
                 "unicode_errors is deprecated.",
                 PendingDeprecationWarning)
+        else:
+            unicode_errors = 'strict'
 
         if file_like is None:
             self._feeding = True
@@ -714,7 +718,9 @@ class Packer(object):
                 "encoding is deprecated, Use raw_as_bytes=False instead.",
                 PendingDeprecationWarning)
 
-        if unicode_errors is not None:
+        if unicode_errors is None:
+            unicode_errors = 'strict'
+        else:
             warnings.warn(
                 "unicode_errors is deprecated.",
                 PendingDeprecationWarning)
