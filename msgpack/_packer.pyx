@@ -38,6 +38,7 @@ cdef extern from "pack.h":
     int msgpack_pack_bin(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
+    int msgpack_pack_unicode(msgpack_packer* pk, object o, long long limit)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
 cdef long long ITEM_LIMIT = (2**32)-1
@@ -214,16 +215,18 @@ cdef class Packer(object):
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyUnicode_CheckExact(o) if strict_types else PyUnicode_Check(o):
                 if self.encoding == NULL:
-                    rawval = PyUnicode_AsUTF8AndSize(o, &L)
+                    ret = msgpack_pack_unicode(&self.pk, o, ITEM_LIMIT);
+                    if ret == -2:
+                        raise PackValueError("unicode string is too large")
                 else:
                     o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
                     L = len(o)
-                    rawval = o
-                if L > ITEM_LIMIT:
-                    raise PackValueError("unicode string is too large")
-                ret = msgpack_pack_raw(&self.pk, L)
-                if ret == 0:
-                    ret = msgpack_pack_raw_body(&self.pk, rawval, L)
+                    if L > ITEM_LIMIT:
+                        raise PackValueError("unicode string is too large")
+                    ret = msgpack_pack_raw(&self.pk, L)
+                    if ret == 0:
+                        rawval = o
+                        ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyDict_CheckExact(o):
                 d = <dict>o
                 L = len(d)

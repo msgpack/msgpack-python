@@ -9,6 +9,6 @@ for V in cp36-cp36m cp35-cp35m cp27-cp27m cp27-cp27mu; do
     pushd test          # prevent importing msgpack package in current directory.
     $PYBIN/python -c 'import sys; print(hex(sys.maxsize))'
     $PYBIN/python -c 'from msgpack import _packer, _unpacker'
-    $PYBIN/py.test -v
+    $PYBIN/pytest -v test
     popd
 done
