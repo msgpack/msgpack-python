@@ -2,7 +2,7 @@
 #cython: embedsignature=True
 
 from cpython cimport *
-#from cpython.exc cimport PyErr_WarnEx
+from cpython.exc cimport PyErr_WarnEx
 
 from msgpack.exceptions import PackValueError, PackOverflowError
 from msgpack import ExtType
@@ -110,9 +110,13 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
+    def __init__(self, default=None, encoding=None, unicode_errors=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=False,
                  bint strict_types=False):
+        if encoding is not None:
+            PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated.", 1)
+        if unicode_errors is not None:
+            PyErr_WarnEx(PendingDeprecationWarning, "unicode_errors is deprecated.", 1)
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
@@ -122,7 +126,7 @@ cdef class Packer(object):
                 raise TypeError("default must be a callable.")
         self._default = default
         if encoding is None:
-            self.encoding = NULL
+            self.encoding = 'utf_8'
             self.unicode_errors = NULL
         else:
             if isinstance(encoding, unicode):
@@ -203,6 +207,7 @@ cdef class Packer(object):
             elif PyUnicode_CheckExact(o) if strict_types else PyUnicode_Check(o):
                 if not self.encoding:
                     raise TypeError("Can't encode unicode string: no encoding is specified")
+                #TODO: Use faster API for UTF-8
                 o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
                 L = len(o)
                 if L > ITEM_LIMIT:

@@ -704,9 +704,21 @@ class Packer(object):
     :param str unicode_errors:
         (deprecated) Error handler for encoding unicode. (default: 'strict')
     """
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
+    def __init__(self, default=None, encoding=None, unicode_errors=None,
                  use_single_float=False, autoreset=True, use_bin_type=False,
                  strict_types=False):
+        if encoding is None:
+            encoding = 'utf_8'
+        else:
+            warnings.warn(
+                "encoding is deprecated, Use raw_as_bytes=False instead.",
+                PendingDeprecationWarning)
+
+        if unicode_errors is not None:
+            warnings.warn(
+                "unicode_errors is deprecated.",
+                PendingDeprecationWarning)
+
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
