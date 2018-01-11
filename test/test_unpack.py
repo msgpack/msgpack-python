@@ -47,8 +47,8 @@ def test_unpacker_ext_hook():
     class MyUnpacker(Unpacker):
 
         def __init__(self):
-            super(MyUnpacker, self).__init__(ext_hook=self._hook,
-                                             encoding='utf-8')
+            super(MyUnpacker, self).__init__(
+                ext_hook=self._hook, raw_as_bytes=False)
 
         def _hook(self, code, data):
             if code == 1:
@@ -57,11 +57,11 @@ def test_unpacker_ext_hook():
                 return ExtType(code, data)
 
     unpacker = MyUnpacker()
-    unpacker.feed(packb({'a': 1}, encoding='utf-8'))
+    unpacker.feed(packb({'a': 1}))
     assert unpacker.unpack() == {'a': 1}
-    unpacker.feed(packb({'a': ExtType(1, b'123')}, encoding='utf-8'))
+    unpacker.feed(packb({'a': ExtType(1, b'123')}))
     assert unpacker.unpack() == {'a': 123}
-    unpacker.feed(packb({'a': ExtType(2, b'321')}, encoding='utf-8'))
+    unpacker.feed(packb({'a': ExtType(2, b'321')}))
     assert unpacker.unpack() == {'a': ExtType(2, b'321')}
 
 
