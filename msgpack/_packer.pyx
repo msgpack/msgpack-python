@@ -13,6 +13,7 @@ cdef extern from "Python.h":
     int PyMemoryView_Check(object obj)
     int PyByteArray_Check(object obj)
     int PyByteArray_CheckExact(object obj)
+    char* PyUnicode_AsUTF8AndSize(object obj, Py_ssize_t *l) except NULL
 
 
 cdef extern from "pack.h":
@@ -126,8 +127,12 @@ cdef class Packer(object):
                 raise TypeError("default must be a callable.")
         self._default = default
         if encoding is None:
-            self.encoding = 'utf_8'
-            self.unicode_errors = NULL
+            if unicode_errors is None:
+                self.encoding = NULL
+                self.unicode_errors = NULL
+            else:
+                self.encoding = "utf_8"
+                self.unicode_errors = unicode_errors
         else:
             if isinstance(encoding, unicode):
                 self._bencoding = encoding.encode('ascii')
@@ -140,6 +145,8 @@ cdef class Packer(object):
                 self._berrors = unicode_errors
             if self._berrors is not None:
                 self.unicode_errors = PyBytes_AsString(self._berrors)
+            else:
+                self.unicode_errors = NULL
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
@@ -206,14 +213,14 @@ cdef class Packer(object):
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyUnicode_CheckExact(o) if strict_types else PyUnicode_Check(o):
-                if not self.encoding:
-                    raise TypeError("Can't encode unicode string: no encoding is specified")
-                #TODO: Use faster API for UTF-8
-                o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
-                L = len(o)
+                if self.encoding == NULL:
+                    rawval = PyUnicode_AsUTF8AndSize(o, &L)
+                else:
+                    o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
+                    L = len(o)
+                    rawval = o
                 if L > ITEM_LIMIT:
                     raise PackValueError("unicode string is too large")
-                rawval = o
                 ret = msgpack_pack_raw(&self.pk, L)
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
