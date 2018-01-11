@@ -848,7 +848,11 @@ class Packer(object):
             raise TypeError("Cannot serialize %r" % (obj, ))
 
     def pack(self, obj):
-        self._pack(obj)
+        try:
+            self._pack(obj)
+        except:
+            self._buffer = StringIO()  # force reset
+            raise
         ret = self._buffer.getvalue()
         if self._autoreset:
             self._buffer = StringIO()
