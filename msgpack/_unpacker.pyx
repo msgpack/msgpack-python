@@ -158,7 +158,8 @@ cdef inline int get_data_from_buffer(object obj,
         return 1
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
-            bint use_list=True, int raw_as_bytes=-1, encoding=None, unicode_errors="strict",
+            bint use_list=True, bint raw_as_bytes=True,
+            encoding=None, unicode_errors="strict",
             object_pairs_hook=None, ext_hook=ExtType,
             Py_ssize_t max_str_len=2147483647, # 2**32-1
             Py_ssize_t max_bin_len=2147483647,
@@ -182,35 +183,27 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef char* cenc = NULL
     cdef char* cerr = NULL
     cdef int new_protocol = 0
-    cdef bint _raw_as_bytes
-
-    if raw_as_bytes == -1:
-        _raw_as_bytes = 1
-    else:
-        if encoding is not None:
-            raise TypeError("raw_as_bytes and encoding are mutually exclusive")
-        _raw_as_bytes = raw_as_bytes
 
     if encoding is not None:
-        #PyErr_WarnEx(
-        #    DeprecationWarning,
-        #    "encoding is deprecated, Use raw_as_bytes=False instead.",
-        #    1)
-        _raw_as_bytes = 0
+        PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated, Use raw_as_bytes=False instead.", 1)
         if isinstance(encoding, unicode):
             encoding = encoding.encode('ascii')
+        elif not isinstance(encoding, bytes):
+            raise TypeError("encoding should be bytes or unicode")
         cenc = PyBytes_AsString(encoding)
 
     if unicode_errors is not None:
-        #PyErr_WarnEx(DeprecationWarning, "unicode_errors is deprecated", 1)
+        PyErr_WarnEx(PendingDeprecationWarning, "unicode_errors is deprecated", 1)
         if isinstance(unicode_errors, unicode):
             unicode_errors = unicode_errors.encode('ascii')
+        elif not isinstance(unicode_errors, bytes):
+            raise TypeError("unicode_errors should be bytes or unicode")
         cerr = PyBytes_AsString(unicode_errors)
 
     get_data_from_buffer(packed, &view, &buf, &buf_len, &new_protocol)
     try:
         init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
-                 use_list, _raw_as_bytes, cenc, cerr,
+                 use_list, raw_as_bytes, cenc, cerr,
                  max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
         ret = unpack_construct(&ctx, buf, buf_len, &off)
     finally:
@@ -269,10 +262,14 @@ cdef class Unpacker(object):
         Otherwise, unpack to Python tuple. (default: True)
 
     :param bool raw_as_bytes:
-        If true, unpack msgpack raw to Python bytes.  Otherwise, unpack to Python str
-        (or unicode on Python 2) by decoding with UTF-8 encoding.
-        Currently, the default is true, but it will be changed to false in near future.
-        So you must specify it explicitly.
+        If true, unpack msgpack raw to Python bytes (default).
+        Otherwise, unpack to Python str (or unicode on Python 2) by decoding
+        with UTF-8 encoding (recommended).
+        Currently, the default is true, but it will be changed to false in
+        near future.  So you must specify it explicitly for keeping backward
+        compatibility.
+
+        *encoding* option which is deprecated overrides this option.
 
     :param callable object_hook:
         When specified, it should be callable.
@@ -283,15 +280,6 @@ cdef class Unpacker(object):
         When specified, it should be callable.
         Unpacker calls it with a list of key-value pairs after unpacking msgpack map.
         (See also simplejson)
-
-    :param str encoding:
-        (Deprecated, use raw_as_bytes instead)
-        Encoding used for decoding msgpack raw.
-        If it is None (default), msgpack raw is deserialized to Python bytes.
-
-    :param str unicode_errors:
-        Used for decoding msgpack raw with *encoding*.
-        (default: `'strict'`)
 
     :param int max_buffer_size:
         Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
@@ -310,16 +298,25 @@ cdef class Unpacker(object):
     :param int max_map_len:
         Limits max length of map. (default: 2**31-1)
 
+    :param str encoding:
+        Deprecated, use raw_as_bytes instead.
+        Encoding used for decoding msgpack raw.
+        If it is None (default), msgpack raw is deserialized to Python bytes.
 
-    example of streaming deserialize from file-like object::
+    :param str unicode_errors:
+        Deprecated. Used for decoding msgpack raw with *encoding*.
+        (default: `'strict'`)
 
-        unpacker = Unpacker(file_like)
+
+    Example of streaming deserialize from file-like object::
+
+        unpacker = Unpacker(file_like, raw_as_bytes=False)
         for o in unpacker:
             process(o)
 
-    example of streaming deserialize from socket::
+    Example of streaming deserialize from socket::
 
-        unpacker = Unpacker()
+        unpacker = Unpacker(raw_as_bytes=False)
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -347,7 +344,8 @@ cdef class Unpacker(object):
         PyMem_Free(self.buf)
         self.buf = NULL
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=0, bint use_list=1, bint raw_as_bytes=-1,
+    def __init__(self, file_like=None, Py_ssize_t read_size=0,
+                 bint use_list=True, bint raw_as_bytes=False,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  object ext_hook=ExtType,
@@ -358,17 +356,6 @@ cdef class Unpacker(object):
                  Py_ssize_t max_ext_len=2147483647):
         cdef char *cenc=NULL,
         cdef char *cerr=NULL
-
-        cdef bint _raw_as_bytes
-
-        if raw_as_bytes < 0:
-            #PyErr_WarnEx(
-            #    FutureWarning,
-            #    "raw_as_bytes option is not specified. Default value of the option will be changed in future version.",
-            #    1)
-            _raw_as_bytes = 1
-        else:
-            _raw_as_bytes = raw_as_bytes
 
         self.object_hook = object_hook
         self.object_pairs_hook = object_pairs_hook
@@ -397,6 +384,7 @@ cdef class Unpacker(object):
         self.stream_offset = 0
 
         if encoding is not None:
+            PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated, Use raw_as_bytes=False instead.", 1)
             if isinstance(encoding, unicode):
                 self.encoding = encoding.encode('ascii')
             elif isinstance(encoding, bytes):
@@ -406,6 +394,7 @@ cdef class Unpacker(object):
             cenc = PyBytes_AsString(self.encoding)
 
         if unicode_errors is not None:
+            PyErr_WarnEx(PendingDeprecationWarning, "unicode_errors is deprecated", 1)
             if isinstance(unicode_errors, unicode):
                 self.unicode_errors = unicode_errors.encode('ascii')
             elif isinstance(unicode_errors, bytes):
@@ -415,7 +404,7 @@ cdef class Unpacker(object):
             cerr = PyBytes_AsString(self.unicode_errors)
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
-                 ext_hook, use_list, _raw_as_bytes, cenc, cerr,
+                 ext_hook, use_list, raw_as_bytes, cenc, cerr,
                  max_str_len, max_bin_len, max_array_len,
                  max_map_len, max_ext_len)
 

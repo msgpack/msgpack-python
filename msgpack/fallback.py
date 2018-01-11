@@ -146,10 +146,14 @@ class Unpacker(object):
         Otherwise, unpack to Python tuple. (default: True)
 
     :param bool raw_as_bytes:
-        If true, unpack msgpack raw to Python bytes.  Otherwise, unpack to Python str
-        (or unicode on Python 2) by decoding with UTF-8 encoding.
-        Currently, the default is true, but it will be changed to false in near future.
-        So you must specify it explicitly.
+        If true, unpack msgpack raw to Python bytes (default).
+        Otherwise, unpack to Python str (or unicode on Python 2) by decoding
+        with UTF-8 encoding (recommended).
+        Currently, the default is true, but it will be changed to false in
+        near future.  So you must specify it explicitly for keeping backward
+        compatibility.
+
+        *encoding* option which is deprecated overrides this option.
 
     :param callable object_hook:
         When specified, it should be callable.
@@ -189,13 +193,13 @@ class Unpacker(object):
 
     example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like)
+        unpacker = Unpacker(file_like, raw_as_bytes=False)
         for o in unpacker:
             process(o)
 
     example of streaming deserialize from socket::
 
-        unpacker = Unpacker()
+        unpacker = Unpacker(raw_as_bytes=False)
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -205,7 +209,7 @@ class Unpacker(object):
                 process(o)
     """
 
-    def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=None,
+    def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=False,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors='strict', max_buffer_size=0,
                  ext_hook=ExtType,
@@ -217,18 +221,11 @@ class Unpacker(object):
         if encoding is not None:
             warnings.warn(
                 "encoding is deprecated, Use raw_as_bytes=False instead.",
-                DeprecationWarning)
-
-        if raw_as_bytes is None:
+                PendingDeprecationWarning)
+        if unicode_errors is not None:
             warnings.warn(
-                "raw_as_bytes option is not specified. Default value of the option will be changed in future version.",
-                FutureWarning)
-            raw_as_bytes = True
-        else:
-            raw_as_bytes = bool(raw_as_bytes)
-            if encoding is not None:
-                raise TypeError("raw_as_bytes and encoding are mutually exclusive")
-            encoding = "utf_8"
+                "unicode_errors is deprecated.",
+                PendingDeprecationWarning)
 
         if file_like is None:
             self._feeding = True
@@ -256,6 +253,7 @@ class Unpacker(object):
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
         self._read_size = read_size or min(self._max_buffer_size, 16*1024)
+        self._raw_as_bytes = bool(raw_as_bytes)
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
@@ -604,8 +602,10 @@ class Unpacker(object):
         if typ == TYPE_RAW:
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
-            else:
+            elif self._raw_as_bytes:
                 obj = bytes(obj)
+            else:
+                obj = obj.decode('utf_8')
             return obj
         if typ == TYPE_EXT:
             return self._ext_hook(n, bytes(obj))
