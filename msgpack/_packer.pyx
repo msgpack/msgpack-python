@@ -39,7 +39,7 @@ cdef extern from "pack.h":
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
-cdef size_t ITEM_LIMIT = (2**32)-1
+cdef Py_ssize_t ITEM_LIMIT = (2**32)-1
 
 
 cdef inline int PyBytesLike_Check(object o):
@@ -138,7 +138,8 @@ cdef class Packer(object):
                 self._berrors = unicode_errors.encode('ascii')
             else:
                 self._berrors = unicode_errors
-            self.unicode_errors = PyBytes_AsString(self._berrors)
+            if self._berrors is not None:
+                self.unicode_errors = PyBytes_AsString(self._berrors)
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
@@ -153,7 +154,7 @@ cdef class Packer(object):
         cdef char* rawval
         cdef int ret
         cdef dict d
-        cdef size_t L
+        cdef Py_ssize_t L
         cdef int default_used = 0
         cdef bint strict_types = self.strict_types
         cdef Py_buffer view
