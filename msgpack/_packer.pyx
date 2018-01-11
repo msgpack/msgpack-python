@@ -289,11 +289,13 @@ cdef class Packer(object):
 
     cpdef pack(self, object obj):
         cdef int ret
-        ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
-        if ret == -1:
-            raise MemoryError
-        elif ret:  # should not happen.
-            raise TypeError
+        try:
+            ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
+        except:
+            self.pk.length = 0
+            raise
+        if ret:  # should not happen.
+            raise RuntimeError("internal error")
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
