@@ -345,7 +345,7 @@ cdef class Unpacker(object):
         self.buf = NULL
 
     def __init__(self, file_like=None, Py_ssize_t read_size=0,
-                 bint use_list=True, bint raw_as_bytes=False,
+                 bint use_list=True, bint raw_as_bytes=True,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors='strict', int max_buffer_size=0,
                  object ext_hook=ExtType,

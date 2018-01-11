@@ -209,7 +209,7 @@ class Unpacker(object):
                 process(o)
     """
 
-    def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=False,
+    def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors='strict', max_buffer_size=0,
                  ext_hook=ExtType,
