@@ -145,6 +145,16 @@ class Unpacker(object):
         If true, unpack msgpack array to Python list.
         Otherwise, unpack to Python tuple. (default: True)
 
+    :param bool raw_as_bytes:
+        If true, unpack msgpack raw to Python bytes (default).
+        Otherwise, unpack to Python str (or unicode on Python 2) by decoding
+        with UTF-8 encoding (recommended).
+        Currently, the default is true, but it will be changed to false in
+        near future.  So you must specify it explicitly for keeping backward
+        compatibility.
+
+        *encoding* option which is deprecated overrides this option.
+
     :param callable object_hook:
         When specified, it should be callable.
         Unpacker calls it with a dict argument after unpacking msgpack map.
@@ -183,13 +193,13 @@ class Unpacker(object):
 
     example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like)
+        unpacker = Unpacker(file_like, raw_as_bytes=False)
         for o in unpacker:
             process(o)
 
     example of streaming deserialize from socket::
 
-        unpacker = Unpacker()
+        unpacker = Unpacker(raw_as_bytes=False)
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -199,15 +209,28 @@ class Unpacker(object):
                 process(o)
     """
 
-    def __init__(self, file_like=None, read_size=0, use_list=True,
+    def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
-                 encoding=None, unicode_errors='strict', max_buffer_size=0,
+                 encoding=None, unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
                  max_str_len=2147483647, # 2**32-1
                  max_bin_len=2147483647,
                  max_array_len=2147483647,
                  max_map_len=2147483647,
                  max_ext_len=2147483647):
+
+        if encoding is not None:
+            warnings.warn(
+                "encoding is deprecated, Use raw_as_bytes=False instead.",
+                PendingDeprecationWarning)
+
+        if unicode_errors is not None:
+            warnings.warn(
+                "unicode_errors is deprecated.",
+                PendingDeprecationWarning)
+        else:
+            unicode_errors = 'strict'
+
         if file_like is None:
             self._feeding = True
         else:
@@ -234,6 +257,7 @@ class Unpacker(object):
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
         self._read_size = read_size or min(self._max_buffer_size, 16*1024)
+        self._raw_as_bytes = bool(raw_as_bytes)
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
@@ -582,8 +606,10 @@ class Unpacker(object):
         if typ == TYPE_RAW:
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
-            else:
+            elif self._raw_as_bytes:
                 obj = bytes(obj)
+            else:
+                obj = obj.decode('utf_8')
             return obj
         if typ == TYPE_EXT:
             return self._ext_hook(n, bytes(obj))
@@ -682,9 +708,23 @@ class Packer(object):
     :param str unicode_errors:
         (deprecated) Error handler for encoding unicode. (default: 'strict')
     """
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
+    def __init__(self, default=None, encoding=None, unicode_errors=None,
                  use_single_float=False, autoreset=True, use_bin_type=False,
                  strict_types=False):
+        if encoding is None:
+            encoding = 'utf_8'
+        else:
+            warnings.warn(
+                "encoding is deprecated, Use raw_as_bytes=False instead.",
+                PendingDeprecationWarning)
+
+        if unicode_errors is None:
+            unicode_errors = 'strict'
+        else:
+            warnings.warn(
+                "unicode_errors is deprecated.",
+                PendingDeprecationWarning)
+
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset

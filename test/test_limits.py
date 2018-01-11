@@ -39,11 +39,11 @@ def test_max_str_len():
     d = 'x' * 3
     packed = packb(d)
 
-    unpacker = Unpacker(max_str_len=3, encoding='utf-8')
+    unpacker = Unpacker(max_str_len=3, raw_as_bytes=False)
     unpacker.feed(packed)
     assert unpacker.unpack() == d
 
-    unpacker = Unpacker(max_str_len=2, encoding='utf-8')
+    unpacker = Unpacker(max_str_len=2, raw_as_bytes=False)
     with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()

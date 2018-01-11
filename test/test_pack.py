@@ -31,14 +31,14 @@ def testPack():
 def testPackUnicode():
     test_data = ["", "abcd", ["defgh"], "Русский текст"]
     for td in test_data:
-        re = unpackb(packb(td, encoding='utf-8'), use_list=1, encoding='utf-8')
+        re = unpackb(packb(td), use_list=1, raw_as_bytes=False)
         assert re == td
-        packer = Packer(encoding='utf-8')
+        packer = Packer()
         data = packer.pack(td)
-        re = Unpacker(BytesIO(data), encoding=str('utf-8'), use_list=1).unpack()
+        re = Unpacker(BytesIO(data), raw_as_bytes=False, use_list=1).unpack()
         assert re == td
 
-def testPackUTF32():
+def testPackUTF32():  # deprecated
     try:
         test_data = [
             "",
@@ -66,25 +66,21 @@ def testPackByteArrays():
     for td in test_data:
         check(td)
 
-def testIgnoreUnicodeErrors():
+def testIgnoreUnicodeErrors(): # deprecated
     re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
     assert re == "abcdef"
 
 def testStrictUnicodeUnpack():
     with raises(UnicodeDecodeError):
-        unpackb(packb(b'abc\xeddef'), encoding='utf-8', use_list=1)
+        unpackb(packb(b'abc\xeddef'), raw_as_bytes=False, use_list=1)
 
-def testStrictUnicodePack():
+def testStrictUnicodePack():  # deprecated
     with raises(UnicodeEncodeError):
         packb("abc\xeddef", encoding='ascii', unicode_errors='strict')
 
-def testIgnoreErrorsPack():
-    re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), encoding='utf-8', use_list=1)
+def testIgnoreErrorsPack():  # deprecated
+    re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), raw_as_bytes=False, use_list=1)
     assert re == "abcdef"
-
-def testNoEncoding():
-    with raises(TypeError):
-        packb("abc", encoding=None)
 
 def testDecodeBinary():
     re = unpackb(packb(b"abc"), encoding=None, use_list=1)

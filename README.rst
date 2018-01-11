@@ -10,8 +10,21 @@ MessagePack for Python
    :target: https://msgpack-python.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
-IMPORTANT: Upgrading from msgpack-0.4
---------------------------------------
+
+What's this
+-----------
+
+`MessagePack <https://msgpack.org/>`_ is an efficient binary serialization format.
+It lets you exchange data among multiple languages like JSON.
+But it's faster and smaller.
+This package provides CPython bindings for reading and writing MessagePack data.
+
+
+Very important notes for existing users
+---------------------------------------
+
+PyPI package name
+^^^^^^^^^^^^^^^^^
 
 TL;DR: When upgrading from msgpack-0.4 or earlier, don't do `pip install -U msgpack-python`.
 Do `pip uninstall msgpack-python; pip install msgpack` instead.
@@ -24,13 +37,37 @@ Sadly, this doesn't work for upgrade install.  After `pip install -U msgpack-pyt
 msgpack is removed and `import msgpack` fail.
 
 
-What's this
------------
+Deprecating encoding option
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-`MessagePack <https://msgpack.org/>`_ is an efficient binary serialization format.
-It lets you exchange data among multiple languages like JSON.
-But it's faster and smaller.
-This package provides CPython bindings for reading and writing MessagePack data.
+encoding and unicode_errors options are deprecated.
+
+In case of packer, use UTF-8 always.  Storing other than UTF-8 is not recommended.
+
+For backward compatibility, you can use ``use_bin_type=False`` and pack ``bytes``
+object into msgpack raw type.
+
+In case of unpacker, there is new ``raw_as_bytes`` option.  It is ``True`` by default
+for backward compatibility, but it is changed to ``False`` in near future.
+You can use ``raw_as_bytes=False`` instead of ``encoding='utf-8'``.
+
+Planned backward incompatible changes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When msgpack 1.0, I planning these breaking changes:
+
+* packer and unpacker: Remove ``encoding`` and ``unicode_errors`` option.
+* packer: Change default of ``use_bin_type`` option from False to True.
+* unpacker: Change default of ``raw_as_bytes`` option from True to False.
+* unpacker: Reduce all ``max_xxx_len`` options for typical usage.
+* unpacker: Remove ``write_bytes`` option from all methods.
+
+To avoid these breaking changes breaks your application, please:
+
+* Don't use deprecated options.
+* Pass ``use_bin_type`` and ``raw_as_bytes`` options explicitly.
+* If your application handle large (>1MB) data, specify ``max_xxx_len`` options too.
+
 
 Install
 -------
@@ -76,14 +113,14 @@ msgpack provides ``dumps`` and ``loads`` as an alias for compatibility with
    >>> import msgpack
    >>> msgpack.packb([1, 2, 3], use_bin_type=True)
    '\x93\x01\x02\x03'
-   >>> msgpack.unpackb(_)
+   >>> msgpack.unpackb(_, raw_as_bytes=False)
    [1, 2, 3]
 
 ``unpack`` unpacks msgpack's array to Python's list, but can also unpack to tuple:
 
 .. code-block:: pycon
 
-   >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
+   >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False, raw_as_bytes=False)
    (1, 2, 3)
 
 You should always specify the ``use_list`` keyword argument for backward compatibility.
@@ -109,7 +146,7 @@ stream (or from bytes provided through its ``feed`` method).
 
    buf.seek(0)
 
-   unpacker = msgpack.Unpacker(buf)
+   unpacker = msgpack.Unpacker(buf, raw_as_bytes=False)
    for unpacked in unpacker:
        print(unpacked)
 
@@ -142,7 +179,7 @@ It is also possible to pack/unpack custom data types. Here is an example for
 
 
     packed_dict = msgpack.packb(useful_dict, default=encode_datetime, use_bin_type=True)
-    this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime)
+    this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime, raw_as_bytes=False)
 
 ``Unpacker``'s ``object_hook`` callback receives a dict; the
 ``object_pairs_hook`` callback may instead be used to receive a list of
@@ -172,7 +209,7 @@ It is also possible to pack/unpack custom data types using the **ext** type.
     ...
     >>> data = array.array('d', [1.2, 3.4])
     >>> packed = msgpack.packb(data, default=default, use_bin_type=True)
-    >>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook)
+    >>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook, raw_as_bytes=False)
     >>> data == unpacked
     True
 
@@ -217,14 +254,10 @@ Early versions of msgpack didn't distinguish string and binary types (like Pytho
 The type for representing both string and binary types was named **raw**.
 
 For backward compatibility reasons, msgpack-python will still default all
-strings to byte strings, unless you specify the `use_bin_type=True` option in
+strings to byte strings, unless you specify the ``use_bin_type=True`` option in
 the packer. If you do so, it will use a non-standard type called **bin** to
 serialize byte arrays, and **raw** becomes to mean **str**. If you want to
-distinguish **bin** and **raw** in the unpacker, specify `encoding='utf-8'`.
-
-**In future version, default value of ``use_bin_type`` will be changed to ``True``.
-To avoid this change will break your code, you must specify it explicitly
-even when you want to use old format.**
+distinguish **bin** and **raw** in the unpacker, specify ``raw_as_bytes=False``.
 
 Note that Python 2 defaults to byte-arrays over Unicode strings:
 
@@ -234,7 +267,7 @@ Note that Python 2 defaults to byte-arrays over Unicode strings:
     >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs']))
     ['spam', 'eggs']
     >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True),
-                        encoding='utf-8')
+                        raw_as_bytes=False)
     ['spam', u'eggs']
 
 This is the same code in Python 3 (same behaviour, but Python 3 has a
@@ -246,7 +279,7 @@ different default):
     >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs']))
     [b'spam', b'eggs']
     >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True),
-                        encoding='utf-8')
+                        raw_as_bytes=False)
     [b'spam', 'eggs']
 
 
@@ -277,6 +310,7 @@ You can use ``gc.disable()`` when unpacking large message.
 
 use_list option
 ^^^^^^^^^^^^^^^
+
 List is the default sequence type of Python.
 But tuple is lighter than list.
 You can use ``use_list=False`` while unpacking when performance is important.
@@ -295,7 +329,7 @@ Test
 MessagePack uses `pytest` for testing.
 Run test with following command:
 
-    $ pytest -v test
+    $ make test
 
 
 ..

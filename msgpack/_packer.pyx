@@ -2,7 +2,7 @@
 #cython: embedsignature=True
 
 from cpython cimport *
-#from cpython.exc cimport PyErr_WarnEx
+from cpython.exc cimport PyErr_WarnEx
 
 from msgpack.exceptions import PackValueError, PackOverflowError
 from msgpack import ExtType
@@ -39,7 +39,7 @@ cdef extern from "pack.h":
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
-cdef size_t ITEM_LIMIT = (2**32)-1
+cdef long long ITEM_LIMIT = (2**32)-1
 
 
 cdef inline int PyBytesLike_Check(object o):
@@ -110,9 +110,13 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None, encoding='utf-8', unicode_errors='strict',
+    def __init__(self, default=None, encoding=None, unicode_errors=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=False,
                  bint strict_types=False):
+        if encoding is not None:
+            PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated.", 1)
+        if unicode_errors is not None:
+            PyErr_WarnEx(PendingDeprecationWarning, "unicode_errors is deprecated.", 1)
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
@@ -122,7 +126,7 @@ cdef class Packer(object):
                 raise TypeError("default must be a callable.")
         self._default = default
         if encoding is None:
-            self.encoding = NULL
+            self.encoding = 'utf_8'
             self.unicode_errors = NULL
         else:
             if isinstance(encoding, unicode):
@@ -134,7 +138,8 @@ cdef class Packer(object):
                 self._berrors = unicode_errors.encode('ascii')
             else:
                 self._berrors = unicode_errors
-            self.unicode_errors = PyBytes_AsString(self._berrors)
+            if self._berrors is not None:
+                self.unicode_errors = PyBytes_AsString(self._berrors)
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
@@ -149,7 +154,7 @@ cdef class Packer(object):
         cdef char* rawval
         cdef int ret
         cdef dict d
-        cdef size_t L
+        cdef Py_ssize_t L
         cdef int default_used = 0
         cdef bint strict_types = self.strict_types
         cdef Py_buffer view
@@ -203,6 +208,7 @@ cdef class Packer(object):
             elif PyUnicode_CheckExact(o) if strict_types else PyUnicode_Check(o):
                 if not self.encoding:
                     raise TypeError("Can't encode unicode string: no encoding is specified")
+                #TODO: Use faster API for UTF-8
                 o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
                 L = len(o)
                 if L > ITEM_LIMIT:

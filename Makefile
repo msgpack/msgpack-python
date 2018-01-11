@@ -8,7 +8,8 @@ cython:
 
 .PHONY: test
 test:
-	py.test -v test
+	pytest -v test
+	MSGPACK_PUREPYTHON=1 pytest -v test
 
 .PHONY: serve-doc
 serve-doc: all

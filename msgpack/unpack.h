@@ -20,9 +20,10 @@
 #include "unpack_define.h"
 
 typedef struct unpack_user {
-    int use_list;
-    PyObject *object_hook;
+    bool use_list;
+    bool raw_as_bytes;
     bool has_pairs_hook;
+    PyObject *object_hook;
     PyObject *list_hook;
     PyObject *ext_hook;
     const char *encoding;
@@ -225,10 +226,13 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
     }
 
     PyObject *py;
-    if(u->encoding) {
+
+    if (u->encoding) {
         py = PyUnicode_Decode(p, l, u->encoding, u->unicode_errors);
-    } else {
+    } else if (u->raw_as_bytes) {
         py = PyBytes_FromStringAndSize(p, l);
+    } else {
+        py = PyUnicode_DecodeUTF8(p, l, NULL);
     }
     if (!py)
         return -1;
