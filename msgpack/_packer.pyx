@@ -39,7 +39,7 @@ cdef extern from "pack.h":
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
-cdef Py_ssize_t ITEM_LIMIT = (2**32)-1
+cdef long long ITEM_LIMIT = (2**32)-1
 
 
 cdef inline int PyBytesLike_Check(object o):
