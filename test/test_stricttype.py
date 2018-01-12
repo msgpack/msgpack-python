@@ -11,7 +11,7 @@ def test_namedtuple():
             return dict(o._asdict())
         raise TypeError('Unsupported type %s' % (type(o),))
     packed = packb(T(1, 42), strict_types=True, use_bin_type=True, default=default)
-    unpacked = unpackb(packed, raw_as_bytes=False)
+    unpacked = unpackb(packed, raw=False)
     assert unpacked == {'foo': 1, 'bar': 42}
 
 
@@ -32,7 +32,7 @@ def test_tuple():
         return o
 
     data = packb(t, strict_types=True, use_bin_type=True, default=default)
-    expected = unpackb(data, raw_as_bytes=False, object_hook=convert)
+    expected = unpackb(data, raw=False, object_hook=convert)
 
     assert expected == t
 
@@ -53,10 +53,10 @@ def test_tuple_ext():
     def convert(code, payload):
         if code == MSGPACK_EXT_TYPE_TUPLE:
             # Unpack and convert to tuple
-            return tuple(unpackb(payload, raw_as_bytes=False, ext_hook=convert))
+            return tuple(unpackb(payload, raw=False, ext_hook=convert))
         raise ValueError('Unknown Ext code {}'.format(code))
 
     data = packb(t, strict_types=True, use_bin_type=True, default=default)
-    expected = unpackb(data, raw_as_bytes=False, ext_hook=convert)
+    expected = unpackb(data, raw=False, ext_hook=convert)
 
     assert expected == t

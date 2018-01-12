@@ -145,7 +145,7 @@ class Unpacker(object):
         If true, unpack msgpack array to Python list.
         Otherwise, unpack to Python tuple. (default: True)
 
-    :param bool raw_as_bytes:
+    :param bool raw:
         If true, unpack msgpack raw to Python bytes (default).
         Otherwise, unpack to Python str (or unicode on Python 2) by decoding
         with UTF-8 encoding (recommended).
@@ -193,13 +193,13 @@ class Unpacker(object):
 
     example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like, raw_as_bytes=False)
+        unpacker = Unpacker(file_like, raw=False)
         for o in unpacker:
             process(o)
 
     example of streaming deserialize from socket::
 
-        unpacker = Unpacker(raw_as_bytes=False)
+        unpacker = Unpacker(raw=False)
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -209,7 +209,7 @@ class Unpacker(object):
                 process(o)
     """
 
-    def __init__(self, file_like=None, read_size=0, use_list=True, raw_as_bytes=True,
+    def __init__(self, file_like=None, read_size=0, use_list=True, raw=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
@@ -221,7 +221,7 @@ class Unpacker(object):
 
         if encoding is not None:
             warnings.warn(
-                "encoding is deprecated, Use raw_as_bytes=False instead.",
+                "encoding is deprecated, Use raw=False instead.",
                 PendingDeprecationWarning)
 
         if unicode_errors is not None:
@@ -257,7 +257,7 @@ class Unpacker(object):
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
         self._read_size = read_size or min(self._max_buffer_size, 16*1024)
-        self._raw_as_bytes = bool(raw_as_bytes)
+        self._raw = bool(raw)
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
@@ -606,7 +606,7 @@ class Unpacker(object):
         if typ == TYPE_RAW:
             if self._encoding is not None:
                 obj = obj.decode(self._encoding, self._unicode_errors)
-            elif self._raw_as_bytes:
+            elif self._raw:
                 obj = bytes(obj)
             else:
                 obj = obj.decode('utf_8')
@@ -715,7 +715,7 @@ class Packer(object):
             encoding = 'utf_8'
         else:
             warnings.warn(
-                "encoding is deprecated, Use raw_as_bytes=False instead.",
+                "encoding is deprecated, Use raw=False instead.",
                 PendingDeprecationWarning)
 
         if unicode_errors is None:

@@ -18,7 +18,8 @@ serve-doc: all
 .PHONY: clean
 clean:
 	rm -rf build
-	rm msgpack/*.so
+	rm -f msgpack/_packer.cpp
+	rm -f msgpack/_unpacker.cpp
 	rm -rf msgpack/__pycache__
 	rm -rf test/__pycache__
 
