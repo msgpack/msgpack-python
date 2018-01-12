@@ -21,7 +21,7 @@
 
 typedef struct unpack_user {
     bool use_list;
-    bool raw_as_bytes;
+    bool raw;
     bool has_pairs_hook;
     PyObject *object_hook;
     PyObject *list_hook;
@@ -229,7 +229,7 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
 
     if (u->encoding) {
         py = PyUnicode_Decode(p, l, u->encoding, u->unicode_errors);
-    } else if (u->raw_as_bytes) {
+    } else if (u->raw) {
         py = PyBytes_FromStringAndSize(p, l);
     } else {
         py = PyUnicode_DecodeUTF8(p, l, NULL);

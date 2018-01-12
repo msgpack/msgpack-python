@@ -31,11 +31,11 @@ def testPack():
 def testPackUnicode():
     test_data = ["", "abcd", ["defgh"], "Русский текст"]
     for td in test_data:
-        re = unpackb(packb(td), use_list=1, raw_as_bytes=False)
+        re = unpackb(packb(td), use_list=1, raw=False)
         assert re == td
         packer = Packer()
         data = packer.pack(td)
-        re = Unpacker(BytesIO(data), raw_as_bytes=False, use_list=1).unpack()
+        re = Unpacker(BytesIO(data), raw=False, use_list=1).unpack()
         assert re == td
 
 def testPackUTF32():  # deprecated
@@ -72,14 +72,14 @@ def testIgnoreUnicodeErrors(): # deprecated
 
 def testStrictUnicodeUnpack():
     with raises(UnicodeDecodeError):
-        unpackb(packb(b'abc\xeddef'), raw_as_bytes=False, use_list=1)
+        unpackb(packb(b'abc\xeddef'), raw=False, use_list=1)
 
 def testStrictUnicodePack():  # deprecated
     with raises(UnicodeEncodeError):
         packb("abc\xeddef", encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():  # deprecated
-    re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), raw_as_bytes=False, use_list=1)
+    re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), raw=False, use_list=1)
     assert re == "abcdef"
 
 def testDecodeBinary():
