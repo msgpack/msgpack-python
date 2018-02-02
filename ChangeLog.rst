@@ -1,3 +1,16 @@
+0.5.2
+======
+
+* Add ``raw`` option to Unpacker.  It is preferred way than ``encoding`` option.
+
+* Packer.pack() reset buffer on exception (#274)
+
+
+0.5.1
+======
+
+* Remove FutureWarning about use_bin_type option (#271)
+
 0.5.0
 ======
 
