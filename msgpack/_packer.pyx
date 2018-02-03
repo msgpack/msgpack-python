@@ -127,27 +127,26 @@ cdef class Packer(object):
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
         self._default = default
-        if encoding is None:
-            if unicode_errors is None:
-                self.encoding = NULL
-                self.unicode_errors = NULL
-            else:
-                self.encoding = "utf_8"
-                self.unicode_errors = unicode_errors
+        if encoding is None and unicode_errors is None:
+            self.encoding = NULL
+            self.unicode_errors = NULL
         else:
-            if isinstance(encoding, unicode):
-                self._bencoding = encoding.encode('ascii')
+            if encoding is None:
+                self.encoding = 'utf-8'
             else:
-                self._bencoding = encoding
-            self.encoding = PyBytes_AsString(self._bencoding)
-            if isinstance(unicode_errors, unicode):
-                self._berrors = unicode_errors.encode('ascii')
+                if isinstance(encoding, unicode):
+                    self._bencoding = encoding.encode('ascii')
+                else:
+                    self._bencoding = encoding
+                self.encoding = PyBytes_AsString(self._bencoding)
+            if unicode_errors is None:
+                self.unicode_errors = 'strict'
             else:
-                self._berrors = unicode_errors
-            if self._berrors is not None:
+                if isinstance(unicode_errors, unicode):
+                    self._berrors = unicode_errors.encode('ascii')
+                else:
+                    self._berrors = unicode_errors
                 self.unicode_errors = PyBytes_AsString(self._berrors)
-            else:
-                self.unicode_errors = NULL
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
