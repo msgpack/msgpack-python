@@ -1,3 +1,8 @@
+0.5.3
+======
+
+* Fixed regression when passing ``unicode_errors`` to Packer but not ``encoding``. (#277)
+
 0.5.2
 ======
 
