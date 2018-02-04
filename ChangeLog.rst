@@ -1,3 +1,8 @@
+0.5.4
+======
+
+* Undeprecate ``unicode_errors`` option. (#278)
+
 0.5.3
 ======
 
