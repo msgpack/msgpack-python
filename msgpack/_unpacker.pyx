@@ -1,6 +1,7 @@
 # coding: utf-8
 #cython: embedsignature=True
 
+from cpython.version cimport PY_MAJOR_VERSION
 from cpython.bytes cimport (
     PyBytes_AsString,
     PyBytes_FromStringAndSize,
@@ -75,7 +76,7 @@ cdef inline init_ctx(unpack_context *ctx,
                      object object_hook, object object_pairs_hook,
                      object list_hook, object ext_hook,
                      bint use_list, bint raw,
-                     char* encoding, char* unicode_errors,
+                     const char* encoding, const char* unicode_errors,
                      Py_ssize_t max_str_len, Py_ssize_t max_bin_len,
                      Py_ssize_t max_array_len, Py_ssize_t max_map_len,
                      Py_ssize_t max_ext_len):
@@ -180,24 +181,16 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef Py_buffer view
     cdef char* buf = NULL
     cdef Py_ssize_t buf_len
-    cdef char* cenc = NULL
-    cdef char* cerr = NULL
+    cdef const char* cenc = NULL
+    cdef const char* cerr = NULL
     cdef int new_protocol = 0
 
     if encoding is not None:
         PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
-        if isinstance(encoding, unicode):
-            encoding = encoding.encode('ascii')
-        elif not isinstance(encoding, bytes):
-            raise TypeError("encoding should be bytes or unicode")
-        cenc = PyBytes_AsString(encoding)
+        cenc = encoding
 
     if unicode_errors is not None:
-        if isinstance(unicode_errors, unicode):
-            unicode_errors = unicode_errors.encode('ascii')
-        elif not isinstance(unicode_errors, bytes):
-            raise TypeError("unicode_errors should be bytes or unicode")
-        cerr = PyBytes_AsString(unicode_errors)
+        cerr = unicode_errors
 
     get_data_from_buffer(packed, &view, &buf, &buf_len, &new_protocol)
     try:
@@ -219,7 +212,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
 
 def unpack(object stream, object object_hook=None, object list_hook=None,
-           bint use_list=1, encoding=None, unicode_errors="strict",
+           bint use_list=1, encoding=None, unicode_errors=None,
            object_pairs_hook=None, ext_hook=ExtType,
            Py_ssize_t max_str_len=2147483647, # 2**32-1
            Py_ssize_t max_bin_len=2147483647,
@@ -352,8 +345,8 @@ cdef class Unpacker(object):
                  Py_ssize_t max_array_len=2147483647,
                  Py_ssize_t max_map_len=2147483647,
                  Py_ssize_t max_ext_len=2147483647):
-        cdef char *cenc=NULL,
-        cdef char *cerr=NULL
+        cdef const char *cenc=NULL,
+        cdef const char *cerr=NULL
 
         self.object_hook = object_hook
         self.object_pairs_hook = object_pairs_hook
@@ -383,22 +376,12 @@ cdef class Unpacker(object):
 
         if encoding is not None:
             PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
-            if isinstance(encoding, unicode):
-                self.encoding = encoding.encode('ascii')
-            elif isinstance(encoding, bytes):
-                self.encoding = encoding
-            else:
-                raise TypeError("encoding should be bytes or unicode")
-            cenc = PyBytes_AsString(self.encoding)
+            self.encoding = encoding
+            cenc = encoding
 
         if unicode_errors is not None:
-            if isinstance(unicode_errors, unicode):
-                self.unicode_errors = unicode_errors.encode('ascii')
-            elif isinstance(unicode_errors, bytes):
-                self.unicode_errors = unicode_errors
-            else:
-                raise TypeError("unicode_errors should be bytes or unicode")
-            cerr = PyBytes_AsString(self.unicode_errors)
+            self.unicode_errors = unicode_errors
+            cerr = unicode_errors
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
                  ext_hook, use_list, raw, cenc, cerr,
