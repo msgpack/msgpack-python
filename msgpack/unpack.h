@@ -232,7 +232,7 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
     } else if (u->raw) {
         py = PyBytes_FromStringAndSize(p, l);
     } else {
-        py = PyUnicode_DecodeUTF8(p, l, NULL);
+        py = PyUnicode_DecodeUTF8(p, l, u->unicode_errors);
     }
     if (!py)
         return -1;

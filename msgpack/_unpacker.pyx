@@ -159,7 +159,7 @@ cdef inline int get_data_from_buffer(object obj,
 
 def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=True, bint raw=True,
-            encoding=None, unicode_errors="strict",
+            encoding=None, unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
             Py_ssize_t max_str_len=2147483647, # 2**32-1
             Py_ssize_t max_bin_len=2147483647,
@@ -193,7 +193,6 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         cenc = PyBytes_AsString(encoding)
 
     if unicode_errors is not None:
-        PyErr_WarnEx(PendingDeprecationWarning, "unicode_errors is deprecated", 1)
         if isinstance(unicode_errors, unicode):
             unicode_errors = unicode_errors.encode('ascii')
         elif not isinstance(unicode_errors, bytes):
@@ -304,8 +303,7 @@ cdef class Unpacker(object):
         If it is None (default), msgpack raw is deserialized to Python bytes.
 
     :param str unicode_errors:
-        Deprecated. Used for decoding msgpack raw with *encoding*.
-        (default: `'strict'`)
+        Error handler used for decoding str type.  (default: `'strict'`)
 
 
     Example of streaming deserialize from file-like object::
@@ -347,7 +345,7 @@ cdef class Unpacker(object):
     def __init__(self, file_like=None, Py_ssize_t read_size=0,
                  bint use_list=True, bint raw=True,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
-                 encoding=None, unicode_errors='strict', int max_buffer_size=0,
+                 encoding=None, unicode_errors=None, int max_buffer_size=0,
                  object ext_hook=ExtType,
                  Py_ssize_t max_str_len=2147483647, # 2**32-1
                  Py_ssize_t max_bin_len=2147483647,
@@ -394,7 +392,6 @@ cdef class Unpacker(object):
             cenc = PyBytes_AsString(self.encoding)
 
         if unicode_errors is not None:
-            PyErr_WarnEx(PendingDeprecationWarning, "unicode_errors is deprecated", 1)
             if isinstance(unicode_errors, unicode):
                 self.unicode_errors = unicode_errors.encode('ascii')
             elif isinstance(unicode_errors, bytes):

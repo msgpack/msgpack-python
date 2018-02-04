@@ -89,10 +89,11 @@ cdef class Packer(object):
         This is useful when trying to implement accurate serialization
         for python types.
 
+    :param str unicode_errors:
+        Error handler for encoding unicode. (default: 'strict')
+
     :param str encoding:
         (deprecated) Convert unicode to bytes with this encoding. (default: 'utf-8')
-    :param str unicode_errors:
-        (deprecated) Error handler for encoding unicode. (default: 'strict')
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -117,8 +118,6 @@ cdef class Packer(object):
                  bint strict_types=False):
         if encoding is not None:
             PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated.", 1)
-        if unicode_errors is not None:
-            PyErr_WarnEx(PendingDeprecationWarning, "unicode_errors is deprecated.", 1)
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
