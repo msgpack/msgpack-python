@@ -2,6 +2,7 @@
 #cython: embedsignature=True
 
 from cpython cimport *
+from cpython.version cimport PY_MAJOR_VERSION
 from cpython.exc cimport PyErr_WarnEx
 
 from msgpack.exceptions import PackValueError, PackOverflowError
@@ -99,8 +100,8 @@ cdef class Packer(object):
     cdef object _default
     cdef object _bencoding
     cdef object _berrors
-    cdef char *encoding
-    cdef char *unicode_errors
+    cdef const char *encoding
+    cdef const char *unicode_errors
     cdef bint strict_types
     cdef bool use_float
     cdef bint autoreset
@@ -126,26 +127,21 @@ cdef class Packer(object):
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
         self._default = default
-        if encoding is None and unicode_errors is None:
-            self.encoding = NULL
-            self.unicode_errors = NULL
-        else:
-            if encoding is None:
+
+        self._bencoding = encoding
+        if encoding is None:
+            if PY_MAJOR_VERSION < 3:
                 self.encoding = 'utf-8'
             else:
-                if isinstance(encoding, unicode):
-                    self._bencoding = encoding.encode('ascii')
-                else:
-                    self._bencoding = encoding
-                self.encoding = PyBytes_AsString(self._bencoding)
-            if unicode_errors is None:
-                self.unicode_errors = 'strict'
-            else:
-                if isinstance(unicode_errors, unicode):
-                    self._berrors = unicode_errors.encode('ascii')
-                else:
-                    self._berrors = unicode_errors
-                self.unicode_errors = PyBytes_AsString(self._berrors)
+                self.encoding = NULL
+        else:
+            self.encoding = self._bencoding
+
+        self._berrors = unicode_errors
+        if unicode_errors is None:
+            self.unicode_errors = NULL
+        else:
+            self.unicode_errors = self._berrors
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
@@ -212,7 +208,7 @@ cdef class Packer(object):
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyUnicode_CheckExact(o) if strict_types else PyUnicode_Check(o):
-                if self.encoding == NULL:
+                if self.encoding == NULL and self.unicode_errors == NULL:
                     ret = msgpack_pack_unicode(&self.pk, o, ITEM_LIMIT);
                     if ret == -2:
                         raise PackValueError("unicode string is too large")
