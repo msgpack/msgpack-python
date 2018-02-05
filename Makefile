@@ -23,6 +23,11 @@ clean:
 	rm -rf msgpack/__pycache__
 	rm -rf test/__pycache__
 
+.PHONY: update-docker
+update-docker:
+	docker pull quay.io/pypa/manylinux1_i686
+	docker pull quay.io/pypa/manylinux1_x86_64
+
 .PHONY: linux-wheel
 linux-wheel:
 	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux1_i686   bash docker/buildwheel.sh
