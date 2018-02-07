@@ -100,3 +100,18 @@ def test_match():
 def test_unicode():
     assert unpackb(packb('foobar'), use_list=1) == b'foobar'
 
+def test_bintype_symmetry():
+    # For background on this test see github issue #281
+    #  - basically: packing with use_bin_type=True and unpacking with raw=False
+    #     should be completely symmetric
+    buf = b'\x92\xa3\xe2\x98\x83\xc4\x03\x00\x01\x02'
+    unpacked = unpackb(buf, raw=False)
+    packed = packb(unpacked, use_bin_type=True)
+    assert packed == buf 
+    # Also confirm that unpacking went to the expected types
+    #  - Note that we can't use test_match since it just uses basic equality
+    #    testing. We need to assert exact type matching here.
+    expected = [u'\u2603', b'\x00\x01\x02']
+    for x, y in zip(expected, unpacked):
+        assert type(x) is type(y)
+        assert x == y
