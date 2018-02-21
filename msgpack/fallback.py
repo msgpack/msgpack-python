@@ -100,16 +100,6 @@ def _get_data_from_buffer(obj):
     return view
 
 
-def unpack(stream, **kwargs):
-    """
-    Unpack an object from `stream`.
-
-    Raises `ExtraData` when `packed` contains extra bytes.
-    See :class:`Unpacker` for options.
-    """
-    data = stream.read()
-    return unpackb(data, **kwargs)
-
 
 def unpackb(packed, **kwargs):
     """
