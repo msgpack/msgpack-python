@@ -1,3 +1,9 @@
+0.5.5
+======
+
+* Fix memory leak in pure Python Unpacker.feed() (#283)
+* Fix unpack() didn't support `raw` option (#285)
+
 0.5.4
 ======
 
