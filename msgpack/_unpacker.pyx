@@ -212,12 +212,9 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
 
 def unpack(object stream, **kwargs):
-    """
-    Unpack an object from `stream`.
-
-    Raises `ValueError` when `stream` has extra bytes.
-    See :class:`Unpacker` for options.
-    """
+    PyErr_WarnEx(
+        PendingDeprecationWarning,
+        "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.", 1)
     data = stream.read()
     return unpackb(data, **kwargs)
 
