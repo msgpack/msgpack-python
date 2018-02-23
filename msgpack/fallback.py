@@ -101,12 +101,9 @@ def _get_data_from_buffer(obj):
 
 
 def unpack(stream, **kwargs):
-    """
-    Unpack an object from `stream`.
-
-    Raises `ExtraData` when `packed` contains extra bytes.
-    See :class:`Unpacker` for options.
-    """
+    warnings.warn(
+        "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.",
+        PendingDeprecationWarning)
     data = stream.read()
     return unpackb(data, **kwargs)
 
@@ -224,11 +221,7 @@ class Unpacker(object):
                 "encoding is deprecated, Use raw=False instead.",
                 PendingDeprecationWarning)
 
-        if unicode_errors is not None:
-            warnings.warn(
-                "unicode_errors is deprecated.",
-                PendingDeprecationWarning)
-        else:
+        if unicode_errors is None:
             unicode_errors = 'strict'
 
         if file_like is None:
@@ -708,7 +701,7 @@ class Packer(object):
         (deprecated) Convert unicode to bytes with this encoding. (default: 'utf-8')
 
     :param str unicode_errors:
-        (deprecated) Error handler for encoding unicode. (default: 'strict')
+        Error handler for encoding unicode. (default: 'strict')
     """
     def __init__(self, default=None, encoding=None, unicode_errors=None,
                  use_single_float=False, autoreset=True, use_bin_type=False,
@@ -722,10 +715,6 @@ class Packer(object):
 
         if unicode_errors is None:
             unicode_errors = 'strict'
-        else:
-            warnings.warn(
-                "unicode_errors is deprecated.",
-                PendingDeprecationWarning)
 
         self._strict_types = strict_types
         self._use_float = use_single_float
