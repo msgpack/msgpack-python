@@ -1,3 +1,10 @@
+0.5.6
+======
+
+* Fix fallback.Unpacker.feed() dropped unused data from buffer (#287)
+* Resurrect fallback.unpack() and _unpacker.unpack().
+  They were removed at 0.5.5 but it breaks backward compatibility. (#288, #290)
+
 0.5.5
 ======
 
