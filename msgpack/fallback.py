@@ -289,8 +289,13 @@ class Unpacker(object):
         view = _get_data_from_buffer(next_bytes)
         if (len(self._buffer) - self._buff_i + len(view) > self._max_buffer_size):
             raise BufferFull
-        del self._buffer[:self._buff_i]
-        self._buff_i = 0
+
+        # Strip buffer before checkpoint before reading file.
+        if self._buf_checkpoint > 0:
+            del self._buffer[:self._buf_checkpoint]
+            self._buff_i -= self._buf_checkpoint
+            self._buf_checkpoint = 0
+
         self._buffer += view
 
     def _consume(self):
