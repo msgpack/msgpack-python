@@ -100,6 +100,13 @@ def _get_data_from_buffer(obj):
     return view
 
 
+# Jython's memoryview support is incomplete
+# See https://github.com/msgpack/msgpack-python/issues/303
+_is_jython = sys.platform.startswith('java')
+if _is_jython:
+    _get_data_from_buffer = bytes
+
+
 def unpack(stream, **kwargs):
     warnings.warn(
         "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.",
