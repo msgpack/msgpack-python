@@ -2,6 +2,7 @@ from __future__ import print_function
 import array
 import msgpack
 from msgpack import ExtType
+from collections import namedtuple
 
 
 def test_pack_ext_type():
