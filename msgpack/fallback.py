@@ -322,7 +322,7 @@ class Unpacker(object):
     def _ext_hook(self, code, data):
         if self.__ext_hook is not None:
             ret = self.__ext_hook(code, data)
-            if not isinstance(ret, (None, ExtType)):
+            if ret is not None and not isinstance(ret, ExtType):
                 return ret
         for cls in _subclasses(ExtType):
             if code == getattr(cls, 'type', getattr(cls, 'code')):
