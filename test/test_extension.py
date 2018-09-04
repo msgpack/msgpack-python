@@ -91,7 +91,7 @@ def test_ext_inheritor():
         def _unpackb(cls, ext):
             return cls()
 
-    self.assertTrue(isinstance(msgpack.unpackb(msgpack.packb(Stub())), Stub))
+    assert isinstance(msgpack.unpackb(msgpack.packb(Stub())), Stub)
 
 def test_ext_namedtuple_inheritor():
     class Stub(ExtType, namedtuple('_Stub', ['foo'])):
@@ -104,6 +104,6 @@ def test_ext_namedtuple_inheritor():
         def _unpackb(cls, ext):
             return cls(*msgpack.unpackb(ext.data))
 
-    self.assertTrue(isinstance(msgpack.unpackb(msgpack.packb(Stub(1))), Stub))
+    assert isinstance(msgpack.unpackb(msgpack.packb(Stub(1))), Stub)
     
     
