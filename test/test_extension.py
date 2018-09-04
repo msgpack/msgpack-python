@@ -74,3 +74,35 @@ def test_overriding_hooks():
     testout = msgpack.packb(obj, default=default)
 
     assert refout == testout
+
+def test_ext_inheritor():
+    class Stub(ExtType):
+        type = 1
+
+        def __init__(self):
+            pass
+
+        @property
+        def data(self):
+            return msgpack.packb(None)
+
+        @classmethod
+        def _unpackb(cls, ext):
+            return cls()
+
+    self.assertTrue(isinstance(msgpack.unpackb(msgpack.packb(Stub())), Stub))
+
+def test_ext_namedtuple_inheritor():
+    class Stub(ExtType, namedtuple('_Stub', ['foo'])):
+        type = 2
+
+        def __init__(self, *args, **kwargs):
+            super(Stub, self).__init__(Stub.type, msgpack.packb(tuple(self)))
+
+        @classmethod
+        def _unpackb(cls, ext):
+            return cls(*msgpack.unpackb(ext.data))
+
+    self.assertTrue(isinstance(msgpack.unpackb(msgpack.packb(Stub(1))), Stub))
+    
+    
