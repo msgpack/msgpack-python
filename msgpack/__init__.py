@@ -5,17 +5,21 @@ from msgpack.exceptions import *
 from collections import namedtuple
 
 
-class ExtType(namedtuple('ExtType', 'code data')):
+class ExtType(object):
     """ExtType represents ext type in msgpack."""
-    def __new__(cls, code, data):
+    __slots__ = ('code', 'data')
+    
+    def __init__(self, code, data):
         if not isinstance(code, int):
             raise TypeError("code must be int")
         if not isinstance(data, bytes):
             raise TypeError("data must be bytes")
         if not 0 <= code <= 127:
             raise ValueError("code must be 0~127")
+        self.code = code
+        self.data = data
         return super(ExtType, cls).__new__(cls, code, data)
-
+    
 
 import os
 if os.environ.get('MSGPACK_PUREPYTHON'):
@@ -64,3 +68,6 @@ loads = unpackb
 
 dump = pack
 dumps = packb
+
+# alias for compatbiliity to umsgpack
+Ext = ExtType
