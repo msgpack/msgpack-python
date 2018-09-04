@@ -3,18 +3,23 @@
 import sys
 import struct
 import warnings
+import itertools
+
+chain = itertools.chain
 
 if sys.version_info[0] == 3:
     PY3 = True
     int_types = int
     Unicode = str
     xrange = range
+    filterfalse = itertools.filterfalse
     def dict_iteritems(d):
         return d.items()
 else:
     PY3 = False
     int_types = (int, long)
     Unicode = unicode
+    filterfalse = itertools.ifilterfalse
     def dict_iteritems(d):
         return d.iteritems()
 
@@ -98,6 +103,30 @@ def _get_data_from_buffer(obj):
     if view.itemsize != 1:
         raise ValueError("cannot unpack from multi-byte object")
     return view
+
+
+# Automatic detection of Ext subtypes
+def _filter_unique(iterable):
+    seen = set()
+    seen_add = seen.add  # this is just to prevent excessive lookups
+    for x in filterfalse(seen.__contains__, iterable):
+        seen_add(x)
+        yield x
+
+        
+def _subclasses(cls, unique=True):
+    """Iterates over the set of all subclasses of an object. Unlike
+    class.__subclasses__(), this returns all subclasses, not just direct ones.
+    Note: though issubclass(cls, cls) returns True, we do not yield cls"""
+    if unique:
+        for x in _filter_unique(_subclasses(cls, unique=False)):
+            yield x
+    else:
+        sub = tuple(x for x in cls.__subclasses__() if x is not type)
+        for x in sub:
+            yield x
+        for x in chain.from_iterable(_subclasses(x, unique=False) for x in sub):
+            yield x
 
 
 # Jython's memoryview support is incomplete
@@ -270,7 +299,7 @@ class Unpacker(object):
         self._list_hook = list_hook
         self._object_hook = object_hook
         self._object_pairs_hook = object_pairs_hook
-        self._ext_hook = ext_hook
+        self.__ext_hook = ext_hook
         self._max_str_len = max_str_len
         self._max_bin_len = max_bin_len
         self._max_array_len = max_array_len
@@ -289,6 +318,15 @@ class Unpacker(object):
                             "exclusive")
         if not callable(ext_hook):
             raise TypeError("`ext_hook` is not callable")
+            
+    def _ext_hook(self, code, data):
+        if self.__ext_hook is not None:
+            ret = self.__ext_hook(code, data)
+            if not isinstance(ret, (None, ExtType)):
+                return ret
+        for cls in _subclasses(ExtType):
+            if code == getattr(cls, 'type'):
+                return cls._unpackb(ExtType(code, data))
 
     def feed(self, next_bytes):
         assert self._feeding
