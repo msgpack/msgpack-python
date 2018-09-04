@@ -18,7 +18,6 @@ class ExtType(object):
             raise ValueError("code must be 0~127")
         self.code = code
         self.data = data
-        return super(ExtType, cls).__new__(cls, code, data)
     
 
 import os
