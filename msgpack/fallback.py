@@ -300,7 +300,6 @@ class Unpacker(object):
         self._object_hook = object_hook
         self._object_pairs_hook = object_pairs_hook
         self.__ext_hook = ext_hook
-        self._ext_returned = False
         self._max_str_len = max_str_len
         self._max_bin_len = max_bin_len
         self._max_array_len = max_array_len
@@ -324,12 +323,11 @@ class Unpacker(object):
         if self.__ext_hook is not None:
             ret = self.__ext_hook(code, data)
             if ret is not None and not isinstance(ret, ExtType):
-                self._ext_returned = True
                 return ret
         for cls in _subclasses(ExtType):
             if code == getattr(cls, 'type', getattr(cls, 'code')):
-                self._ext_returned = True
                 return cls._unpackb(ExtType(code, data))
+        return ExtType(code, data)
 
     def feed(self, next_bytes):
         assert self._feeding
@@ -666,10 +664,7 @@ class Unpacker(object):
                 obj = obj.decode('utf_8')
             return obj
         if typ == TYPE_EXT:
-            ret = self._ext_hook(n, bytes(obj))
-            if self._ext_returned:
-                self._ext_returned = False
-                return ret
+            return self._ext_hook(n, bytes(obj))
         if typ == TYPE_BIN:
             return bytes(obj)
         assert typ == TYPE_IMMEDIATE
