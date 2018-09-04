@@ -18,6 +18,10 @@ class ExtType(object):
             raise ValueError("code must be 0~127")
         self.code = code
         self.data = data
+        
+    def __eq__(self, other):
+        return isinstance(other, ExtType) and \
+        self.code == other.code and self.data == other.data
     
 
 import os
