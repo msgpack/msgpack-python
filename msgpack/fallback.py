@@ -325,7 +325,7 @@ class Unpacker(object):
             if not isinstance(ret, (None, ExtType)):
                 return ret
         for cls in _subclasses(ExtType):
-            if code == getattr(cls, 'type'):
+            if code == getattr(cls, 'type', getattr(cls, 'code')):
                 return cls._unpackb(ExtType(code, data))
 
     def feed(self, next_bytes):
