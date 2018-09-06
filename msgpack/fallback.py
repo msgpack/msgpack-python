@@ -3,18 +3,23 @@
 import sys
 import struct
 import warnings
+import itertools
+
+chain = itertools.chain
 
 if sys.version_info[0] == 3:
     PY3 = True
     int_types = int
     Unicode = str
     xrange = range
+    filterfalse = itertools.filterfalse
     def dict_iteritems(d):
         return d.items()
 else:
     PY3 = False
     int_types = (int, long)
     Unicode = unicode
+    filterfalse = itertools.ifilterfalse
     def dict_iteritems(d):
         return d.iteritems()
 
@@ -57,7 +62,7 @@ from msgpack.exceptions import (
     PackOverflowError,
     ExtraData)
 
-from msgpack import ExtType
+from msgpack import ExtType, _subclasses
 
 
 EX_SKIP                 = 0
@@ -270,7 +275,7 @@ class Unpacker(object):
         self._list_hook = list_hook
         self._object_hook = object_hook
         self._object_pairs_hook = object_pairs_hook
-        self._ext_hook = ext_hook
+        self.__ext_hook = ext_hook
         self._max_str_len = max_str_len
         self._max_bin_len = max_bin_len
         self._max_array_len = max_array_len
@@ -289,6 +294,16 @@ class Unpacker(object):
                             "exclusive")
         if not callable(ext_hook):
             raise TypeError("`ext_hook` is not callable")
+
+    def _ext_hook(self, code, data):
+        if self.__ext_hook is not None:
+            ret = self.__ext_hook(code, data)
+            if ret is not None and type(ret) != ExtType:  # strict typecheck
+                return ret
+        for cls in _subclasses(ExtType):
+            if code == getattr(cls, 'type', getattr(cls, 'code', float('NaN'))):
+                return cls._unpackb(ExtType(code, data))
+        return ExtType(code, data)
 
     def feed(self, next_bytes):
         assert self._feeding

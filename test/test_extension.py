@@ -1,7 +1,9 @@
 from __future__ import print_function
 import array
 import msgpack
-from msgpack import ExtType
+from msgpack import ExtType, Unpacker
+from collections import namedtuple
+from io import BytesIO
 
 
 def test_pack_ext_type():
@@ -74,3 +76,65 @@ def test_overriding_hooks():
     testout = msgpack.packb(obj, default=default)
 
     assert refout == testout
+
+def test_ext_inheritor():
+    class Stub(ExtType):
+        code = type = 127
+
+        def __init__(self):
+            pass
+
+        @property
+        def data(self):
+            return msgpack.packb(None)
+
+        @classmethod
+        def _unpackb(cls, ext):
+            return cls()
+
+    assert isinstance(msgpack.unpackb(msgpack.packb(Stub())), Stub)
+
+def test_ext_namedtuple_inheritor():
+    class Stub(ExtType, namedtuple('_Stub', ['foo'])):
+        code = type = 126
+
+        def __init__(self, *args, **kwargs):
+            super(Stub, self).__init__(Stub.type, msgpack.packb(tuple(self)))
+
+        @classmethod
+        def _unpackb(cls, ext):
+            return cls(*msgpack.unpackb(ext.data))
+
+    assert isinstance(msgpack.unpackb(msgpack.packb(Stub(1))), Stub)
+
+def test_ext_inheritor_Unpacker():
+    class Stub(ExtType):
+        code = type = 125
+
+        def __init__(self):
+            pass
+
+        @property
+        def data(self):
+            return msgpack.packb(None)
+
+        @classmethod
+        def _unpackb(cls, ext):
+            return cls()
+
+    unpacker = Unpacker(BytesIO(msgpack.packb(Stub())))
+    assert isinstance(unpacker.unpack(), Stub)
+
+def test_ext_namedtuple_inheritor_Unpacker():
+    class Stub(ExtType, namedtuple('_Stub', ['foo'])):
+        code = type = 124
+
+        def __init__(self, *args, **kwargs):
+            super(Stub, self).__init__(Stub.type, msgpack.packb(tuple(self)))
+
+        @classmethod
+        def _unpackb(cls, ext):
+            return cls(*msgpack.unpackb(ext.data))
+
+    unpacker = Unpacker(BytesIO(msgpack.packb(Stub(1))))
+    assert isinstance(unpacker.unpack(), Stub)
