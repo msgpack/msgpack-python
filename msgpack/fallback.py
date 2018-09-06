@@ -301,7 +301,7 @@ class Unpacker(object):
             if ret is not None and type(ret) != ExtType:  # strict typecheck
                 return ret
         for cls in _subclasses(ExtType):
-            if code == getattr(cls, 'type', getattr(cls, 'code')):
+            if code == getattr(cls, 'type', getattr(cls, 'code', float('NaN'))):
                 return cls._unpackb(ExtType(code, data))
         return ExtType(code, data)
 
