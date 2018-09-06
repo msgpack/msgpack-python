@@ -79,7 +79,7 @@ def test_overriding_hooks():
 
 def test_ext_inheritor():
     class Stub(ExtType):
-        code = type = 1
+        code = type = 127
 
         def __init__(self):
             pass
@@ -96,7 +96,7 @@ def test_ext_inheritor():
 
 def test_ext_namedtuple_inheritor():
     class Stub(ExtType, namedtuple('_Stub', ['foo'])):
-        code = type = 2
+        code = type = 126
 
         def __init__(self, *args, **kwargs):
             super(Stub, self).__init__(Stub.type, msgpack.packb(tuple(self)))
@@ -109,7 +109,7 @@ def test_ext_namedtuple_inheritor():
 
 def test_ext_inheritor_Unpacker():
     class Stub(ExtType):
-        code = type = 3
+        code = type = 125
 
         def __init__(self):
             pass
@@ -127,7 +127,7 @@ def test_ext_inheritor_Unpacker():
 
 def test_ext_namedtuple_inheritor_Unpacker():
     class Stub(ExtType, namedtuple('_Stub', ['foo'])):
-        code = type = 4
+        code = type = 124
 
         def __init__(self, *args, **kwargs):
             super(Stub, self).__init__(Stub.type, msgpack.packb(tuple(self)))
