@@ -2,13 +2,9 @@
 from msgpack._version import version
 from msgpack.exceptions import *
 
-from collections import namedtuple
-
 
 class ExtType(object):
     """ExtType represents ext type in msgpack."""
-    __slots__ = ('code', 'data')
-    
     def __init__(self, code, data):
         if not isinstance(code, int):
             raise TypeError("code must be int")
@@ -18,11 +14,14 @@ class ExtType(object):
             raise ValueError("code must be 0~127")
         self.code = code
         self.data = data
-        
+
     def __eq__(self, other):
         return isinstance(other, ExtType) and \
         self.code == other.code and self.data == other.data
-    
+
+    def __hash__(self):
+        return hash((ExtType, self.code, self.data))
+
 
 import os
 if os.environ.get('MSGPACK_PUREPYTHON'):
