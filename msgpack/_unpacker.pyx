@@ -38,7 +38,7 @@ from msgpack.exceptions import (
     UnpackValueError,
     ExtraData,
 )
-from msgpack import ExtType
+from msgpack import ExtType, _subclasses
 
 
 cdef extern from "unpack.h":
@@ -192,9 +192,19 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     if unicode_errors is not None:
         cerr = unicode_errors
 
+    def _ext_hook(object code, object data):
+        if ext_hook is not None:
+            ret = ext_hook(code, data)
+            if ret is not None and type(ret) != ExtType:  # strict typecheck
+                return ret
+        for cls in _subclasses(ExtType):
+            if code == getattr(cls, 'type', getattr(cls, 'code')):
+                return cls._unpackb(ExtType(code, data))
+        return ExtType(code, data)
+
     get_data_from_buffer(packed, &view, &buf, &buf_len, &new_protocol)
     try:
-        init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
+        init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, _ext_hook,
                  use_list, raw, cenc, cerr,
                  max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
         ret = unpack_construct(&ctx, buf, buf_len, &off)
@@ -333,8 +343,18 @@ cdef class Unpacker(object):
         self.object_hook = object_hook
         self.object_pairs_hook = object_pairs_hook
         self.list_hook = list_hook
-        self.ext_hook = ext_hook
 
+        def _ext_hook(object code, object data):
+            if ext_hook is not None:
+                ret = ext_hook(code, data)
+                if ret is not None and type(ret) != ExtType:  # strict typecheck
+                    return ret
+            for cls in _subclasses(ExtType):
+                if code == getattr(cls, 'type', getattr(cls, 'code')):
+                    return cls._unpackb(ExtType(code, data))
+            return ExtType(code, data)
+
+        self.ext_hook = _ext_hook
         self.file_like = file_like
         if file_like:
             self.file_like_read = file_like.read
@@ -366,7 +386,7 @@ cdef class Unpacker(object):
             cerr = unicode_errors
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
-                 ext_hook, use_list, raw, cenc, cerr,
+                 _ext_hook, use_list, raw, cenc, cerr,
                  max_str_len, max_bin_len, max_array_len,
                  max_map_len, max_ext_len)
 
