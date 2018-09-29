@@ -205,7 +205,12 @@ class Unpacker(object):
             for o in unpacker:
                 process(o)
     """
-
+    # Some old pythons don't support `self._unpack_from()` `bytearray`. 
+    _unpack_from = staticmethod(
+        struct.unpack_from if sys.version_info >= (2, 7, 6)
+        else lambda f,b,o=0: struct.unpack_from(f, b[:o+2].tobytes(),o)
+    )
+    
     def __init__(self, file_like=None, read_size=0, use_list=True, raw=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors=None, max_buffer_size=0,
@@ -231,14 +236,6 @@ class Unpacker(object):
                 raise TypeError("`file_like.read` must be callable")
             self.file_like = file_like
             self._feeding = False
-        # Some old pythons don't support `self._unpack_from()` `bytearray`. 
-        if sys.version_info < (2, 7, 6):
-            self._unpack_from = staticmethod(
-                lambda f,b,o=0: struct.unpack_from(f, b[:o+2].tobytes(), o)
-            )
-        else:
-            self._unpack_from = staticmethod(struct.unpack_from)
-
 
         #: array of bytes fed.
         self._buffer = bytearray()
