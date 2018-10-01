@@ -128,7 +128,8 @@ def unpackb(packed, **kwargs):
 
 if sys.version < (2, 7, 6):
     def _unpack_from(f, b, o=0):
-        return struct.unpack_from(f, bytes(b[:o+2]), o)
+        """Explicit typcast for legacy struct.unpack_from"""
+        return struct.unpack_from(f, bytes(b), o)
 else:
     _unpack_from = struct.unpack_from
 
