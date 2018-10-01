@@ -126,7 +126,7 @@ def unpackb(packed, **kwargs):
     return ret
 
 
-if sys.version < (2, 7, 6):
+if sys.version_info < (2, 7, 6):
     def _unpack_from(f, b, o=0):
         """Explicit typcast for legacy struct.unpack_from"""
         return struct.unpack_from(f, bytes(b), o)
