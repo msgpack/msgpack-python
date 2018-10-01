@@ -297,6 +297,7 @@ class Unpacker(object):
             self._buff_i -= self._buf_checkpoint
             self._buf_checkpoint = 0
 
+        # Use extend here: INPLACE_ADD += doesn't reliably typecast memoryview in jython
         self._buffer.extend(view)
 
     def _consume(self):
