@@ -213,7 +213,7 @@ class Unpacker(object):
             for o in unpacker:
                 process(o)
     """
-    
+
     def __init__(self, file_like=None, read_size=0, use_list=True, raw=True,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors=None, max_buffer_size=0,
