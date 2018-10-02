@@ -100,3 +100,26 @@ def test_match():
 def test_unicode():
     assert unpackb(packb('foobar'), use_list=1) == b'foobar'
 
+def test_mixed_bin_str():
+    # This test explicitly checks behaviour when a MessagePack byte sequence has both
+    # "bin family" types and "str family" types.
+    # For background on this test see github issue #281
+    #  - basically: packing with use_bin_type=True and unpacking with raw=False should be
+    #     completely symmetric
+    expected = [u'\u2603', b'\x00\x01\x02']
+    buf = (b'\x92'                 # array with length 2      (fixarray)
+           b'\xa3\xe2\x98\x83'     # str format with length 3 (fixstr) (UTF8 snowman)
+           b'\xc4\x03\x00\x01\x02' # bin format with length 3 (bin8) (0x000102)
+           )
+
+    # Check symmetry
+    unpacked = unpackb(buf, raw=False)
+    packed = packb(unpacked, use_bin_type=True)
+    assert packed == buf 
+
+    # Also confirm that unpacking went to the expected types
+    #  - Note that we can't use test_match since it just uses basic equality testing. We
+    #     need to assert exact type matching here.
+    for x, y in zip(expected, unpacked):
+        assert type(x) is type(y)
+        assert x == y
