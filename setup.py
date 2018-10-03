@@ -68,8 +68,7 @@ if len(version) > 3 and version[3] != 'final':
 if have_cython:
     class Sdist(sdist):
         def __init__(self, *args, **kwargs):
-            for src in glob('msgpack/*.pyx'):
-                cythonize(src)
+            cythonize('msgpack/_msgpack.pyx')
             sdist.__init__(self, *args, **kwargs)
 else:
     Sdist = sdist
@@ -85,14 +84,8 @@ else:
 
 ext_modules = []
 if not hasattr(sys, 'pypy_version_info'):
-    ext_modules.append(Extension('msgpack._packer',
-                                 sources=['msgpack/_packer.cpp'],
-                                 libraries=libraries,
-                                 include_dirs=['.'],
-                                 define_macros=macros,
-                                 ))
-    ext_modules.append(Extension('msgpack._unpacker',
-                                 sources=['msgpack/_unpacker.cpp'],
+    ext_modules.append(Extension('msgpack._msgpack',
+                                 sources=['msgpack/_msgpack.cpp'],
                                  libraries=libraries,
                                  include_dirs=['.'],
                                  define_macros=macros,

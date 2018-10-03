@@ -4,7 +4,7 @@ all: cython
 
 .PHONY: cython
 cython:
-	cython --cplus msgpack/*.pyx
+	cython --cplus msgpack/_msgpack.pyx
 
 .PHONY: test
 test:
@@ -18,8 +18,7 @@ serve-doc: all
 .PHONY: clean
 clean:
 	rm -rf build
-	rm -f msgpack/_packer.cpp
-	rm -f msgpack/_unpacker.cpp
+	rm -f msgpack/_msgpack.cpp
 	rm -rf msgpack/__pycache__
 	rm -rf test/__pycache__
 
