@@ -142,7 +142,7 @@ stream (or from bytes provided through its ``feed`` method).
 
    buf = BytesIO()
    for i in range(100):
-      buf.write(msgpack.packb(range(i), use_bin_type=True))
+      buf.write(msgpack.packb(i, use_bin_type=True))
 
    buf.seek(0)
 
