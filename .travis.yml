@@ -1,4 +1,4 @@
-sudo: false
+dist: xenial
 language: python
 cache: pip
 
@@ -7,7 +7,8 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - "3.7-dev"
+  - "3.7"
+  - "nightly"
 
 matrix:
   include:
@@ -24,7 +25,12 @@ matrix:
         - docker pull $DOCKER_IMAGE
       script:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
-    - python: "pypy"
+    - python: "pypy2.7-5.10.0"
+      install:
+        - pip install -e .
+      script:
+        - py.test -v test
+    - python: "pypy3.5"
       install:
         - pip install -e .
       script:
