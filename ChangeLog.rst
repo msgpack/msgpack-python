@@ -3,8 +3,20 @@
 
 Release Date: TBD
 
+
+Important changes
+------------------
+
 Extension modules are merged.  There is ``msgpack._msgpack`` instead of
 ``msgpack._packer`` and ``msgpack._unpacker``. (#314)
+
+unpacker: Default size limits is smaller than before to avoid DoS attack.
+If you need to handle large data, you need to specify limits manually.
+
+
+
+Other changes
+--------------
 
 
 
