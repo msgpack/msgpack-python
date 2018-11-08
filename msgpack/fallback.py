@@ -980,3 +980,11 @@ class Packer(object):
 
     def reset(self):
         self._buffer = StringIO()
+
+    def buffer(self):
+        """Return view of internal buffer.
+
+        NOTE: Unlike Cython implementation, buffer() is not faster
+        than bytes() in pure Python implementation.
+        """
+        return memoryview(self.bytes())
