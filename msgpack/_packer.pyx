@@ -284,7 +284,7 @@ cdef class Packer(object):
                 raise TypeError("can't serialize %r" % (o,))
             return ret
 
-    cpdef pack(self, object obj, bint ret_as_buff=0):
+    cpdef pack(self, object obj):
         cdef int ret
         try:
             ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
@@ -294,11 +294,7 @@ cdef class Packer(object):
         if ret:  # should not happen.
             raise RuntimeError("internal error")
         if self.autoreset:
-            if not ret_as_buff:
-                buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            else:
-                buf = buff_to_buff(self.pk.buf, self.pk.length)
-
+            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
             return buf
 
