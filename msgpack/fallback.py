@@ -184,17 +184,19 @@ class Unpacker(object):
         You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
-        Limits max length of str. (default: 2**31-1)
+        Limits max length of str. (default: 1024*1024)
 
     :param int max_bin_len:
-        Limits max length of bin. (default: 2**31-1)
+        Limits max length of bin. (default: 1024*1024)
 
     :param int max_array_len:
-        Limits max length of array. (default: 2**31-1)
+        Limits max length of array. (default: 128*1024)
 
     :param int max_map_len:
-        Limits max length of map. (default: 2**31-1)
+        Limits max length of map. (default: 32*1024)
 
+    :param int max_ext_len:
+        Limits max length of map. (default: 1024*1024)
 
     example of streaming deserialize from file-like object::
 
@@ -218,11 +220,11 @@ class Unpacker(object):
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
-                 max_str_len=2147483647, # 2**32-1
-                 max_bin_len=2147483647,
-                 max_array_len=2147483647,
-                 max_map_len=2147483647,
-                 max_ext_len=2147483647):
+                 max_str_len=1024*1024,
+                 max_bin_len=1024*1024,
+                 max_array_len=128*1024,
+                 max_map_len=32*1024,
+                 max_ext_len=1024*1024):
 
         if encoding is not None:
             warnings.warn(
