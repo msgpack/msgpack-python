@@ -162,11 +162,11 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=True, bint raw=True,
             encoding=None, unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
-            Py_ssize_t max_str_len=2147483647, # 2**32-1
-            Py_ssize_t max_bin_len=2147483647,
-            Py_ssize_t max_array_len=2147483647,
-            Py_ssize_t max_map_len=2147483647,
-            Py_ssize_t max_ext_len=2147483647):
+            Py_ssize_t max_str_len=1024*1024,
+            Py_ssize_t max_bin_len=1024*1024,
+            Py_ssize_t max_array_len=128*1024,
+            Py_ssize_t max_map_len=32*1024,
+            Py_ssize_t max_ext_len=1024*1024):
     """
     Unpack packed_bytes to object. Returns an unpacked object.
 
@@ -261,16 +261,19 @@ cdef class Unpacker(object):
         You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
-        Limits max length of str. (default: 2**31-1)
+        Limits max length of str. (default: 1024*1024)
 
     :param int max_bin_len:
-        Limits max length of bin. (default: 2**31-1)
+        Limits max length of bin. (default: 1024*1024)
 
     :param int max_array_len:
-        Limits max length of array. (default: 2**31-1)
+        Limits max length of array. (default: 128*1024)
 
     :param int max_map_len:
-        Limits max length of map. (default: 2**31-1)
+        Limits max length of map. (default: 32*1024)
+
+    :param int max_ext_len:
+        Limits max length of map. (default: 1024*1024)
 
     :param str encoding:
         Deprecated, use raw instead.
@@ -322,11 +325,11 @@ cdef class Unpacker(object):
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors=None, int max_buffer_size=0,
                  object ext_hook=ExtType,
-                 Py_ssize_t max_str_len=2147483647, # 2**32-1
-                 Py_ssize_t max_bin_len=2147483647,
-                 Py_ssize_t max_array_len=2147483647,
-                 Py_ssize_t max_map_len=2147483647,
-                 Py_ssize_t max_ext_len=2147483647):
+                 Py_ssize_t max_str_len=1024*1024,
+                 Py_ssize_t max_bin_len=1024*1024,
+                 Py_ssize_t max_array_len=128*1024,
+                 Py_ssize_t max_map_len=32*1024,
+                 Py_ssize_t max_ext_len=1024*1024):
         cdef const char *cenc=NULL,
         cdef const char *cerr=NULL
 
