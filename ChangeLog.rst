@@ -3,6 +3,10 @@
 
 Release Date: TBD
 
+Extension modules are merged.  There is ``msgpack._msgpack`` instead of
+``msgpack._packer`` and ``msgpack._unpacker``. (#314)
+
+
 
 0.5.6
 ======
