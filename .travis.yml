@@ -1,15 +1,52 @@
+dist: xenial
 language: python
-python:
-    - 2.7
+cache: pip
 
-env:
-    - PIP_USE_MIRRORS=true
+python:
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+  - "nightly"
+
+matrix:
+  include:
+    - sudo: required
+      language: python
+      services:
+        - docker
+      env:
+        - DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
+      install:
+        - pip install -U pip
+        - pip install cython
+        - make cython
+        - docker pull $DOCKER_IMAGE
+      script:
+        - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
+    - python: "pypy2.7-5.10.0"
+      install:
+        - pip install -e .
+      script:
+        - py.test -v test
+    - python: "pypy3.5"
+      install:
+        - pip install -e .
+      script:
+        - pytest -v test
+
 
 install:
-    - sudo apt-get update -qq
-    - sudo apt-get install -q python3.3-dev
-    - pip install --use-mirrors tox cython
-    - cython --cplus msgpack/_packer.pyx
-    - cython --cplus msgpack/_unpacker.pyx
+  - pip install -U pip
+  - pip install cython
+  - make cython
+  - pip install -e .
 
-script: "tox && MSGPACK_PUREPYTHON=x tox"
+script:
+  - python -c 'import sys; print(hex(sys.maxsize))'
+  - python -c 'from msgpack import _msgpack'
+  - pytest -v test
+  - MSGPACK_PUREPYTHON=x pytest -v test
+
+# vim: sw=2 ts=2

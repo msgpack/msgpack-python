@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import six
 import io
 import msgpack
 
-binarydata = [chr(i) for i in range(256)]
-binarydata = six.b("".join(binarydata))
+
+binarydata = bytes(bytearray(range(256)))
 
 def gen_binary_data(idx):
-    data = binarydata[:idx % 300]
-    return data
+    return binarydata[:idx % 300]
+
 
 def test_exceeding_unpacker_read_size():
     dumpf = io.BytesIO()

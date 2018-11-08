@@ -34,41 +34,10 @@ typedef struct msgpack_packer {
     char *buf;
     size_t length;
     size_t buf_size;
+    bool use_bin_type;
 } msgpack_packer;
 
 typedef struct Packer Packer;
-
-static inline int msgpack_pack_short(msgpack_packer* pk, short d);
-static inline int msgpack_pack_int(msgpack_packer* pk, int d);
-static inline int msgpack_pack_long(msgpack_packer* pk, long d);
-static inline int msgpack_pack_long_long(msgpack_packer* pk, long long d);
-static inline int msgpack_pack_unsigned_short(msgpack_packer* pk, unsigned short d);
-static inline int msgpack_pack_unsigned_int(msgpack_packer* pk, unsigned int d);
-static inline int msgpack_pack_unsigned_long(msgpack_packer* pk, unsigned long d);
-static inline int msgpack_pack_unsigned_long_long(msgpack_packer* pk, unsigned long long d);
-
-static inline int msgpack_pack_uint8(msgpack_packer* pk, uint8_t d);
-static inline int msgpack_pack_uint16(msgpack_packer* pk, uint16_t d);
-static inline int msgpack_pack_uint32(msgpack_packer* pk, uint32_t d);
-static inline int msgpack_pack_uint64(msgpack_packer* pk, uint64_t d);
-static inline int msgpack_pack_int8(msgpack_packer* pk, int8_t d);
-static inline int msgpack_pack_int16(msgpack_packer* pk, int16_t d);
-static inline int msgpack_pack_int32(msgpack_packer* pk, int32_t d);
-static inline int msgpack_pack_int64(msgpack_packer* pk, int64_t d);
-
-static inline int msgpack_pack_float(msgpack_packer* pk, float d);
-static inline int msgpack_pack_double(msgpack_packer* pk, double d);
-
-static inline int msgpack_pack_nil(msgpack_packer* pk);
-static inline int msgpack_pack_true(msgpack_packer* pk);
-static inline int msgpack_pack_false(msgpack_packer* pk);
-
-static inline int msgpack_pack_array(msgpack_packer* pk, unsigned int n);
-
-static inline int msgpack_pack_map(msgpack_packer* pk, unsigned int n);
-
-static inline int msgpack_pack_raw(msgpack_packer* pk, size_t l);
-static inline int msgpack_pack_raw_body(msgpack_packer* pk, const void* b, size_t l);
 
 static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_t l)
 {
@@ -78,8 +47,11 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
 
     if (len + l > bs) {
         bs = (len + l) * 2;
-        buf = (char*)realloc(buf, bs);
-        if (!buf) return -1;
+        buf = (char*)PyMem_Realloc(buf, bs);
+        if (!buf) {
+            PyErr_NoMemory();
+            return -1;
+        }
     }
     memcpy(buf + len, data, l);
     len += l;
@@ -90,18 +62,57 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
     return 0;
 }
 
-#define msgpack_pack_inline_func(name) \
-	static inline int msgpack_pack ## name
-
-#define msgpack_pack_inline_func_cint(name) \
-	static inline int msgpack_pack ## name
-
-#define msgpack_pack_user msgpack_packer*
-
 #define msgpack_pack_append_buffer(user, buf, len) \
         return msgpack_pack_write(user, (const char*)buf, len)
 
 #include "pack_template.h"
+
+// return -2 when o is too long
+static inline int
+msgpack_pack_unicode(msgpack_packer *pk, PyObject *o, long long limit)
+{
+#if PY_MAJOR_VERSION >= 3
+    assert(PyUnicode_Check(o));
+
+    Py_ssize_t len;
+    const char* buf = PyUnicode_AsUTF8AndSize(o, &len);
+    if (buf == NULL)
+        return -1;
+
+    if (len > limit) {
+        return -2;
+    }
+
+    int ret = msgpack_pack_raw(pk, len);
+    if (ret) return ret;
+
+    return msgpack_pack_raw_body(pk, buf, len);
+#else
+    PyObject *bytes;
+    Py_ssize_t len;
+    int ret;
+
+    // py2
+    bytes = PyUnicode_AsUTF8String(o);
+    if (bytes == NULL)
+        return -1;
+
+    len = PyString_GET_SIZE(bytes);
+    if (len > limit) {
+        Py_DECREF(bytes);
+        return -2;
+    }
+
+    ret = msgpack_pack_raw(pk, len);
+    if (ret) {
+        Py_DECREF(bytes);
+        return -1;
+    }
+    ret = msgpack_pack_raw_body(pk, PyString_AS_STRING(bytes), len);
+    Py_DECREF(bytes);
+    return ret;
+#endif
+}
 
 #ifdef __cplusplus
 }

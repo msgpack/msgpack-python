@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
+import io
 import os
 import sys
 from glob import glob
@@ -7,6 +8,9 @@ from distutils.command.sdist import sdist
 from setuptools import setup, Extension
 
 from distutils.command.build_ext import build_ext
+
+# for building transitional package.
+TRANSITIONAL = False
 
 class NoCython(Exception):
     pass
@@ -20,7 +24,7 @@ except ImportError:
 
 def cythonize(src):
     sys.stderr.write("cythonize: %r\n" % (src,))
-    cython_compiler.compile([src], cplus=True, emit_linenums=True)
+    cython_compiler.compile([src], cplus=True)
 
 def ensure_source(src):
     pyx = os.path.splitext(src)[0] + '.pyx'
@@ -49,7 +53,7 @@ class BuildExt(build_ext):
         try:
             return build_ext.build_extension(self, ext)
         except Exception as e:
-            print("WARNING: Failed to compile extensiom modules.")
+            print("WARNING: Failed to compile extension modules.")
             print("msgpack uses fallback pure python implementation.")
             print(e)
 
@@ -64,8 +68,7 @@ if len(version) > 3 and version[3] != 'final':
 if have_cython:
     class Sdist(sdist):
         def __init__(self, *args, **kwargs):
-            for src in glob('msgpack/*.pyx'):
-                cythonize(src)
+            cythonize('msgpack/_msgpack.pyx')
             sdist.__init__(self, *args, **kwargs)
 else:
     Sdist = sdist
@@ -81,14 +84,8 @@ else:
 
 ext_modules = []
 if not hasattr(sys, 'pypy_version_info'):
-    ext_modules.append(Extension('msgpack._packer',
-                                 sources=['msgpack/_packer.cpp'],
-                                 libraries=libraries,
-                                 include_dirs=['.'],
-                                 define_macros=macros,
-                                 ))
-    ext_modules.append(Extension('msgpack._unpacker',
-                                 sources=['msgpack/_unpacker.cpp'],
+    ext_modules.append(Extension('msgpack._msgpack',
+                                 sources=['msgpack/_msgpack.cpp'],
                                  libraries=libraries,
                                  include_dirs=['.'],
                                  define_macros=macros,
@@ -97,12 +94,17 @@ del libraries, macros
 
 
 desc = 'MessagePack (de)serializer.'
-f = open('README.rst')
-long_desc = f.read()
-f.close()
+with io.open('README.rst', encoding='utf-8') as f:
+    long_desc = f.read()
 del f
 
-setup(name='msgpack-python',
+name = 'msgpack'
+
+if TRANSITIONAL:
+    name = 'msgpack-python'
+    long_desc = "This package is deprecated.  Install msgpack instead."
+
+setup(name=name,
       author='INADA Naoki',
       author_email='songofacandy@gmail.com',
       version=version_str,
@@ -111,12 +113,24 @@ setup(name='msgpack-python',
       packages=['msgpack'],
       description=desc,
       long_description=long_desc,
-      url='http://msgpack.org/',
-      download_url='http://pypi.python.org/pypi/msgpack/',
+      long_description_content_type="text/x-rst",
+      url='https://msgpack.org/',
+      project_urls = {
+          'Documentation': 'https://msgpack-python.readthedocs.io/',
+          'Source': 'https://github.com/msgpack/msgpack-python',
+          'Tracker': 'https://github.com/msgpack/msgpack-python/issues',
+      },
+      license='Apache 2.0',
       classifiers=[
           'Programming Language :: Python :: 2',
+          'Programming Language :: Python :: 2.7',
           'Programming Language :: Python :: 3',
+          'Programming Language :: Python :: 3.5',
+          'Programming Language :: Python :: 3.6',
+          'Programming Language :: Python :: 3.7',
+          'Programming Language :: Python :: Implementation :: CPython',
+          'Programming Language :: Python :: Implementation :: PyPy',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: Apache Software License',
-          ]
-      )
+      ],
+)
