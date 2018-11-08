@@ -860,12 +860,12 @@ class Packer(object):
         except:
             self._buffer = StringIO()  # force reset
             raise
-        ret = self._buffer.getvalue()
         if self._autoreset:
+            ret = self._buffer.getvalue()
             self._buffer = StringIO()
+            return ret
         elif USING_STRINGBUILDER:
             self._buffer = StringIO(ret)
-        return ret
 
     def pack_map_pairs(self, pairs):
         self._pack_map_pairs(len(pairs), pairs)
