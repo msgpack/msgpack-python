@@ -150,8 +150,12 @@ def test_pairlist():
     assert pairlist == unpacked
 
 def test_get_buffer():
-    packer = Packer(autoreset=0)
+    packer = Packer(autoreset=0, use_bin_type=True)
     packer.pack([1, 2])
     buf = packer.buffer()
-    expected = packb([1, 2])
-    assert bytes(buf) == expected
+    strm = BytesIO()
+    strm.write(buf)
+    written = strm.getvalue()
+
+    expected = packb([1, 2], use_bin_type=True)
+    assert written == expected
