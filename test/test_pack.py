@@ -152,8 +152,6 @@ def test_pairlist():
 def test_get_buffer():
     packer = Packer(autoreset=0)
     packer.pack([1, 2])
-    if six.PY3:
-        assert type(packer.buffer()) == memoryview
-    else:
-        assert type(packer.buffer()) == buffer
-    assert len(packer.buffer()) == 3
+    buf = packer.buffer()
+    expected = packb([1, 2])
+    assert bytes(buf) == expected
