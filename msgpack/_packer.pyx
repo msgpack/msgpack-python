@@ -359,6 +359,6 @@ cdef class Packer(object):
         """Return buffer content."""
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
 
-    def buffer(self):
+    def getbuffer(self):
         """Return view of internal buffer."""
         return buff_to_buff(self.pk.buf, self.pk.length)

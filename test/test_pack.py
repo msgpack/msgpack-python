@@ -152,9 +152,8 @@ def test_pairlist():
 def test_get_buffer():
     packer = Packer(autoreset=0, use_bin_type=True)
     packer.pack([1, 2])
-    buf = packer.buffer()
     strm = BytesIO()
-    strm.write(buf)
+    strm.write(packer.getbuffer())
     written = strm.getvalue()
 
     expected = packb([1, 2], use_bin_type=True)
