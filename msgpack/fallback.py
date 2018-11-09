@@ -860,43 +860,35 @@ class Packer(object):
         except:
             self._buffer = StringIO()  # force reset
             raise
-        ret = self._buffer.getvalue()
         if self._autoreset:
+            ret = self._buffer.getvalue()
             self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+            return ret
 
     def pack_map_pairs(self, pairs):
         self._pack_map_pairs(len(pairs), pairs)
-        ret = self._buffer.getvalue()
         if self._autoreset:
+            ret = self._buffer.getvalue()
             self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+            return ret
 
     def pack_array_header(self, n):
         if n >= 2**32:
             raise PackValueError
         self._pack_array_header(n)
-        ret = self._buffer.getvalue()
         if self._autoreset:
+            ret = self._buffer.getvalue()
             self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+            return ret
 
     def pack_map_header(self, n):
         if n >= 2**32:
             raise PackValueError
         self._pack_map_header(n)
-        ret = self._buffer.getvalue()
         if self._autoreset:
+            ret = self._buffer.getvalue()
             self._buffer = StringIO()
-        elif USING_STRINGBUILDER:
-            self._buffer = StringIO(ret)
-        return ret
+            return ret
 
     def pack_ext_type(self, typecode, data):
         if not isinstance(typecode, int):
@@ -976,7 +968,19 @@ class Packer(object):
             raise PackValueError('Bin is too large')
 
     def bytes(self):
+        """Return internal buffer contents as bytes object"""
         return self._buffer.getvalue()
 
     def reset(self):
+        """Reset internal buffer.
+
+        This method is usaful only when autoreset=False.
+        """
         self._buffer = StringIO()
+
+    def getbuffer(self):
+        """Return view of internal buffer."""
+        if USING_STRINGBUILDER or not PY3:
+            return memoryview(self.bytes())
+        else:
+            return self._buffer.getbuffer()

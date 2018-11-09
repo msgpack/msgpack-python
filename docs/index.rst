@@ -8,3 +8,4 @@ language data exchange.
    :maxdepth: 1
 
    api
+   advanced

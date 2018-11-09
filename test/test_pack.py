@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import struct
 from pytest import raises, xfail
 
-from msgpack import packb, unpackb, Unpacker, Packer
+from msgpack import packb, unpackb, Unpacker, Packer, pack
 
 from collections import OrderedDict
 from io import BytesIO
@@ -148,3 +148,13 @@ def test_pairlist():
     packed = packer.pack_map_pairs(pairlist)
     unpacked = unpackb(packed, object_pairs_hook=list)
     assert pairlist == unpacked
+
+def test_get_buffer():
+    packer = Packer(autoreset=0, use_bin_type=True)
+    packer.pack([1, 2])
+    strm = BytesIO()
+    strm.write(packer.getbuffer())
+    written = strm.getvalue()
+
+    expected = packb([1, 2], use_bin_type=True)
+    assert written == expected

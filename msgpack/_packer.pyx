@@ -41,6 +41,9 @@ cdef extern from "pack.h":
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
     int msgpack_pack_unicode(msgpack_packer* pk, object o, long long limit)
 
+cdef extern from "buff_converter.h":
+    object buff_to_buff(char *, Py_ssize_t)
+
 cdef int DEFAULT_RECURSE_LIMIT=511
 cdef long long ITEM_LIMIT = (2**32)-1
 
@@ -349,9 +352,16 @@ cdef class Packer(object):
             return buf
 
     def reset(self):
-        """Clear internal buffer."""
+        """Reset internal buffer.
+
+        This method is usaful only when autoreset=False.
+        """
         self.pk.length = 0
 
     def bytes(self):
-        """Return buffer content."""
+        """Return internal buffer contents as bytes object"""
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+
+    def getbuffer(self):
+        """Return view of internal buffer."""
+        return buff_to_buff(self.pk.buf, self.pk.length)
