@@ -979,7 +979,7 @@ class Packer(object):
         NOTE: Unlike Cython implementation, buffer() is not faster
         than bytes() in pure Python implementation.
         """
-        if USING_STRINGBUILDER:
+        if USING_STRINGBUILDER or not PY3:
             return memoryview(self.bytes())
         else:
             return self._buffer.getbuffer()
