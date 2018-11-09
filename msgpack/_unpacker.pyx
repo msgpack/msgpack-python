@@ -186,7 +186,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef int new_protocol = 0
 
     if encoding is not None:
-        PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
+        PyErr_WarnEx(DeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
         cenc = encoding
 
     if unicode_errors is not None:
@@ -213,7 +213,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
 def unpack(object stream, **kwargs):
     PyErr_WarnEx(
-        PendingDeprecationWarning,
+        DeprecationWarning,
         "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.", 1)
     data = stream.read()
     return unpackb(data, **kwargs)
@@ -357,7 +357,7 @@ cdef class Unpacker(object):
         self.stream_offset = 0
 
         if encoding is not None:
-            PyErr_WarnEx(PendingDeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
+            PyErr_WarnEx(DeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
             self.encoding = encoding
             cenc = encoding
 
