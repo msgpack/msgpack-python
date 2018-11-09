@@ -352,11 +352,14 @@ cdef class Packer(object):
             return buf
 
     def reset(self):
-        """Clear internal buffer."""
+        """Reset internal buffer.
+
+        This method is usaful only when autoreset=False.
+        """
         self.pk.length = 0
 
     def bytes(self):
-        """Return buffer content."""
+        """Return internal buffer contents as bytes object"""
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
 
     def getbuffer(self):

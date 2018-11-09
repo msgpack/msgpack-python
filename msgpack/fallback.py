@@ -968,17 +968,18 @@ class Packer(object):
             raise PackValueError('Bin is too large')
 
     def bytes(self):
+        """Return internal buffer contents as bytes object"""
         return self._buffer.getvalue()
 
     def reset(self):
+        """Reset internal buffer.
+
+        This method is usaful only when autoreset=False.
+        """
         self._buffer = StringIO()
 
     def getbuffer(self):
-        """Return view of internal buffer.
-
-        NOTE: Unlike Cython implementation, buffer() is not faster
-        than bytes() in pure Python implementation.
-        """
+        """Return view of internal buffer."""
         if USING_STRINGBUILDER or not PY3:
             return memoryview(self.bytes())
         else:

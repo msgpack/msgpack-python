@@ -18,6 +18,8 @@ If you need to handle large data, you need to specify limits manually.
 Other changes
 --------------
 
+Add ``Unpacker.getbuffer()`` method.
+
 
 
 0.5.6

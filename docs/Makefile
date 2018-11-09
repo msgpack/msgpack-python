@@ -153,7 +153,7 @@ doctest:
 	      "results in $(BUILDDIR)/doctest/output.txt."
 
 serve: html
-	cd _build/html && python3 -m http.server
+	python3 -m http.server -d _build/html
 
 zip: html
 	cd _build/html && zip -r ../../../msgpack-doc.zip .
