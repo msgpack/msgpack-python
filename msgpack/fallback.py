@@ -103,7 +103,7 @@ def _get_data_from_buffer(obj):
 def unpack(stream, **kwargs):
     warnings.warn(
         "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.",
-        PendingDeprecationWarning)
+        DeprecationWarning)
     data = stream.read()
     return unpackb(data, **kwargs)
 
@@ -229,7 +229,7 @@ class Unpacker(object):
         if encoding is not None:
             warnings.warn(
                 "encoding is deprecated, Use raw=False instead.",
-                PendingDeprecationWarning)
+                DeprecationWarning)
 
         if unicode_errors is None:
             unicode_errors = 'strict'
@@ -727,7 +727,7 @@ class Packer(object):
         else:
             warnings.warn(
                 "encoding is deprecated, Use raw=False instead.",
-                PendingDeprecationWarning)
+                DeprecationWarning)
 
         if unicode_errors is None:
             unicode_errors = 'strict'
