@@ -136,10 +136,10 @@ cdef inline int get_data_from_buffer(object obj,
         if view.itemsize != 1:
             PyBuffer_Release(view)
             raise BufferError("cannot unpack from multi-byte object")
-        if PyBuffer_IsContiguous(view, 'A') == 0:
+        if PyBuffer_IsContiguous(view, b'A') == 0:
             PyBuffer_Release(view)
             # create a contiguous copy and get buffer
-            contiguous = PyMemoryView_GetContiguous(obj, PyBUF_READ, 'C')
+            contiguous = PyMemoryView_GetContiguous(obj, PyBUF_READ, b'C')
             PyObject_GetBuffer(contiguous, view, PyBUF_SIMPLE)
             # view must hold the only reference to contiguous,
             # so memory is freed when view is released
@@ -441,13 +441,10 @@ cdef class Unpacker(object):
         else:
             self.file_like = None
 
-    cdef object _unpack(self, execute_fn execute, object write_bytes, bint iter=0):
+    cdef object _unpack(self, execute_fn execute, bint iter=0):
         cdef int ret
         cdef object obj
         cdef Py_ssize_t prev_head
-
-        if write_bytes is not None:
-            PyErr_WarnEx(DeprecationWarning, "`write_bytes` option is deprecated. Use `.tell()` instead.", 1)
 
         if self.buf_head >= self.buf_tail and self.file_like is not None:
             self.read_from_file()
@@ -463,8 +460,6 @@ cdef class Unpacker(object):
             try:
                 ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
                 self.stream_offset += self.buf_head - prev_head
-                if write_bytes is not None:
-                    write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
 
                 if ret == 1:
                     obj = unpack_data(&self.ctx)
@@ -493,41 +488,35 @@ cdef class Unpacker(object):
             ret += self.file_like.read(nbytes - len(ret))
         return ret
 
-    def unpack(self, object write_bytes=None):
+    def unpack(self):
         """Unpack one object
 
-        If write_bytes is not None, it will be called with parts of the raw
-        message as it is unpacked.
-
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(unpack_construct, write_bytes)
+        return self._unpack(unpack_construct)
 
-    def skip(self, object write_bytes=None):
+    def skip(self):
         """Read and ignore one object, returning None
 
-        If write_bytes is not None, it will be called with parts of the raw
-        message as it is unpacked.
-
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(unpack_skip, write_bytes)
+        return self._unpack(unpack_skip)
 
-    def read_array_header(self, object write_bytes=None):
+    def read_array_header(self):
         """assuming the next object is an array, return its size n, such that
         the next n unpack() calls will iterate over its contents.
 
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(read_array_header, write_bytes)
+        return self._unpack(read_array_header)
 
-    def read_map_header(self, object write_bytes=None):
+    def read_map_header(self):
         """assuming the next object is a map, return its size n, such that the
         next n * 2 unpack() calls will iterate over its key-value pairs.
 
         Raises `OutOfData` when there are no more bytes to unpack.
         """
-        return self._unpack(read_map_header, write_bytes)
+        return self._unpack(read_map_header)
 
     def tell(self):
         return self.stream_offset
@@ -536,7 +525,7 @@ cdef class Unpacker(object):
         return self
 
     def __next__(self):
-        return self._unpack(unpack_construct, None, 1)
+        return self._unpack(unpack_construct, 1)
 
     # for debug.
     #def _buf(self):
