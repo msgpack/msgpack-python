@@ -35,7 +35,6 @@ ctypedef unsigned long long uint64_t
 from msgpack.exceptions import (
     BufferFull,
     OutOfData,
-    UnpackValueError,
     ExtraData,
 )
 from msgpack import ExtType
@@ -208,7 +207,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
     unpack_clear(&ctx)
-    raise UnpackValueError("Unpack failed: error = %d" % (ret,))
+    raise ValueError("Unpack failed: error = %d" % (ret,))
 
 
 def unpack(object stream, **kwargs):
@@ -460,28 +459,25 @@ cdef class Unpacker(object):
                 else:
                     raise OutOfData("No more data to unpack.")
 
-            try:
-                ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
-                self.stream_offset += self.buf_head - prev_head
-                if write_bytes is not None:
-                    write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
+            ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
+            self.stream_offset += self.buf_head - prev_head
+            if write_bytes is not None:
+                write_bytes(PyBytes_FromStringAndSize(self.buf + prev_head, self.buf_head - prev_head))
 
-                if ret == 1:
-                    obj = unpack_data(&self.ctx)
-                    unpack_init(&self.ctx)
-                    return obj
-                elif ret == 0:
-                    if self.file_like is not None:
-                        self.read_from_file()
-                        continue
-                    if iter:
-                        raise StopIteration("No more data to unpack.")
-                    else:
-                        raise OutOfData("No more data to unpack.")
+            if ret == 1:
+                obj = unpack_data(&self.ctx)
+                unpack_init(&self.ctx)
+                return obj
+            elif ret == 0:
+                if self.file_like is not None:
+                    self.read_from_file()
+                    continue
+                if iter:
+                    raise StopIteration("No more data to unpack.")
                 else:
-                    raise UnpackValueError("Unpack failed: error = %d" % (ret,))
-            except ValueError as e:
-                raise UnpackValueError(e)
+                    raise OutOfData("No more data to unpack.")
+            else:
+                raise ValueError("Unpack failed: error = %d" % (ret,))
 
     def read_bytes(self, Py_ssize_t nbytes):
         """Read a specified number of raw bytes from the stream"""
