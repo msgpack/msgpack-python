@@ -1,26 +1,7 @@
 # coding: utf-8
 #cython: embedsignature=True, c_string_encoding=ascii
 
-from cpython.version cimport PY_MAJOR_VERSION
-from cpython.bytes cimport (
-    PyBytes_AsString,
-    PyBytes_FromStringAndSize,
-    PyBytes_Size,
-)
-from cpython.buffer cimport (
-    Py_buffer,
-    PyObject_CheckBuffer,
-    PyObject_GetBuffer,
-    PyBuffer_Release,
-    PyBuffer_IsContiguous,
-    PyBUF_READ,
-    PyBUF_SIMPLE,
-    PyBUF_FULL_RO,
-)
-from cpython.mem cimport PyMem_Malloc, PyMem_Free
-from cpython.object cimport PyCallable_Check
-from cpython.ref cimport Py_DECREF
-from cpython.exc cimport PyErr_WarnEx
+from cpython import *
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
