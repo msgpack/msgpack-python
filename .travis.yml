@@ -45,7 +45,7 @@ install:
 
 script:
   - python -c 'import sys; print(hex(sys.maxsize))'
-  - python -c 'from msgpack import _msgpack'
+  - python -c 'from msgpack import _cmsgpack'
   - pytest -v test
   - MSGPACK_PUREPYTHON=x pytest -v test
 
