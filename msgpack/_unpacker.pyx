@@ -1,7 +1,6 @@
 # coding: utf-8
-#cython: embedsignature=True, c_string_encoding=ascii
 
-from cpython import *
+from cpython cimport *
 
 cdef extern from "Python.h":
     ctypedef struct PyObject

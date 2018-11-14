@@ -1,5 +1,4 @@
 # coding: utf-8
-#cython: embedsignature=True, c_string_encoding=ascii
 
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
