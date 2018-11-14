@@ -1,9 +1,7 @@
 # coding: utf-8
-#cython: embedsignature=True, c_string_encoding=ascii
 
 from cpython cimport *
-from cpython.version cimport PY_MAJOR_VERSION
-from cpython.exc cimport PyErr_WarnEx
+from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 
 from msgpack import ExtType
 
@@ -11,8 +9,6 @@ from msgpack import ExtType
 cdef extern from "Python.h":
 
     int PyMemoryView_Check(object obj)
-    int PyByteArray_Check(object obj)
-    int PyByteArray_CheckExact(object obj)
     char* PyUnicode_AsUTF8AndSize(object obj, Py_ssize_t *l) except NULL
 
 
@@ -204,7 +200,7 @@ cdef class Packer(object):
             elif PyBytesLike_CheckExact(o) if strict_types else PyBytesLike_Check(o):
                 L = len(o)
                 if L > ITEM_LIMIT:
-                    raise ValueError("%s is too large" % type(o).__name__)
+                    PyErr_Format(ValueError, b"%.200s object is too large", Py_TYPE(o).tp_name)
                 rawval = o
                 ret = msgpack_pack_bin(&self.pk, L)
                 if ret == 0:
@@ -280,7 +276,7 @@ cdef class Packer(object):
                 default_used = 1
                 continue
             else:
-                raise TypeError("can't serialize %r" % (o,))
+                PyErr_Format(TypeError, b"can not serialize '%.200s' object", Py_TYPE(o).tp_name)
             return ret
 
     cpdef pack(self, object obj):

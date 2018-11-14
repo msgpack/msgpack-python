@@ -4,7 +4,7 @@ all: cython
 
 .PHONY: cython
 cython:
-	cython --cplus msgpack/_msgpack.pyx
+	cython --cplus msgpack/_cmsgpack.pyx
 
 .PHONY: test
 test:
