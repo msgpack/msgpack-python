@@ -6,12 +6,21 @@ class UnpackException(Exception):
     Exception instead.
     """
 
+
 class BufferFull(UnpackException):
     pass
 
 
 class OutOfData(UnpackException):
     pass
+
+
+class FormatError(UnpackException):
+    """Invalid msgpack format"""
+
+
+class StackError(UnpackException):
+    """Too nested"""
 
 
 # Deprecated.  Use ValueError instead
@@ -24,6 +33,7 @@ class ExtraData(UnpackValueError):
     This exception is raised while only one-shot (not streaming)
     unpack.
     """
+
     def __init__(self, unpacked, extra):
         self.unpacked = unpacked
         self.extra = extra
@@ -32,7 +42,7 @@ class ExtraData(UnpackValueError):
         return "unpack(b) received extra data."
 
 
-#Deprecated.  Use Exception instead to catch all exception during packing.
+# Deprecated.  Use Exception instead to catch all exception during packing.
 PackException = Exception
 PackValueError = ValueError
 PackOverflowError = OverflowError
