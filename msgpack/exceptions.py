@@ -15,11 +15,11 @@ class OutOfData(UnpackException):
     pass
 
 
-class FormatError(UnpackException):
+class FormatError(ValueError, UnpackException):
     """Invalid msgpack format"""
 
 
-class StackError(UnpackException):
+class StackError(ValueError, UnpackException):
     """Too nested"""
 
 

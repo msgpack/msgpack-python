@@ -52,7 +52,10 @@ else:
 from msgpack.exceptions import (
     BufferFull,
     OutOfData,
-    ExtraData)
+    ExtraData,
+    FormatError,
+    StackError,
+)
 
 from msgpack import ExtType
 
@@ -118,6 +121,8 @@ def unpackb(packed, **kwargs):
         ret = unpacker._unpack()
     except OutOfData:
         raise ValueError("Data is not enough.")
+    except RecursionError:
+        raise StackError
     if unpacker._got_extradata():
         raise ExtraData(ret, unpacker._get_extradata())
     return ret
@@ -561,7 +566,7 @@ class Unpacker(object):
                 raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
             typ = TYPE_MAP
         else:
-            raise ValueError("Unknown header: 0x%x" % b)
+            raise FormatError("Unknown header: 0x%x" % b)
         return typ, n, obj
 
     def _unpack(self, execute=EX_CONSTRUCT):
@@ -637,6 +642,8 @@ class Unpacker(object):
         except OutOfData:
             self._consume()
             raise StopIteration
+        except RecursionError:
+            raise StackError
 
     next = __next__
 
@@ -645,7 +652,10 @@ class Unpacker(object):
         self._consume()
 
     def unpack(self):
-        ret = self._unpack(EX_CONSTRUCT)
+        try:
+            ret = self._unpack(EX_CONSTRUCT)
+        except RecursionError:
+            raise StackError
         self._consume()
         return ret
 

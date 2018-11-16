@@ -123,7 +123,7 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize
     goto _fixed_trail_again
 
 #define start_container(func, count_, ct_) \
-    if(top >= MSGPACK_EMBED_STACK_SIZE) { goto _failed; } /* FIXME */ \
+    if(top >= MSGPACK_EMBED_STACK_SIZE) { ret = -3; goto _end; } \
     if(construct_cb(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
     if((count_) == 0) { obj = stack[top].obj; \
         if (construct_cb(func##_end)(user, &obj) < 0) { goto _failed; } \
@@ -132,27 +132,6 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize
     stack[top].size  = count_; \
     stack[top].count = 0; \
     ++top; \
-    /*printf("container %d count %d stack %d\n",stack[top].obj,count_,top);*/ \
-    /*printf("stack push %d\n", top);*/ \
-    /* FIXME \
-    if(top >= stack_size) { \
-        if(stack_size == MSGPACK_EMBED_STACK_SIZE) { \
-            size_t csize = sizeof(unpack_stack) * MSGPACK_EMBED_STACK_SIZE; \
-            size_t nsize = csize * 2; \
-            unpack_stack* tmp = (unpack_stack*)malloc(nsize); \
-            if(tmp == NULL) { goto _failed; } \
-            memcpy(tmp, ctx->stack, csize); \
-            ctx->stack = stack = tmp; \
-            ctx->stack_size = stack_size = MSGPACK_EMBED_STACK_SIZE * 2; \
-        } else { \
-            size_t nsize = sizeof(unpack_stack) * ctx->stack_size * 2; \
-            unpack_stack* tmp = (unpack_stack*)realloc(ctx->stack, nsize); \
-            if(tmp == NULL) { goto _failed; } \
-            ctx->stack = stack = tmp; \
-            ctx->stack_size = stack_size = stack_size * 2; \
-        } \
-    } \
-    */ \
     goto _header_again
 
 #define NEXT_CS(p)  ((unsigned int)*p & 0x1f)
@@ -239,7 +218,8 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize
                 start_container(_map, ((unsigned int)*p) & 0x0f, CT_MAP_KEY);
 
             SWITCH_RANGE_DEFAULT
-                goto _failed;
+                ret = -2;
+                goto _end;
             SWITCH_RANGE_END
             // end CS_HEADER
 
