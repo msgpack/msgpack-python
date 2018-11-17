@@ -208,7 +208,8 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize
                 case 0xdf:  // map 32
                     again_fixed_trail(NEXT_CS(p), 2 << (((unsigned int)*p) & 0x01));
                 default:
-                    goto _failed;
+                    ret = -2;
+                    goto _end;
                 }
             SWITCH_RANGE(0xa0, 0xbf)  // FixRaw
                 again_fixed_trail_if_zero(ACS_RAW_VALUE, ((unsigned int)*p & 0x1f), _raw_zero);

@@ -3,6 +3,7 @@
 
 from pytest import raises
 from msgpack import packb, unpackb
+from msgpack import FormatError, StackError, OutOfData
 
 import datetime
 
@@ -27,5 +28,15 @@ def test_raise_from_object_hook():
 
 
 def test_invalidvalue():
-    with raises(ValueError):
-        unpackb(b'\xd9\x97#DL_')
+    with raises(OutOfData):
+        unpackb(b'\xd9\x97#DL_')  # raw8 - length=0x97
+
+    with raises(FormatError):
+        id(None)
+        unpackb(b'\xc1')  # (undefined tag)
+
+    with raises(FormatError):
+        unpackb(b'\x91\xc1')  # fixarray(len=1) [ (undefined tag) ]
+
+    with raises(StackError):
+        unpackb(b'\x91' * 3000)  # nested fixarray(len=1)

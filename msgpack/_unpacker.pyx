@@ -189,7 +189,9 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
     unpack_clear(&ctx)
-    if ret == -2:
+    if ret == 0:
+        raise OutOfData
+    elif ret == -2:
         raise FormatError
     elif ret == -3:
         raise StackError
