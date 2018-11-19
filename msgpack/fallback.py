@@ -23,7 +23,8 @@ if sys.version_info < (3, 5):
     RecursionError = RuntimeError
 
     def _is_recursionerror(e):
-        return e.args == ('maximum recursion depth exceeded',)
+        return len(e.args) == 1 and isinstance(e.args[0], str) and \
+            e.args[0].startswith('maximum recursion depth exceeded')
 else:
     def _is_recursionerror(e):
         return True
