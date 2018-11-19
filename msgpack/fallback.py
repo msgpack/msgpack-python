@@ -18,6 +18,8 @@ else:
     def dict_iteritems(d):
         return d.iteritems()
 
+if sys.version_info < (3, 5):
+    RecursionError = RuntimeError
 
 if hasattr(sys, 'pypy_version_info'):
     # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
