@@ -302,7 +302,7 @@ cdef class Unpacker(object):
     def __init__(self, file_like=None, Py_ssize_t read_size=0,
                  bint use_list=True, bint raw=True,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
-                 encoding=None, unicode_errors=None, int max_buffer_size=0,
+                 encoding=None, unicode_errors=None, Py_ssize_t max_buffer_size=0,
                  object ext_hook=ExtType,
                  Py_ssize_t max_str_len=1024*1024,
                  Py_ssize_t max_bin_len=1024*1024,
