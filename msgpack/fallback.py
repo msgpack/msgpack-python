@@ -112,13 +112,20 @@ def unpackb(packed, **kwargs):
     """
     Unpack an object from `packed`.
 
-    Raises `ExtraData` when `packed` contains extra bytes.
+    Raises ``ExtraData`` when *packed* contains extra bytes.
+    Raises ``ValueError`` when *packed* is incomplete.
+    Raises ``FormatError`` when *packed* is not valid msgpack.
+    Raises ``StackError`` when *packed* contains too nested.
+    Other exceptions can be raised during unpacking.
+
     See :class:`Unpacker` for options.
     """
     unpacker = Unpacker(None, **kwargs)
     unpacker.feed(packed)
     try:
         ret = unpacker._unpack()
+    except OutOfData:
+        raise ValueError("Unpack failed: incomplete input")
     except RecursionError:
         raise StackError
     if unpacker._got_extradata():
@@ -214,6 +221,12 @@ class Unpacker(object):
             unpacker.feed(buf)
             for o in unpacker:
                 process(o)
+
+    Raises ``ExtraData`` when *packed* contains extra bytes.
+    Raises ``OutOfData`` when *packed* is incomplete.
+    Raises ``FormatError`` when *packed* is not valid msgpack.
+    Raises ``StackError`` when *packed* contains too nested.
+    Other exceptions can be raised during unpacking.
     """
 
     def __init__(self, file_like=None, read_size=0, use_list=True, raw=True,
