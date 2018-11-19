@@ -7,7 +7,8 @@ cython:
 	cython --cplus msgpack/_cmsgpack.pyx
 
 .PHONY: test
-test:
+test: cython
+	pip install -e .
 	pytest -v test
 	MSGPACK_PUREPYTHON=1 pytest -v test
 

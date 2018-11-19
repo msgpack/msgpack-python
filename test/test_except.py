@@ -43,7 +43,6 @@ def test_invalidvalue():
         unpacker.unpack()
 
     with raises(FormatError):
-        id(None)
         unpackb(b"\xc1")  # (undefined tag)
 
     with raises(FormatError):

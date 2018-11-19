@@ -19,7 +19,14 @@ else:
         return d.iteritems()
 
 if sys.version_info < (3, 5):
+    # Ugly hack...
     RecursionError = RuntimeError
+
+    def _is_recursionerror(e):
+        return e.args == ('maximum recursion depth exceeded',)
+else:
+    def _is_recursionerror(e):
+        return True
 
 if hasattr(sys, 'pypy_version_info'):
     # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
@@ -128,8 +135,10 @@ def unpackb(packed, **kwargs):
         ret = unpacker._unpack()
     except OutOfData:
         raise ValueError("Unpack failed: incomplete input")
-    except RecursionError:
-        raise StackError
+    except RecursionError as e:
+        if _is_recursionerror(e):
+            raise StackError
+        raise
     if unpacker._got_extradata():
         raise ExtraData(ret, unpacker._get_extradata())
     return ret
