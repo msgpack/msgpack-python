@@ -190,7 +190,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         return obj
     unpack_clear(&ctx)
     if ret == 0:
-        raise OutOfData
+        raise ValueError("Unpack failed: incomplete")
     elif ret == -2:
         raise FormatError
     elif ret == -3:

@@ -119,8 +119,6 @@ def unpackb(packed, **kwargs):
     unpacker.feed(packed)
     try:
         ret = unpacker._unpack()
-    except OutOfData:
-        raise ValueError("Data is not enough.")
     except RecursionError:
         raise StackError
     if unpacker._got_extradata():
