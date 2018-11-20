@@ -16,6 +16,8 @@ from msgpack.exceptions import (
     BufferFull,
     OutOfData,
     ExtraData,
+    FormatError,
+    StackError,
 )
 from msgpack import ExtType
 
@@ -149,7 +151,11 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     """
     Unpack packed_bytes to object. Returns an unpacked object.
 
-    Raises `ValueError` when `packed` contains extra bytes.
+    Raises ``ExtraData`` when *packed* contains extra bytes.
+    Raises ``ValueError`` when *packed* is incomplete.
+    Raises ``FormatError`` when *packed* is not valid msgpack.
+    Raises ``StackError`` when *packed* contains too nested.
+    Other exceptions can be raised during unpacking.
 
     See :class:`Unpacker` for options.
     """
@@ -187,6 +193,12 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
     unpack_clear(&ctx)
+    if ret == 0:
+        raise ValueError("Unpack failed: incomplete input")
+    elif ret == -2:
+        raise FormatError
+    elif ret == -3:
+        raise StackError
     raise ValueError("Unpack failed: error = %d" % (ret,))
 
 
@@ -201,7 +213,7 @@ def unpack(object stream, **kwargs):
 cdef class Unpacker(object):
     """Streaming unpacker.
 
-    arguments:
+    Arguments:
 
     :param file_like:
         File-like object having `.read(n)` method.
@@ -279,6 +291,12 @@ cdef class Unpacker(object):
             unpacker.feed(buf)
             for o in unpacker:
                 process(o)
+
+    Raises ``ExtraData`` when *packed* contains extra bytes.
+    Raises ``OutOfData`` when *packed* is incomplete.
+    Raises ``FormatError`` when *packed* is not valid msgpack.
+    Raises ``StackError`` when *packed* contains too nested.
+    Other exceptions can be raised during unpacking.
     """
     cdef unpack_context ctx
     cdef char* buf
@@ -451,6 +469,10 @@ cdef class Unpacker(object):
                     raise StopIteration("No more data to unpack.")
                 else:
                     raise OutOfData("No more data to unpack.")
+            elif ret == -2:
+                raise FormatError
+            elif ret == -3:
+                raise StackError
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 

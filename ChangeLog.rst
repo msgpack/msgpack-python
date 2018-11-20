@@ -5,21 +5,25 @@ Release Date: TBD
 
 
 Important changes
-------------------
+-----------------
 
-Extension modules are merged.  There is ``msgpack._msgpack`` instead of
-``msgpack._packer`` and ``msgpack._unpacker``. (#314)
-
-unpacker: Default size limits is smaller than before to avoid DoS attack.
-If you need to handle large data, you need to specify limits manually.
-
+* unpacker: Default size limits is smaller than before to avoid DoS attack.
+  If you need to handle large data, you need to specify limits manually. (#319)
 
 
 Other changes
---------------
+-------------
 
-Add ``Unpacker.getbuffer()`` method.
+* Extension modules are merged.  There is ``msgpack._msgpack`` instead of
+  ``msgpack._packer`` and ``msgpack._unpacker``. (#314)
 
+* Add ``Unpacker.getbuffer()`` method. (#320)
+
+* unpacker: ``msgpack.StackError`` is raised when input data contains too
+  nested data. (#331)
+
+* unpacker: ``msgpack.FormatError`` is raised when input data is not valid
+  msgpack format. (#331)
 
 
 0.5.6
