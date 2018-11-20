@@ -7,15 +7,21 @@ Release Date: TBD
 Important changes
 -----------------
 
-* unpacker: Default size limits is smaller than before to avoid DoS attack.
+* unpacker: Default value of input limits are smaller than before to avoid DoS attack.
   If you need to handle large data, you need to specify limits manually. (#319)
 
+* Unpacker doesn't wrap underlaying ``ValueError`` (including ``UnicodeError``) into
+  ``UnpackValueError``.  If you want to catch all exception during unpack, you need
+  to use ``try ... except Exception`` with minimum try code block. (#323, #233)
+
+* ``PackValueError`` and ``PackOverflowError`` are also removed.  You need to catch
+  normal ``ValueError`` and ``OverflowError``. (#323, #233)
 
 Other changes
 -------------
 
-* Extension modules are merged.  There is ``msgpack._msgpack`` instead of
-  ``msgpack._packer`` and ``msgpack._unpacker``. (#314)
+* Extension modules are merged.  There is ``msgpack._cmsgpack`` instead of
+  ``msgpack._packer`` and ``msgpack._unpacker``. (#314, #328)
 
 * Add ``Unpacker.getbuffer()`` method. (#320)
 
