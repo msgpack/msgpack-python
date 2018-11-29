@@ -23,6 +23,7 @@ typedef struct unpack_user {
     bool use_list;
     bool raw;
     bool has_pairs_hook;
+    bool strict_map_key;
     PyObject *object_hook;
     PyObject *list_hook;
     PyObject *ext_hook;
@@ -188,6 +189,10 @@ static inline int unpack_callback_map(unpack_user* u, unsigned int n, msgpack_un
 
 static inline int unpack_callback_map_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object k, msgpack_unpack_object v)
 {
+    if (u->strict_map_key && !PyUnicode_CheckExact(k) && !PyBytes_CheckExact(k)) {
+        PyErr_Format(PyExc_ValueError, "%.100s is not allowed for map key", Py_TYPE(k)->tp_name);
+        return -1;
+    }
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);
         if (!item)
