@@ -179,6 +179,11 @@ class Unpacker(object):
 
         *encoding* option which is deprecated overrides this option.
 
+    :param bool strict_map_key:
+        If true, only str or bytes are accepted for map (dict) keys.
+        It's False by default for backward-compatibility.
+        But it will be True from msgpack 1.0.
+
     :param callable object_hook:
         When specified, it should be callable.
         Unpacker calls it with a dict argument after unpacking msgpack map.
@@ -241,7 +246,7 @@ class Unpacker(object):
     Other exceptions can be raised during unpacking.
     """
 
-    def __init__(self, file_like=None, read_size=0, use_list=True, raw=True,
+    def __init__(self, file_like=None, read_size=0, use_list=True, raw=True, strict_map_key=False,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
@@ -286,6 +291,7 @@ class Unpacker(object):
             raise ValueError("read_size must be smaller than max_buffer_size")
         self._read_size = read_size or min(self._max_buffer_size, 16*1024)
         self._raw = bool(raw)
+        self._strict_map_key = bool(strict_map_key)
         self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
@@ -633,6 +639,8 @@ class Unpacker(object):
                 ret = {}
                 for _ in xrange(n):
                     key = self._unpack(EX_CONSTRUCT)
+                    if self._strict_map_key and type(key) not in (unicode, bytes):
+                        raise ValueError("%s is not allowed for map key" % str(type(key)))
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
                     ret = self._object_hook(ret)
