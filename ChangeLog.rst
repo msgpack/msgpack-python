@@ -1,8 +1,9 @@
 0.6.0
 ======
 
-Release Date: TBD
+Release Date: 2018-11-30
 
+This release contains some backward incompatible changes for security reason (DoS).
 
 Important changes
 -----------------
