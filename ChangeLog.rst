@@ -17,6 +17,11 @@ Important changes
 * ``PackValueError`` and ``PackOverflowError`` are also removed.  You need to catch
   normal ``ValueError`` and ``OverflowError``. (#323, #233)
 
+* Unpacker has ``strict_map_key`` option now.  When it is true, only bytes and str
+  (unicode in Python 2) are allowed for map keys.  It is recommended to avoid
+  hashdos.  Default value of this option is False for backward compatibility reason.
+  But it will be changed True in 1.0. (#296, #334)
+
 Other changes
 -------------
 
