@@ -21,13 +21,13 @@ test_script:
   - ci\\runtests.bat
   - set PYTHON="C:\\Python27-x64"
   - ci\\runtests.bat
-  - set PYTHON="C:\\Python35"
-  - ci\\runtests.bat
-  - set PYTHON="C:\\Python35-x64"
-  - ci\\runtests.bat
   - set PYTHON="C:\\Python36"
   - ci\\runtests.bat
   - set PYTHON="C:\\Python36-x64"
+  - ci\\runtests.bat
+  - set PYTHON="C:\\Python37"
+  - ci\\runtests.bat
+  - set PYTHON="C:\\Python37-x64"
   - ci\\runtests.bat
 
 after_test:
