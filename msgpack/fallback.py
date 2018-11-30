@@ -4,19 +4,19 @@ import sys
 import struct
 import warnings
 
-if sys.version_info[0] == 3:
-    PY3 = True
+
+if sys.version_info[0] == 2:
+    PY2 = True
+    int_types = (int, long)
+    def dict_iteritems(d):
+        return d.iteritems()
+else:
+    PY2 = False
     int_types = int
-    Unicode = str
+    unicode = str
     xrange = range
     def dict_iteritems(d):
         return d.items()
-else:
-    PY3 = False
-    int_types = (int, long)
-    Unicode = unicode
-    def dict_iteritems(d):
-        return d.iteritems()
 
 if sys.version_info < (3, 5):
     # Ugly hack...
@@ -97,7 +97,7 @@ def _get_data_from_buffer(obj):
         view = memoryview(obj)
     except TypeError:
         # try to use legacy buffer protocol if 2.7, otherwise re-raise
-        if not PY3:
+        if PY2:
             view = memoryview(buffer(obj))
             warnings.warn("using old buffer interface to unpack %s; "
                           "this leads to unpacking errors if slicing is used and "
@@ -639,7 +639,7 @@ class Unpacker(object):
                 ret = {}
                 for _ in xrange(n):
                     key = self._unpack(EX_CONSTRUCT)
-                    if self._strict_map_key and type(key) not in (Unicode, bytes):
+                    if self._strict_map_key and type(key) not in (unicode, bytes):
                         raise ValueError("%s is not allowed for map key" % str(type(key)))
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
@@ -819,7 +819,7 @@ class Packer(object):
                     raise ValueError("%s is too large" % type(obj).__name__)
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
-            if check(obj, Unicode):
+            if check(obj, unicode):
                 if self._encoding is None:
                     raise TypeError(
                         "Can't encode unicode string: "
@@ -1006,7 +1006,7 @@ class Packer(object):
 
     def getbuffer(self):
         """Return view of internal buffer."""
-        if USING_STRINGBUILDER or not PY3:
+        if USING_STRINGBUILDER or PY2:
             return memoryview(self.bytes())
         else:
             return self._buffer.getbuffer()
