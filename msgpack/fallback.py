@@ -639,7 +639,7 @@ class Unpacker(object):
                 ret = {}
                 for _ in xrange(n):
                     key = self._unpack(EX_CONSTRUCT)
-                    if self._strict_map_key and type(key) not in (unicode, bytes):
+                    if self._strict_map_key and type(key) not in (Unicode, bytes):
                         raise ValueError("%s is not allowed for map key" % str(type(key)))
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
