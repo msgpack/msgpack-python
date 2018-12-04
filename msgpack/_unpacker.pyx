@@ -271,7 +271,7 @@ cdef class Unpacker(object):
         Limits max length of map. (default: 32*1024)
 
     :param int max_ext_len:
-        Limits max length of map. (default: 1024*1024)
+        Limits max size of ext type. (default: 1024*1024)
 
     :param str encoding:
         Deprecated, use raw instead.
