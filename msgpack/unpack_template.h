@@ -243,17 +243,11 @@ static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize
                                           _msgpack_load32(uint32_t,n)+1,
                                           _ext_zero);
             case CS_FLOAT: {
-                    union { uint32_t i; float f; } mem;
-                    mem.i = _msgpack_load32(uint32_t,n);
-                    push_fixed_value(_float, mem.f); }
+                    double f = _PyFloat_Unpack4((unsigned char*)n, 0);
+                    push_fixed_value(_float, f); }
             case CS_DOUBLE: {
-                    union { uint64_t i; double f; } mem;
-                    mem.i = _msgpack_load64(uint64_t,n);
-#if defined(__arm__) && !(__ARM_EABI__) // arm-oabi
-                    // https://github.com/msgpack/msgpack-perl/pull/1
-                    mem.i = (mem.i & 0xFFFFFFFFUL) << 32UL | (mem.i >> 32UL);
-#endif
-                    push_fixed_value(_double, mem.f); }
+                    double f = _PyFloat_Unpack8((unsigned char*)n, 0);
+                    push_fixed_value(_double, f); }
             case CS_UINT_8:
                 push_fixed_value(_uint8, *(uint8_t*)n);
             case CS_UINT_16:

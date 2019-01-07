@@ -566,24 +566,17 @@ if(sizeof(unsigned long long) == 2) {
 
 static inline int msgpack_pack_float(msgpack_packer* x, float d)
 {
-    union { float f; uint32_t i; } mem;
-    mem.f = d;
     unsigned char buf[5];
-    buf[0] = 0xca; _msgpack_store32(&buf[1], mem.i);
+    buf[0] = 0xca;
+    _PyFloat_Pack4(d, &buf[1], 0);
     msgpack_pack_append_buffer(x, buf, 5);
 }
 
 static inline int msgpack_pack_double(msgpack_packer* x, double d)
 {
-    union { double f; uint64_t i; } mem;
-    mem.f = d;
     unsigned char buf[9];
     buf[0] = 0xcb;
-#if defined(__arm__) && !(__ARM_EABI__) // arm-oabi
-    // https://github.com/msgpack/msgpack-perl/pull/1
-    mem.i = (mem.i & 0xFFFFFFFFUL) << 32UL | (mem.i >> 32UL);
-#endif
-    _msgpack_store64(&buf[1], mem.i);
+    _PyFloat_Pack8(d, &buf[1], 0);
     msgpack_pack_append_buffer(x, buf, 9);
 }
 
