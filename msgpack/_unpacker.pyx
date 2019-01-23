@@ -145,11 +145,11 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
             bint use_list=True, bint raw=True, bint strict_map_key=False,
             encoding=None, unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
-            Py_ssize_t max_str_len=1024*1024,
-            Py_ssize_t max_bin_len=1024*1024,
-            Py_ssize_t max_array_len=128*1024,
-            Py_ssize_t max_map_len=32*1024,
-            Py_ssize_t max_ext_len=1024*1024):
+            Py_ssize_t max_str_len=-1,
+            Py_ssize_t max_bin_len=-1,
+            Py_ssize_t max_array_len=-1,
+            Py_ssize_t max_map_len=-1,
+            Py_ssize_t max_ext_len=-1):
     """
     Unpack packed_bytes to object. Returns an unpacked object.
 
@@ -160,6 +160,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     Other exceptions can be raised during unpacking.
 
     See :class:`Unpacker` for options.
+
+    *max_xxx_len* options are configured automatically from ``len(packed)``.
     """
     cdef unpack_context ctx
     cdef Py_ssize_t off = 0
@@ -180,6 +182,18 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         cerr = unicode_errors
 
     get_data_from_buffer(packed, &view, &buf, &buf_len, &new_protocol)
+
+    if max_str_len == -1:
+        max_str_len = buf_len
+    if max_bin_len == -1:
+        max_bin_len = buf_len
+    if max_array_len == -1:
+        max_array_len = buf_len
+    if max_map_len == -1:
+        max_map_len = buf_len//2
+    if max_ext_len == -1:
+        max_ext_len = buf_len
+
     try:
         init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
                  use_list, raw, strict_map_key, cenc, cerr,
@@ -259,19 +273,19 @@ cdef class Unpacker(object):
         You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
-        Limits max length of str. (default: 1024*1024)
+        Limits max length of str. (default: max_buffer_size or 1024*1024)
 
     :param int max_bin_len:
-        Limits max length of bin. (default: 1024*1024)
+        Limits max length of bin. (default: max_buffer_size or 1024*1024)
 
     :param int max_array_len:
-        Limits max length of array. (default: 128*1024)
+        Limits max length of array. (default: max_buffer_size or 128*1024)
 
     :param int max_map_len:
-        Limits max length of map. (default: 32*1024)
+        Limits max length of map. (default: max_buffer_size//2 or 32*1024)
 
     :param int max_ext_len:
-        Limits max size of ext type. (default: 1024*1024)
+        Limits max size of ext type. (default: max_buffer_size or 1024*1024)
 
     :param str encoding:
         Deprecated, use raw instead.
@@ -329,11 +343,11 @@ cdef class Unpacker(object):
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  encoding=None, unicode_errors=None, Py_ssize_t max_buffer_size=0,
                  object ext_hook=ExtType,
-                 Py_ssize_t max_str_len=1024*1024,
-                 Py_ssize_t max_bin_len=1024*1024,
-                 Py_ssize_t max_array_len=128*1024,
-                 Py_ssize_t max_map_len=32*1024,
-                 Py_ssize_t max_ext_len=1024*1024):
+                 Py_ssize_t max_str_len=-1,
+                 Py_ssize_t max_bin_len=-1,
+                 Py_ssize_t max_array_len=-1,
+                 Py_ssize_t max_map_len=-1,
+                 Py_ssize_t max_ext_len=-1):
         cdef const char *cenc=NULL,
         cdef const char *cerr=NULL
 
@@ -347,6 +361,18 @@ cdef class Unpacker(object):
             self.file_like_read = file_like.read
             if not PyCallable_Check(self.file_like_read):
                 raise TypeError("`file_like.read` must be a callable.")
+
+        if max_str_len == -1:
+            max_str_len = max_buffer_size or 1024*1024
+        if max_bin_len == -1:
+            max_bin_len = max_buffer_size or 1024*1024
+        if max_array_len == -1:
+            max_array_len = max_buffer_size or 128*1024
+        if max_map_len == -1:
+            max_map_len = max_buffer_size//2 or 32*1024
+        if max_ext_len == -1:
+            max_ext_len = max_buffer_size or 1024*1024
+
         if not max_buffer_size:
             max_buffer_size = INT_MAX
         if read_size > max_buffer_size:
