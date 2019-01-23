@@ -105,7 +105,6 @@ def test_max_ext_len():
         unpacker.unpack()
 
 
-
 # PyPy fails following tests because of constant folding?
 # https://bugs.pypy.org/issue1721
 #@pytest.mark.skipif(True, reason="Requires very large memory.")
@@ -134,3 +133,57 @@ def test_max_ext_len():
 #    x.append(0)
 #    with pytest.raises(ValueError):
 #        packb(x)
+
+
+# auto max len
+
+def test_auto_max_str_len():
+    packed = b'\xd9\x06zzz'
+    with pytest.raises(UnpackValueError):
+        unpackb(packed, raw=False)
+
+    unpacker = Unpacker(max_buffer_size=5, raw=False)
+    unpacker.feed(packed)
+    with pytest.raises(UnpackValueError):
+        unpacker.unpack()
+
+def test_auto_max_bin_len():
+    packed = b'\xc4\x06zzz'
+    with pytest.raises(UnpackValueError):
+        unpackb(packed, raw=False)
+
+    unpacker = Unpacker(max_buffer_size=5, raw=False)
+    unpacker.feed(packed)
+    with pytest.raises(UnpackValueError):
+        unpacker.unpack()
+
+def test_auto_max_array_len():
+    packed = b'\xde\x00\x06zz'
+    with pytest.raises(UnpackValueError):
+        unpackb(packed, raw=False)
+
+    unpacker = Unpacker(max_buffer_size=5, raw=False)
+    unpacker.feed(packed)
+    with pytest.raises(UnpackValueError):
+        unpacker.unpack()
+
+def test_auto_max_map_len():
+    # len(packed) == 6 -> max_map_len == 3
+    packed = b'\xde\x00\x04zzz'
+    with pytest.raises(UnpackValueError):
+        unpackb(packed, raw=False)
+
+    unpacker = Unpacker(max_buffer_size=6, raw=False)
+    unpacker.feed(packed)
+    with pytest.raises(UnpackValueError):
+        unpacker.unpack()
+
+def test_auto_max_ext_len():
+    packed = b'\xc7\x05\x01z'
+    with pytest.raises(UnpackValueError):
+        unpackb(packed, raw=False)
+
+    unpacker = Unpacker(max_buffer_size=4, raw=False)
+    unpacker.feed(packed)
+    with pytest.raises(UnpackValueError):
+        unpacker.unpack()
