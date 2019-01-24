@@ -130,7 +130,7 @@ def unpackb(packed, **kwargs):
 
     See :class:`Unpacker` for options.
     """
-    unpacker = Unpacker(None, **kwargs)
+    unpacker = Unpacker(None, max_buffer_size=len(packed), **kwargs)
     unpacker.feed(packed)
     try:
         ret = unpacker._unpack()
@@ -208,19 +208,24 @@ class Unpacker(object):
         You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
-        Limits max length of str. (default: 1024*1024)
+        (deprecated) Limits max length of str.
+        (default: max_buffer_size or 1024*1024)
 
     :param int max_bin_len:
-        Limits max length of bin. (default: 1024*1024)
+        (deprecated) Limits max length of bin.
+        (default: max_buffer_size or 1024*1024)
 
     :param int max_array_len:
-        Limits max length of array. (default: 128*1024)
+        Limits max length of array.
+        (default: max_buffer_size or 128*1024)
 
     :param int max_map_len:
-        Limits max length of map. (default: 32*1024)
+        Limits max length of map.
+        (default: max_buffer_size//2 or 32*1024)
 
     :param int max_ext_len:
-        Limits max size of ext type. (default: 1024*1024)
+        (deprecated) Limits max size of ext type.
+        (default: max_buffer_size or 1024*1024)
 
     example of streaming deserialize from file-like object::
 
@@ -250,12 +255,11 @@ class Unpacker(object):
                  object_hook=None, object_pairs_hook=None, list_hook=None,
                  encoding=None, unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
-                 max_str_len=1024*1024,
-                 max_bin_len=1024*1024,
-                 max_array_len=128*1024,
-                 max_map_len=32*1024,
-                 max_ext_len=1024*1024):
-
+                 max_str_len=-1,
+                 max_bin_len=-1,
+                 max_array_len=-1,
+                 max_map_len=-1,
+                 max_ext_len=-1):
         if encoding is not None:
             warnings.warn(
                 "encoding is deprecated, Use raw=False instead.",
@@ -285,6 +289,17 @@ class Unpacker(object):
         # we raise an OutOfData) we need to rollback the buffer to the correct
         # state, which _buf_checkpoint records.
         self._buf_checkpoint = 0
+
+        if max_str_len == -1:
+            max_str_len = max_buffer_size or 1024*1024
+        if max_bin_len == -1:
+            max_bin_len = max_buffer_size or 1024*1024
+        if max_array_len == -1:
+            max_array_len = max_buffer_size or 128*1024
+        if max_map_len == -1:
+            max_map_len = max_buffer_size//2 or 32*1024
+        if max_ext_len == -1:
+            max_ext_len = max_buffer_size or 1024*1024
 
         self._max_buffer_size = max_buffer_size or 2**31-1
         if read_size > self._max_buffer_size:
