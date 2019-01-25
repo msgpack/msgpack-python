@@ -39,7 +39,7 @@ matrix:
 
 install:
   - pip install -U pip
-  - pip install cython
+  - pip install -U cython pytest
   - make cython
   - pip install -e .
 
