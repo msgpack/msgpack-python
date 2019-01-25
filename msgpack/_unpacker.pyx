@@ -273,9 +273,11 @@ cdef class Unpacker(object):
         You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
+        Deprecated, use *max_buffer_size* instead.
         Limits max length of str. (default: max_buffer_size or 1024*1024)
 
     :param int max_bin_len:
+        Deprecated, use *max_buffer_size* instead.
         Limits max length of bin. (default: max_buffer_size or 1024*1024)
 
     :param int max_array_len:
@@ -285,10 +287,11 @@ cdef class Unpacker(object):
         Limits max length of map. (default: max_buffer_size//2 or 32*1024)
 
     :param int max_ext_len:
+        Deprecated, use *max_buffer_size* instead.
         Limits max size of ext type. (default: max_buffer_size or 1024*1024)
 
     :param str encoding:
-        Deprecated, use raw instead.
+        Deprecated, use ``raw=False`` instead.
         Encoding used for decoding msgpack raw.
         If it is None (default), msgpack raw is deserialized to Python bytes.
 
@@ -298,13 +301,13 @@ cdef class Unpacker(object):
 
     Example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like, raw=False)
+        unpacker = Unpacker(file_like, raw=False, max_buffer_size=10*1024*1024)
         for o in unpacker:
             process(o)
 
     Example of streaming deserialize from socket::
 
-        unpacker = Unpacker(raw=False)
+        unpacker = Unpacker(raw=False, max_buffer_size=10*1024*1024)
         while True:
             buf = sock.recv(1024**2)
             if not buf:

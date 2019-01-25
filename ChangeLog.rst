@@ -1,3 +1,21 @@
+0.6.1
+======
+
+Release Date: 2019-01-25
+
+This release is for mitigating pain caused by v0.6.1 reduced max input limits
+for security reason.
+
+* ``unpackb(data)`` configures ``max_*_len`` options from ``len(data)``,
+  instead of static default sizes.
+
+* ``Unpacker(max_buffer_len=N)`` configures ``max_*_len`` options from ``N``,
+  instead of static default sizes.
+
+* ``max_bin_len``, ``max_str_len``, and ``max_ext_len`` are deprecated.
+  Since this is minor release, it's document only deprecation.
+
+
 0.6.0
 ======
 
