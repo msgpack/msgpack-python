@@ -40,7 +40,10 @@ def test_extension_type():
         print('default called', obj)
         if isinstance(obj, array.array):
             typecode = 123 # application specific typecode
-            data = obj.tostring()
+            try:
+                data = obj.tobytes()
+            except AttributeError:
+                data = obj.tostring()
             return ExtType(typecode, data)
         raise TypeError("Unknown type object %r" % (obj,))
 
@@ -48,7 +51,10 @@ def test_extension_type():
         print('ext_hook called', code, data)
         assert code == 123
         obj = array.array('d')
-        obj.fromstring(data)
+        try:
+            obj.frombytes(data)
+        except AttributeError:  # PY2
+            obj.fromstring(data)
         return obj
 
     obj = [42, b'hello', array.array('d', [1.1, 2.2, 3.3])]

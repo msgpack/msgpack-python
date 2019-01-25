@@ -2,13 +2,15 @@
 # coding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from collections import OrderedDict
+from io import BytesIO
 import struct
+
+import pytest
 from pytest import raises, xfail
 
 from msgpack import packb, unpackb, Unpacker, Packer, pack
 
-from collections import OrderedDict
-from io import BytesIO
 
 def check(data, use_list=False):
     re = unpackb(packb(data), use_list=use_list)
@@ -47,7 +49,8 @@ def testPackUTF32():  # deprecated
             "Русский текст",
             ]
         for td in test_data:
-            re = unpackb(packb(td, encoding='utf-32'), use_list=1, encoding='utf-32')
+            with pytest.deprecated_call():
+                re = unpackb(packb(td, encoding='utf-32'), use_list=1, encoding='utf-32')
             assert re == td
     except LookupError as e:
         xfail(e)
@@ -67,19 +70,23 @@ def testPackByteArrays():
         check(td)
 
 def testIgnoreUnicodeErrors(): # deprecated
-    re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
+    with pytest.deprecated_call():
+        re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
     assert re == "abcdef"
 
 def testStrictUnicodeUnpack():
-    with raises(UnicodeDecodeError):
-        unpackb(packb(b'abc\xeddef'), raw=False, use_list=1)
+    packed = packb(b'abc\xeddef')
+    with pytest.raises(UnicodeDecodeError):
+        unpackb(packed, raw=False, use_list=1)
 
 def testStrictUnicodePack():  # deprecated
     with raises(UnicodeEncodeError):
-        packb("abc\xeddef", encoding='ascii', unicode_errors='strict')
+        with pytest.deprecated_call():
+            packb("abc\xeddef", encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():  # deprecated
-    re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), raw=False, use_list=1)
+    with pytest.deprecated_call():
+        re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), raw=False, use_list=1)
     assert re == "abcdef"
 
 def testDecodeBinary():
