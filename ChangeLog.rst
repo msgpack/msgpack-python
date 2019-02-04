@@ -3,7 +3,7 @@
 
 Release Date: 2019-01-25
 
-This release is for mitigating pain caused by v0.6.1 reduced max input limits
+This release is for mitigating pain caused by v0.6.0 reduced max input limits
 for security reason.
 
 * ``unpackb(data)`` configures ``max_*_len`` options from ``len(data)``,
