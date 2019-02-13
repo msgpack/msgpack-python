@@ -759,10 +759,17 @@ class Packer(object):
 
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
+
+    :param object writer:
+        An optional object with a write() method. (default: None).
+        If provided, the object will receive the packed bytes as they are generated.
+        This is especially helpful when packing large objects as it prevents the internal
+        buffer from becoming very large.
+        NB: when this is used bytes() and getbuffer() will always return None.
     """
     def __init__(self, default=None, encoding=None, unicode_errors=None,
                  use_single_float=False, autoreset=True, use_bin_type=False,
-                 strict_types=False):
+                 strict_types=False, writer=None):
         if encoding is None:
             encoding = 'utf_8'
         else:
@@ -775,11 +782,11 @@ class Packer(object):
 
         self._strict_types = strict_types
         self._use_float = use_single_float
-        self._autoreset = autoreset
+        self._autoreset = autoreset and writer is None
         self._use_bin_type = use_bin_type
         self._encoding = encoding
         self._unicode_errors = unicode_errors
-        self._buffer = StringIO()
+        self._buffer = StringIO() if writer is None else writer
         if default is not None:
             if not callable(default):
                 raise TypeError("default must be callable")
@@ -899,7 +906,8 @@ class Packer(object):
         try:
             self._pack(obj)
         except:
-            self._buffer = StringIO()  # force reset
+            if isinstance(self._buffer, StringIO):
+                self._buffer = StringIO()  # force reset
             raise
         if self._autoreset:
             ret = self._buffer.getvalue()
@@ -1010,17 +1018,22 @@ class Packer(object):
 
     def bytes(self):
         """Return internal buffer contents as bytes object"""
-        return self._buffer.getvalue()
+        return self._buffer.getvalue() if isinstance(self._buffer, StringIO) else None
 
     def reset(self):
         """Reset internal buffer.
 
-        This method is usaful only when autoreset=False.
+        This method is useful only when autoreset=False.
         """
-        self._buffer = StringIO()
+        if isinstance(self._buffer, StringIO):
+            self._buffer = StringIO()
 
     def getbuffer(self):
         """Return view of internal buffer."""
+        if not isinstance(self._buffer, StringIO):
+            return None
+        if self._buffer is None:
+            return None
         if USING_STRINGBUILDER or PY2:
             return memoryview(self.bytes())
         else:

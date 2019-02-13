@@ -35,9 +35,37 @@ typedef struct msgpack_packer {
     size_t length;
     size_t buf_size;
     bool use_bin_type;
+    PyObject *writer;
 } msgpack_packer;
 
 typedef struct Packer Packer;
+
+static inline void msgpack_packer_init(msgpack_packer* pk, PyObject* writer)
+{
+    Py_INCREF(writer);
+    pk->writer = writer;
+    pk->length = 0;
+    pk->buf_size = 1024*1024;
+    pk->buf = (char*) PyMem_Malloc(pk->buf_size);
+    if (pk->buf == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "Unable to allocate internal buffer.");
+    }
+}
+
+static inline void msgpack_packer_free(msgpack_packer* pk)
+{
+    PyMem_Free(pk->buf);
+    Py_DECREF(pk->writer);
+    pk->buf = NULL;
+    pk->writer = NULL;
+}
+
+static inline int msgpack_pack_flush(msgpack_packer* pk)
+{
+    PyObject_CallMethod(pk->writer, "write", "(s#)", pk->buf, pk->length);
+    pk->length = 0;
+    return 0;
+}
 
 static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_t l)
 {
@@ -46,11 +74,30 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
     size_t len = pk->length;
 
     if (len + l > bs) {
-        bs = (len + l) * 2;
-        buf = (char*)PyMem_Realloc(buf, bs);
-        if (!buf) {
-            PyErr_NoMemory();
-            return -1;
+        if (pk->writer != Py_None) {
+            // fill remainder of buffer
+            size_t chunk_size = bs - len;
+            memcpy(buf + len, data, bs - len);
+            data += chunk_size;
+            l -= chunk_size;
+
+            // flush buffer
+            PyObject_CallMethod(pk->writer, "write", "(s#)", pk->buf, bs);
+            len = 0;
+
+            // for large writes, bypass buffer entirely
+            if (l >= bs) {
+                PyObject_CallMethod(pk->writer, "write", "(s#)", data, l);
+                pk->length = 0;
+                return 0;
+            }
+        } else {
+            bs = (len + l) * 2;
+            buf = (char*)PyMem_Realloc(buf, bs);
+            if (!buf) {
+                PyErr_NoMemory();
+                return -1;
+            }
         }
     }
     memcpy(buf + len, data, l);

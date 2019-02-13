@@ -33,8 +33,11 @@ def pack(o, stream, **kwargs):
 
     See :class:`Packer` for options.
     """
-    packer = Packer(**kwargs)
-    stream.write(packer.pack(o))
+    if 'writer' in kwargs:
+        packer = Packer(**kwargs)
+        stream.write(packer.pack(o))
+    else:
+        Packer(writer=stream, **kwargs).pack(o)
 
 
 def packb(o, **kwargs):

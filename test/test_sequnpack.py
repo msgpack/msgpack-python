@@ -106,6 +106,8 @@ def test_unpack_tell():
     messages += [b'hello', b'hello'*1000, list(range(20)),
                  {i: bytes(i)*i for i in range(10)},
                  {i: bytes(i)*i for i in range(32)}]
+    messages += [[b'small stuff before the big one', b'b' * 1024 * 1024]]
+
     offsets = []
     for m in messages:
         pack(m, stream)

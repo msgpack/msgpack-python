@@ -18,6 +18,11 @@ cdef extern from "pack.h":
         size_t length
         size_t buf_size
         bint use_bin_type
+        PyObject* writer
+
+    void msgpack_packer_init(msgpack_packer* pk, PyObject* writer)
+    void msgpack_packer_free(msgpack_packer* pk)
+    int msgpack_pack_flush(msgpack_packer* pk)
 
     int msgpack_pack_int(msgpack_packer* pk, int d)
     int msgpack_pack_nil(msgpack_packer* pk)
@@ -93,6 +98,13 @@ cdef class Packer(object):
 
     :param str encoding:
         (deprecated) Convert unicode to bytes with this encoding. (default: 'utf-8')
+
+    :param object writer:
+        An optional object with a write() method. (default: None).
+        If provided, the object will receive the packed bytes as they are generated.
+        This is especially helpful when packing large objects as it prevents the internal
+        buffer from becoming very large.
+        NB: when this is used bytes() and getbuffer() will always return None.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -104,23 +116,16 @@ cdef class Packer(object):
     cdef bool use_float
     cdef bint autoreset
 
-    def __cinit__(self):
-        cdef int buf_size = 1024*1024
-        self.pk.buf = <char*> PyMem_Malloc(buf_size)
-        if self.pk.buf == NULL:
-            raise MemoryError("Unable to allocate internal buffer.")
-        self.pk.buf_size = buf_size
-        self.pk.length = 0
-
     def __init__(self, default=None, encoding=None, unicode_errors=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=False,
-                 bint strict_types=False):
+                 bint strict_types=False, object writer=None):
         if encoding is not None:
             PyErr_WarnEx(DeprecationWarning, "encoding is deprecated.", 1)
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
         self.pk.use_bin_type = use_bin_type
+        msgpack_packer_init(&self.pk, <PyObject*> writer)
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
@@ -142,8 +147,7 @@ cdef class Packer(object):
             self.unicode_errors = self._berrors
 
     def __dealloc__(self):
-        PyMem_Free(self.pk.buf)
-        self.pk.buf = NULL
+        msgpack_packer_free(&self.pk)
 
     cdef int _pack(self, object o, int nest_limit=DEFAULT_RECURSE_LIMIT) except -1:
         cdef long long llval
@@ -270,7 +274,7 @@ cdef class Packer(object):
                 ret = msgpack_pack_bin(&self.pk, L)
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
-                PyBuffer_Release(&view);
+                PyBuffer_Release(&view)
             elif not default_used and self._default:
                 o = self._default(o)
                 default_used = 1
@@ -288,7 +292,12 @@ cdef class Packer(object):
             raise
         if ret:  # should not happen.
             raise RuntimeError("internal error")
-        if self.autoreset:
+        return self._finish()
+
+    def _finish(self):
+        if self.pk.writer != <PyObject*> None:
+            msgpack_pack_flush(&self.pk)
+        elif self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
             return buf
@@ -305,10 +314,7 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            self.pk.length = 0
-            return buf
+        return self._finish()
 
     def pack_map_header(self, long long size):
         if size > ITEM_LIMIT:
@@ -318,10 +324,7 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            self.pk.length = 0
-            return buf
+        return self._finish()
 
     def pack_map_pairs(self, object pairs):
         """
@@ -341,22 +344,23 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            self.pk.length = 0
-            return buf
+        return self._finish()
 
     def reset(self):
         """Reset internal buffer.
 
-        This method is usaful only when autoreset=False.
+        This method is useful only when autoreset=False.
         """
         self.pk.length = 0
 
     def bytes(self):
         """Return internal buffer contents as bytes object"""
+        if self.pk.writer != <PyObject*> None:
+            return None
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
 
     def getbuffer(self):
         """Return view of internal buffer."""
+        if self.pk.writer != <PyObject*> None:
+            return None
         return buff_to_buff(self.pk.buf, self.pk.length)
