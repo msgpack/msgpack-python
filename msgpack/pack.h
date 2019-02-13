@@ -35,9 +35,37 @@ typedef struct msgpack_packer {
     size_t length;
     size_t buf_size;
     bool use_bin_type;
+    PyObject *write;
 } msgpack_packer;
 
 typedef struct Packer Packer;
+
+static inline void msgpack_packer_init(msgpack_packer* pk, PyObject* write)
+{
+    Py_INCREF(write);
+    pk->write = write;
+    pk->length = 0;
+    pk->buf_size = 1024*1024;
+    pk->buf = (char*) PyMem_Malloc(pk->buf_size);
+    if (pk->buf == NULL) {
+        PyErr_SetString(PyExc_MemoryError, "Unable to allocate internal buffer.");
+    }
+}
+
+static inline void msgpack_packer_free(msgpack_packer* pk)
+{
+    PyMem_Free(pk->buf);
+    Py_XDECREF(pk->write);
+    pk->buf = NULL;
+    pk->write = NULL;
+}
+
+static inline int msgpack_pack_flush(msgpack_packer* pk)
+{
+    PyObject_CallFunctionObjArgs(pk->write, PyBytes_FromStringAndSize(pk->buf, pk->length), NULL);
+    pk->length = 0;
+    return 0;
+}
 
 static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_t l)
 {
@@ -46,19 +74,25 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
     size_t len = pk->length;
 
     if (len + l > bs) {
-        bs = (len + l) * 2;
-        buf = (char*)PyMem_Realloc(buf, bs);
-        if (!buf) {
-            PyErr_NoMemory();
-            return -1;
+        // fill remainder of buffer
+        size_t rem = bs - len;
+        memcpy(buf + len, data, bs - len);
+        data += rem;
+        l -= rem;
+
+        // flush buffer
+        PyObject_CallFunctionObjArgs(pk->write, PyBytes_FromStringAndSize(pk->buf, bs), NULL);
+        len = 0;
+
+        // for large writes, bypass buffer entirely
+        if (l >= bs) {
+            PyObject_CallFunctionObjArgs(pk->write, PyBytes_FromStringAndSize(data, l), NULL);
+            pk->length = 0;
+            return 0;
         }
     }
     memcpy(buf + len, data, l);
-    len += l;
-
-    pk->buf = buf;
-    pk->buf_size = bs;
-    pk->length = len;
+    pk->length = len + l;
     return 0;
 }
 

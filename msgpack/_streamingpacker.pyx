@@ -18,6 +18,11 @@ cdef extern from "pack.h":
         size_t length
         size_t buf_size
         bint use_bin_type
+        PyObject* writer
+
+    void msgpack_packer_init(msgpack_packer* pk, PyObject* writer)
+    void msgpack_packer_free(msgpack_packer* pk)
+    int msgpack_pack_flush(msgpack_packer* pk)
 
     int msgpack_pack_int(msgpack_packer* pk, int d)
     int msgpack_pack_nil(msgpack_packer* pk)
@@ -51,17 +56,22 @@ cdef inline int PyBytesLike_CheckExact(object o):
     return PyBytes_CheckExact(o) or PyByteArray_CheckExact(o)
 
 
-cdef class Packer(object):
+cdef class StreamingPacker(object):
     """
     MessagePack Packer
 
     usage::
 
-        packer = Packer()
-        astream.write(packer.pack(a))
-        astream.write(packer.pack(b))
+        with open('/path', 'w') as f:
+            packer = StreamingPacker(f.write)
+            packer.pack(a)
+            packer.pack(b)
 
-    Packer's constructor has some keyword arguments:
+    StreamingPacker's constructor has some keyword arguments:
+
+    :param callable write:
+        An callable object which accepts bytes, for instance the .write(data) method of a file-like object.
+        Called with packed bytes as they are generated.
 
     :param callable default:
         Convert user type to builtin type that Packer supports.
@@ -70,19 +80,13 @@ cdef class Packer(object):
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
 
-    :param bool autoreset:
-        Reset buffer after each pack and return its content as `bytes`. (default: True).
-        If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
-
     :param bool use_bin_type:
-        Use bin type introduced in msgpack spec 2.0 for bytes.
+        Use bin type introduced in msgpack spec 2.0 for bytes. (Default: True)
         It also enables str8 type for unicode.
-        Current default value is false, but it will be changed to true
-        in future version.  You should specify it explicitly.
 
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
-        from serializeable types will not be serialized and will be
+        from serializable types will not be serialized and will be
         treated as unsupported type and forwarded to default.
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
@@ -93,6 +97,7 @@ cdef class Packer(object):
 
     :param str encoding:
         (deprecated) Convert unicode to bytes with this encoding. (default: 'utf-8')
+
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -102,25 +107,18 @@ cdef class Packer(object):
     cdef const char *unicode_errors
     cdef bint strict_types
     cdef bool use_float
-    cdef bint autoreset
 
-    def __cinit__(self):
-        cdef int buf_size = 1024*1024
-        self.pk.buf = <char*> PyMem_Malloc(buf_size)
-        if self.pk.buf == NULL:
-            raise MemoryError("Unable to allocate internal buffer.")
-        self.pk.buf_size = buf_size
-        self.pk.length = 0
-
-    def __init__(self, default=None, encoding=None, unicode_errors=None,
-                 bint use_single_float=False, bint autoreset=True, bint use_bin_type=False,
+    def __init__(self, write, default=None, encoding=None, unicode_errors=None,
+                 bint use_single_float=False, bint use_bin_type=True,
                  bint strict_types=False):
         if encoding is not None:
             PyErr_WarnEx(DeprecationWarning, "encoding is deprecated.", 1)
         self.use_float = use_single_float
         self.strict_types = strict_types
-        self.autoreset = autoreset
         self.pk.use_bin_type = use_bin_type
+        if not PyCallable_Check(write):
+            raise TypeError("`write` must be a callable.")
+        msgpack_packer_init(&self.pk, <PyObject*> write)
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
@@ -142,8 +140,7 @@ cdef class Packer(object):
             self.unicode_errors = self._berrors
 
     def __dealloc__(self):
-        PyMem_Free(self.pk.buf)
-        self.pk.buf = NULL
+        msgpack_packer_free(&self.pk)
 
     cdef int _pack(self, object o, int nest_limit=DEFAULT_RECURSE_LIMIT) except -1:
         cdef long long llval
@@ -207,7 +204,7 @@ cdef class Packer(object):
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyUnicode_CheckExact(o) if strict_types else PyUnicode_Check(o):
                 if self.encoding == NULL and self.unicode_errors == NULL:
-                    ret = msgpack_pack_unicode(&self.pk, o, ITEM_LIMIT);
+                    ret = msgpack_pack_unicode(&self.pk, o, ITEM_LIMIT)
                     if ret == -2:
                         raise ValueError("unicode string is too large")
                 else:
@@ -270,7 +267,7 @@ cdef class Packer(object):
                 ret = msgpack_pack_bin(&self.pk, L)
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
-                PyBuffer_Release(&view);
+                PyBuffer_Release(&view)
             elif not default_used and self._default:
                 o = self._default(o)
                 default_used = 1
@@ -281,21 +278,15 @@ cdef class Packer(object):
 
     cpdef pack(self, object obj):
         cdef int ret
-        try:
-            ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
-        except:
-            self.pk.length = 0
-            raise
+        ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
         if ret:  # should not happen.
             raise RuntimeError("internal error")
-        if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            self.pk.length = 0
-            return buf
+        msgpack_pack_flush(&self.pk)
 
     def pack_ext_type(self, typecode, data):
         msgpack_pack_ext(&self.pk, typecode, len(data))
         msgpack_pack_raw_body(&self.pk, data, len(data))
+        msgpack_pack_flush(&self.pk)
 
     def pack_array_header(self, long long size):
         if size > ITEM_LIMIT:
@@ -305,10 +296,7 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            self.pk.length = 0
-            return buf
+        msgpack_pack_flush(&self.pk)
 
     def pack_map_header(self, long long size):
         if size > ITEM_LIMIT:
@@ -318,10 +306,7 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            self.pk.length = 0
-            return buf
+        msgpack_pack_flush(&self.pk)
 
     def pack_map_pairs(self, object pairs):
         """
@@ -341,22 +326,4 @@ cdef class Packer(object):
             raise MemoryError
         elif ret:  # should not happen
             raise TypeError
-        if self.autoreset:
-            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-            self.pk.length = 0
-            return buf
-
-    def reset(self):
-        """Reset internal buffer.
-
-        This method is usaful only when autoreset=False.
-        """
-        self.pk.length = 0
-
-    def bytes(self):
-        """Return internal buffer contents as bytes object"""
-        return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
-
-    def getbuffer(self):
-        """Return view of internal buffer."""
-        return buff_to_buff(self.pk.buf, self.pk.length)
+        msgpack_pack_flush(&self.pk)

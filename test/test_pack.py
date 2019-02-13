@@ -57,7 +57,7 @@ def testPackUTF32():  # deprecated
 
 def testPackBytes():
     test_data = [
-        b"", b"abcd", (b"defgh",),
+        b"", b"abcd", (b"defgh",), b"longlonglonglong" * 1024 * 1024
         ]
     for td in test_data:
         check(td)
@@ -65,6 +65,7 @@ def testPackBytes():
 def testPackByteArrays():
     test_data = [
         bytearray(b""), bytearray(b"abcd"), (bytearray(b"defgh"),),
+        bytearray(b"longlonglonglong" * 1024 * 1024)
         ]
     for td in test_data:
         check(td)

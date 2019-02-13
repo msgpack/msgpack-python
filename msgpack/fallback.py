@@ -1,22 +1,8 @@
 """Fallback pure Python implementation of msgpack"""
-
-import sys
 import struct
 import warnings
 
-
-if sys.version_info[0] == 2:
-    PY2 = True
-    int_types = (int, long)
-    def dict_iteritems(d):
-        return d.iteritems()
-else:
-    PY2 = False
-    int_types = int
-    unicode = str
-    xrange = range
-    def dict_iteritems(d):
-        return d.items()
+from .compat import *
 
 if sys.version_info < (3, 5):
     # Ugly hack...
@@ -29,36 +15,6 @@ else:
     def _is_recursionerror(e):
         return True
 
-if hasattr(sys, 'pypy_version_info'):
-    # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
-    # StringBuilder is fastest.
-    from __pypy__ import newlist_hint
-    try:
-        from __pypy__.builders import BytesBuilder as StringBuilder
-    except ImportError:
-        from __pypy__.builders import StringBuilder
-    USING_STRINGBUILDER = True
-    class StringIO(object):
-        def __init__(self, s=b''):
-            if s:
-                self.builder = StringBuilder(len(s))
-                self.builder.append(s)
-            else:
-                self.builder = StringBuilder()
-        def write(self, s):
-            if isinstance(s, memoryview):
-                s = s.tobytes()
-            elif isinstance(s, bytearray):
-                s = bytes(s)
-            self.builder.append(s)
-        def getvalue(self):
-            return self.builder.build()
-else:
-    USING_STRINGBUILDER = False
-    from io import BytesIO as StringIO
-    newlist_hint = lambda size: []
-
-
 from msgpack.exceptions import (
     BufferFull,
     OutOfData,
@@ -68,7 +24,6 @@ from msgpack.exceptions import (
 )
 
 from msgpack import ExtType
-
 
 EX_SKIP                 = 0
 EX_CONSTRUCT            = 1
@@ -615,7 +570,6 @@ class Unpacker(object):
 
     def _unpack(self, execute=EX_CONSTRUCT):
         typ, n, obj = self._read_header(execute)
-
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
                 raise ValueError("Expected array")
@@ -719,17 +673,22 @@ class Unpacker(object):
         return self._stream_offset
 
 
-class Packer(object):
+class StreamingPacker(object):
     """
-    MessagePack Packer
+    MessagePack Streaming Packer
 
     usage:
 
-        packer = Packer()
-        astream.write(packer.pack(a))
-        astream.write(packer.pack(b))
+        with open('/path') as f:
+            packer = StreamingPacker(f.write)
+            packer.pack(a)
+            packer.pack(b)
 
-    Packer's constructor has some keyword arguments:
+    StreamingPacker's constructor has some keyword arguments:
+
+    :param callable write:
+        An callable object which accepts bytes, for instance the .write(data) method of a file-like object.
+        Called with packed bytes as they are generated.
 
     :param callable default:
         Convert user type to builtin type that Packer supports.
@@ -738,17 +697,13 @@ class Packer(object):
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
 
-    :param bool autoreset:
-        Reset buffer after each pack and return its content as `bytes`. (default: True).
-        If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
-
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
         It also enables str8 type for unicode.
 
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
-        from serializeable types will not be serialized and will be
+        from serializable types will not be serialized and will be
         treated as unsupported type and forwarded to default.
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
@@ -760,9 +715,8 @@ class Packer(object):
     :param str unicode_errors:
         Error handler for encoding unicode. (default: 'strict')
     """
-    def __init__(self, default=None, encoding=None, unicode_errors=None,
-                 use_single_float=False, autoreset=True, use_bin_type=False,
-                 strict_types=False):
+    def __init__(self, write, default=None, encoding=None, unicode_errors=None,
+                 use_single_float=False, use_bin_type=False, strict_types=False):
         if encoding is None:
             encoding = 'utf_8'
         else:
@@ -775,11 +729,12 @@ class Packer(object):
 
         self._strict_types = strict_types
         self._use_float = use_single_float
-        self._autoreset = autoreset
         self._use_bin_type = use_bin_type
         self._encoding = encoding
         self._unicode_errors = unicode_errors
-        self._buffer = StringIO()
+        if not callable(write):
+            raise TypeError("write must be callable")
+        self._write_fn = write
         if default is not None:
             if not callable(default):
                 raise TypeError("default must be callable")
@@ -797,32 +752,32 @@ class Packer(object):
             if nest_limit < 0:
                 raise ValueError("recursion limit exceeded")
             if obj is None:
-                return self._buffer.write(b"\xc0")
+                return self._write_fn(b"\xc0")
             if check(obj, bool):
                 if obj:
-                    return self._buffer.write(b"\xc3")
-                return self._buffer.write(b"\xc2")
+                    return self._write_fn(b"\xc3")
+                return self._write_fn(b"\xc2")
             if check(obj, int_types):
                 if 0 <= obj < 0x80:
-                    return self._buffer.write(struct.pack("B", obj))
+                    return self._write_fn(struct.pack("B", obj))
                 if -0x20 <= obj < 0:
-                    return self._buffer.write(struct.pack("b", obj))
+                    return self._write_fn(struct.pack("b", obj))
                 if 0x80 <= obj <= 0xff:
-                    return self._buffer.write(struct.pack("BB", 0xcc, obj))
+                    return self._write_fn(struct.pack("BB", 0xcc, obj))
                 if -0x80 <= obj < 0:
-                    return self._buffer.write(struct.pack(">Bb", 0xd0, obj))
+                    return self._write_fn(struct.pack(">Bb", 0xd0, obj))
                 if 0xff < obj <= 0xffff:
-                    return self._buffer.write(struct.pack(">BH", 0xcd, obj))
+                    return self._write_fn(struct.pack(">BH", 0xcd, obj))
                 if -0x8000 <= obj < -0x80:
-                    return self._buffer.write(struct.pack(">Bh", 0xd1, obj))
+                    return self._write_fn(struct.pack(">Bh", 0xd1, obj))
                 if 0xffff < obj <= 0xffffffff:
-                    return self._buffer.write(struct.pack(">BI", 0xce, obj))
+                    return self._write_fn(struct.pack(">BI", 0xce, obj))
                 if -0x80000000 <= obj < -0x8000:
-                    return self._buffer.write(struct.pack(">Bi", 0xd2, obj))
+                    return self._write_fn(struct.pack(">Bi", 0xd2, obj))
                 if 0xffffffff < obj <= 0xffffffffffffffff:
-                    return self._buffer.write(struct.pack(">BQ", 0xcf, obj))
+                    return self._write_fn(struct.pack(">BQ", 0xcf, obj))
                 if -0x8000000000000000 <= obj < -0x80000000:
-                    return self._buffer.write(struct.pack(">Bq", 0xd3, obj))
+                    return self._write_fn(struct.pack(">Bq", 0xd3, obj))
                 if not default_used and self._default is not None:
                     obj = self._default(obj)
                     default_used = True
@@ -833,7 +788,7 @@ class Packer(object):
                 if n >= 2**32:
                     raise ValueError("%s is too large" % type(obj).__name__)
                 self._pack_bin_header(n)
-                return self._buffer.write(obj)
+                return self._write_fn(obj)
             if check(obj, unicode):
                 if self._encoding is None:
                     raise TypeError(
@@ -844,17 +799,17 @@ class Packer(object):
                 if n >= 2**32:
                     raise ValueError("String is too large")
                 self._pack_raw_header(n)
-                return self._buffer.write(obj)
+                return self._write_fn(obj)
             if check(obj, memoryview):
                 n = len(obj) * obj.itemsize
                 if n >= 2**32:
                     raise ValueError("Memoryview is too large")
                 self._pack_bin_header(n)
-                return self._buffer.write(obj)
+                return self._write_fn(obj)
             if check(obj, float):
                 if self._use_float:
-                    return self._buffer.write(struct.pack(">Bf", 0xca, obj))
-                return self._buffer.write(struct.pack(">Bd", 0xcb, obj))
+                    return self._write_fn(struct.pack(">Bf", 0xca, obj))
+                return self._write_fn(struct.pack(">Bd", 0xcb, obj))
             if check(obj, ExtType):
                 code = obj.code
                 data = obj.data
@@ -862,23 +817,23 @@ class Packer(object):
                 assert isinstance(data, bytes)
                 L = len(data)
                 if L == 1:
-                    self._buffer.write(b'\xd4')
+                    self._write_fn(b'\xd4')
                 elif L == 2:
-                    self._buffer.write(b'\xd5')
+                    self._write_fn(b'\xd5')
                 elif L == 4:
-                    self._buffer.write(b'\xd6')
+                    self._write_fn(b'\xd6')
                 elif L == 8:
-                    self._buffer.write(b'\xd7')
+                    self._write_fn(b'\xd7')
                 elif L == 16:
-                    self._buffer.write(b'\xd8')
+                    self._write_fn(b'\xd8')
                 elif L <= 0xff:
-                    self._buffer.write(struct.pack(">BB", 0xc7, L))
+                    self._write_fn(struct.pack(">BB", 0xc7, L))
                 elif L <= 0xffff:
-                    self._buffer.write(struct.pack(">BH", 0xc8, L))
+                    self._write_fn(struct.pack(">BH", 0xc8, L))
                 else:
-                    self._buffer.write(struct.pack(">BI", 0xc9, L))
-                self._buffer.write(struct.pack("b", code))
-                self._buffer.write(data)
+                    self._write_fn(struct.pack(">BI", 0xc9, L))
+                self._write_fn(struct.pack("b", code))
+                self._write_fn(data)
                 return
             if check(obj, list_types):
                 n = len(obj)
@@ -896,40 +851,20 @@ class Packer(object):
             raise TypeError("Cannot serialize %r" % (obj, ))
 
     def pack(self, obj):
-        try:
-            self._pack(obj)
-        except:
-            self._buffer = StringIO()  # force reset
-            raise
-        if self._autoreset:
-            ret = self._buffer.getvalue()
-            self._buffer = StringIO()
-            return ret
+        self._pack(obj)
 
     def pack_map_pairs(self, pairs):
         self._pack_map_pairs(len(pairs), pairs)
-        if self._autoreset:
-            ret = self._buffer.getvalue()
-            self._buffer = StringIO()
-            return ret
 
     def pack_array_header(self, n):
         if n >= 2**32:
             raise ValueError
         self._pack_array_header(n)
-        if self._autoreset:
-            ret = self._buffer.getvalue()
-            self._buffer = StringIO()
-            return ret
 
     def pack_map_header(self, n):
         if n >= 2**32:
             raise ValueError
         self._pack_map_header(n)
-        if self._autoreset:
-            ret = self._buffer.getvalue()
-            self._buffer = StringIO()
-            return ret
 
     def pack_ext_type(self, typecode, data):
         if not isinstance(typecode, int):
@@ -942,40 +877,40 @@ class Packer(object):
         if L > 0xffffffff:
             raise ValueError("Too large data")
         if L == 1:
-            self._buffer.write(b'\xd4')
+            self._write_fn(b'\xd4')
         elif L == 2:
-            self._buffer.write(b'\xd5')
+            self._write_fn(b'\xd5')
         elif L == 4:
-            self._buffer.write(b'\xd6')
+            self._write_fn(b'\xd6')
         elif L == 8:
-            self._buffer.write(b'\xd7')
+            self._write_fn(b'\xd7')
         elif L == 16:
-            self._buffer.write(b'\xd8')
+            self._write_fn(b'\xd8')
         elif L <= 0xff:
-            self._buffer.write(b'\xc7' + struct.pack('B', L))
+            self._write_fn(b'\xc7' + struct.pack('B', L))
         elif L <= 0xffff:
-            self._buffer.write(b'\xc8' + struct.pack('>H', L))
+            self._write_fn(b'\xc8' + struct.pack('>H', L))
         else:
-            self._buffer.write(b'\xc9' + struct.pack('>I', L))
-        self._buffer.write(struct.pack('B', typecode))
-        self._buffer.write(data)
+            self._write_fn(b'\xc9' + struct.pack('>I', L))
+        self._write_fn(struct.pack('B', typecode))
+        self._write_fn(data)
 
     def _pack_array_header(self, n):
         if n <= 0x0f:
-            return self._buffer.write(struct.pack('B', 0x90 + n))
+            return self._write_fn(struct.pack('B', 0x90 + n))
         if n <= 0xffff:
-            return self._buffer.write(struct.pack(">BH", 0xdc, n))
+            return self._write_fn(struct.pack(">BH", 0xdc, n))
         if n <= 0xffffffff:
-            return self._buffer.write(struct.pack(">BI", 0xdd, n))
+            return self._write_fn(struct.pack(">BI", 0xdd, n))
         raise ValueError("Array is too large")
 
     def _pack_map_header(self, n):
         if n <= 0x0f:
-            return self._buffer.write(struct.pack('B', 0x80 + n))
+            return self._write_fn(struct.pack('B', 0x80 + n))
         if n <= 0xffff:
-            return self._buffer.write(struct.pack(">BH", 0xde, n))
+            return self._write_fn(struct.pack(">BH", 0xde, n))
         if n <= 0xffffffff:
-            return self._buffer.write(struct.pack(">BI", 0xdf, n))
+            return self._write_fn(struct.pack(">BI", 0xdf, n))
         raise ValueError("Dict is too large")
 
     def _pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
@@ -986,13 +921,13 @@ class Packer(object):
 
     def _pack_raw_header(self, n):
         if n <= 0x1f:
-            self._buffer.write(struct.pack('B', 0xa0 + n))
+            self._write_fn(struct.pack('B', 0xa0 + n))
         elif self._use_bin_type and n <= 0xff:
-            self._buffer.write(struct.pack('>BB', 0xd9, n))
+            self._write_fn(struct.pack('>BB', 0xd9, n))
         elif n <= 0xffff:
-            self._buffer.write(struct.pack(">BH", 0xda, n))
+            self._write_fn(struct.pack(">BH", 0xda, n))
         elif n <= 0xffffffff:
-            self._buffer.write(struct.pack(">BI", 0xdb, n))
+            self._write_fn(struct.pack(">BI", 0xdb, n))
         else:
             raise ValueError('Raw is too large')
 
@@ -1000,28 +935,10 @@ class Packer(object):
         if not self._use_bin_type:
             return self._pack_raw_header(n)
         elif n <= 0xff:
-            return self._buffer.write(struct.pack('>BB', 0xc4, n))
+            return self._write_fn(struct.pack('>BB', 0xc4, n))
         elif n <= 0xffff:
-            return self._buffer.write(struct.pack(">BH", 0xc5, n))
+            return self._write_fn(struct.pack(">BH", 0xc5, n))
         elif n <= 0xffffffff:
-            return self._buffer.write(struct.pack(">BI", 0xc6, n))
+            return self._write_fn(struct.pack(">BI", 0xc6, n))
         else:
             raise ValueError('Bin is too large')
-
-    def bytes(self):
-        """Return internal buffer contents as bytes object"""
-        return self._buffer.getvalue()
-
-    def reset(self):
-        """Reset internal buffer.
-
-        This method is usaful only when autoreset=False.
-        """
-        self._buffer = StringIO()
-
-    def getbuffer(self):
-        """Return view of internal buffer."""
-        if USING_STRINGBUILDER or PY2:
-            return memoryview(self.bytes())
-        else:
-            return self._buffer.getbuffer()
