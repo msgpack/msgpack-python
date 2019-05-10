@@ -3,7 +3,7 @@
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 
-from msgpack import ExtType
+from . import ExtType
 
 
 cdef extern from "Python.h":
