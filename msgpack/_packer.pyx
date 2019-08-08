@@ -246,7 +246,7 @@ cdef class Packer(object):
                 # This should be before Tuple because ExtType is namedtuple.
                 longval = o.code
                 rawval = o.data
-                L = len(o.data)
+                L = len(rawval)
                 if L > ITEM_LIMIT:
                     raise ValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
