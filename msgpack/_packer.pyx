@@ -158,6 +158,8 @@ cdef class Packer(object):
         cdef int default_used = 0
         cdef bint strict_types = self.strict_types
         cdef Py_buffer view
+        cdef list olist
+        cdef tuple otuple
 
         if nest_limit < 0:
             raise ValueError("recursion limit exceeded.")
@@ -251,13 +253,24 @@ cdef class Packer(object):
                     raise ValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-            elif PyList_CheckExact(o) if strict_types else (PyTuple_Check(o) or PyList_Check(o)):
-                L = len(o)
+            elif PyList_CheckExact(o) if strict_types else PyList_Check(o):
+                olist = <list>o
+                L = len(olist)
                 if L > ITEM_LIMIT:
                     raise ValueError("list is too large")
                 ret = msgpack_pack_array(&self.pk, L)
                 if ret == 0:
-                    for v in o:
+                    for v in olist:
+                        ret = self._pack(v, nest_limit-1)
+                        if ret != 0: break
+            elif not strict_types and PyTuple_Check(o):
+                otuple = <tuple>o
+                L = len(otuple)
+                if L > ITEM_LIMIT:
+                    raise ValueError("tuple is too large")
+                ret = msgpack_pack_array(&self.pk, L)
+                if ret == 0:
+                    for v in otuple:
                         ret = self._pack(v, nest_limit-1)
                         if ret != 0: break
             elif PyMemoryView_Check(o):
