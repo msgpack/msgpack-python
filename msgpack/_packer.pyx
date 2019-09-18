@@ -200,7 +200,7 @@ cdef class Packer(object):
                    dval = o
                    ret = msgpack_pack_double(&self.pk, dval)
             elif PyBytesLike_CheckExact(o) if strict_types else PyBytesLike_Check(o):
-                L = len(o)
+                L = Py_SIZE(o)
                 if L > ITEM_LIMIT:
                     PyErr_Format(ValueError, b"%.200s object is too large", Py_TYPE(o).tp_name)
                 rawval = o
@@ -214,7 +214,7 @@ cdef class Packer(object):
                         raise ValueError("unicode string is too large")
                 else:
                     o = PyUnicode_AsEncodedString(o, self.encoding, self.unicode_errors)
-                    L = len(o)
+                    L = Py_SIZE(o)
                     if L > ITEM_LIMIT:
                         raise ValueError("unicode string is too large")
                     ret = msgpack_pack_raw(&self.pk, L)
@@ -234,7 +234,7 @@ cdef class Packer(object):
                         ret = self._pack(v, nest_limit-1)
                         if ret != 0: break
             elif not strict_types and PyDict_Check(o):
-                L = len(o)
+                L = Py_SIZE(o)
                 if L > ITEM_LIMIT:
                     raise ValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
@@ -254,7 +254,7 @@ cdef class Packer(object):
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyList_CheckExact(o) if strict_types else (PyTuple_Check(o) or PyList_Check(o)):
-                L = len(o)
+                L = Py_SIZE(o)
                 if L > ITEM_LIMIT:
                     raise ValueError("list is too large")
                 ret = msgpack_pack_array(&self.pk, L)
