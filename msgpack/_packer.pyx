@@ -3,6 +3,8 @@
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 
+cdef ExtType
+
 from . import ExtType
 
 
