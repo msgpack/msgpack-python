@@ -3,16 +3,20 @@ language: python
 cache: pip
 
 python:
+  # Available Python (PyPy) can be listed by:
+  #
+  #   $ aws s3 ls s3://travis-python-archives/binaries/ubuntu/16.04/x86_64/
   - "2.7"
   - "3.4"
   - "3.5"
   - "3.6"
   - "3.7"
-  - "nightly"
+  - "3.8-dev"
 
 matrix:
   include:
-    - sudo: required
+    - name: 32bit build
+      sudo: required
       language: python
       services:
         - docker
@@ -25,12 +29,14 @@ matrix:
         - docker pull $DOCKER_IMAGE
       script:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
-    - python: "pypy2.7-5.10.0"
+    - name: "pypy2.7"
+      python: "pypy2.7-7.1.1"
       install:
         - pip install -e .
       script:
         - py.test -v test
-    - python: "pypy3.5"
+    - name: "pypy3"
+      python: "pypy3.6-7.1.1"
       install:
         - pip install -e .
       script:
