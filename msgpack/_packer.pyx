@@ -234,7 +234,7 @@ cdef class Packer(object):
                         ret = self._pack(v, nest_limit-1)
                         if ret != 0: break
             elif not strict_types and PyDict_Check(o):
-                L = Py_SIZE(o)
+                L = len(o)
                 if L > ITEM_LIMIT:
                     raise ValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
