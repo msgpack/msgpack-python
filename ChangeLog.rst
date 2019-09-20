@@ -1,3 +1,13 @@
+0.6.2
+=====
+
+Release Date: 2019-09-20
+
+* Support Python 3.8.
+* Update Cython to 0.29.13 for support Python 3.8.
+* Some small optimizations.
+
+
 0.6.1
 ======
 
