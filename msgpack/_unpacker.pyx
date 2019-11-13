@@ -38,6 +38,7 @@ cdef extern from "unpack.h":
         Py_ssize_t max_array_len
         Py_ssize_t max_map_len
         Py_ssize_t max_ext_len
+        PyObject* memo
 
     ctypedef struct unpack_context:
         msgpack_user user
@@ -61,7 +62,7 @@ cdef inline init_ctx(unpack_context *ctx,
                      const char* encoding, const char* unicode_errors,
                      Py_ssize_t max_str_len, Py_ssize_t max_bin_len,
                      Py_ssize_t max_array_len, Py_ssize_t max_map_len,
-                     Py_ssize_t max_ext_len):
+                     Py_ssize_t max_ext_len, object d):
     unpack_init(ctx)
     ctx.user.use_list = use_list
     ctx.user.raw = raw
@@ -101,6 +102,9 @@ cdef inline init_ctx(unpack_context *ctx,
 
     ctx.user.encoding = encoding
     ctx.user.unicode_errors = unicode_errors
+    Py_INCREF(d)
+    ctx.user.memo = <PyObject*>d
+
 
 def default_read_extended_type(typecode, data):
     raise NotImplementedError("Cannot decode extended type with typecode=%d" % typecode)
@@ -195,9 +199,10 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
         max_ext_len = buf_len
 
     try:
+        memo = {}
         init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
                  use_list, raw, strict_map_key, cenc, cerr,
-                 max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
+                 max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len, memo)
         ret = unpack_construct(&ctx, buf, buf_len, &off)
     finally:
         if new_protocol:
@@ -404,7 +409,7 @@ cdef class Unpacker(object):
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
                  ext_hook, use_list, raw, strict_map_key, cenc, cerr,
                  max_str_len, max_bin_len, max_array_len,
-                 max_map_len, max_ext_len)
+                 max_map_len, max_ext_len, {})
 
     def feed(self, object next_bytes):
         """Append `next_bytes` to internal buffer."""

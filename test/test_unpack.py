@@ -65,6 +65,15 @@ def test_unpacker_ext_hook():
     assert unpacker.unpack() == {'a': ExtType(2, b'321')}
 
 
+def test_unpacker_shares_stringly_keys():
+    f = BytesIO(packb([{" a  ?!": 1}, {" a  ?!": 2}]))
+    unpacker = Unpacker(f)
+    d1, d2 = unpacker.unpack()
+    key1, = d1
+    key2, = d2
+    assert key1 is key2
+
+
 if __name__ == '__main__':
     test_unpack_array_header_from_file()
     test_unpacker_hook_refcnt()

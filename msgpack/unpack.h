@@ -30,6 +30,7 @@ typedef struct unpack_user {
     const char *encoding;
     const char *unicode_errors;
     Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
+    PyObject *memo;
 } unpack_user;
 
 typedef PyObject* msgpack_unpack_object;
@@ -192,6 +193,21 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
     if (u->strict_map_key && !PyUnicode_CheckExact(k) && !PyBytes_CheckExact(k)) {
         PyErr_Format(PyExc_ValueError, "%.100s is not allowed for map key", Py_TYPE(k)->tp_name);
         return -1;
+    }
+    if (PyUnicode_CheckExact(k) || PyBytes_CheckExact(k)) {
+        PyObject *memokey = PyDict_GetItem(u->memo, k);
+        if (memokey != NULL) {
+            Py_INCREF(memokey);
+            Py_DECREF(k);
+            k = memokey;
+        }
+        else {
+            if (PyDict_SetItem(u->memo, k, k) < 0) {
+                Py_DECREF(k);
+                Py_DECREF(v);
+                return -1;
+            }
+        }
     }
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);

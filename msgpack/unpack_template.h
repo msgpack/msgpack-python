@@ -73,6 +73,7 @@ static inline PyObject* unpack_data(unpack_context* ctx)
 static inline void unpack_clear(unpack_context *ctx)
 {
     Py_CLEAR(ctx->stack[0].obj);
+    Py_CLEAR(ctx->user.memo);
 }
 
 template <bool construct>

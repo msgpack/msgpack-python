@@ -321,6 +321,8 @@ class Unpacker(object):
         self._max_ext_len = max_ext_len
         self._stream_offset = 0
 
+        self._memo = {}  # used to memoize keys to reduce memory consumption
+
         if list_hook is not None and not callable(list_hook):
             raise TypeError('`list_hook` is not callable')
         if object_hook is not None and not callable(object_hook):
@@ -656,6 +658,8 @@ class Unpacker(object):
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (unicode, bytes):
                         raise ValueError("%s is not allowed for map key" % str(type(key)))
+                    if type(key) in (unicode, bytes):
+                        key = self._memo.setdefault(key, key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
                     ret = self._object_hook(ret)
