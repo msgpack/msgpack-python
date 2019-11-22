@@ -5,6 +5,10 @@ from .exceptions import *
 from collections import namedtuple
 from numbers import Number, Integral
 
+import struct
+import sys
+if sys.version_info[0] > 2:
+    long = int
 
 class ExtType(namedtuple('ExtType', 'code data')):
     """ExtType represents ext type in msgpack."""
@@ -44,24 +48,24 @@ class TimestampType(namedtuple('TimestampType', 'seconds, nanoseconds')):
         else:
             # round helps with floating point issues
             nanoseconds = int(round(seconds % 1 * 1e9, 0))
-        seconds = int(seconds // 1)
+        seconds = long(seconds // 1)
         return super(TimestampType, cls).__new__(cls, seconds, nanoseconds)
 
     @staticmethod
     def from_bytes(b):
         """Unpack bytes into a TimestampType."""
         if len(b) == 4:
-            seconds_ = int.from_bytes(b, "big", signed=False)
-            nanoseconds_ = 0
+            seconds = struct.unpack("!L", b)[0]
+            nanoseconds = 0
         elif len(b) == 8:
-            data64 = int.from_bytes(b, "big", signed=False)
-            seconds_ = data64 & 0x00000003ffffffff
-            nanoseconds_ = data64 >> 34
+            data64 = struct.unpack("!Q", b)[0]
+            seconds = data64 & 0x00000003ffffffff
+            nanoseconds = data64 >> 34
         elif len(b) == 12:
-            nanoseconds_, seconds_ = struct.unpack("!Iq", b)
+            nanoseconds, seconds = struct.unpack("!Iq", b)
         else:
             raise ValueError("Timestamp type can only be created from 32, 64, or 96-bit byte objects")
-        return TimestampType(seconds_, nanoseconds_)
+        return TimestampType(seconds, nanoseconds)
 
     def to_bytes(self):
         """Pack TimestampType into bytes."""
@@ -69,10 +73,10 @@ class TimestampType(namedtuple('TimestampType', 'seconds, nanoseconds')):
             data64 = self.nanoseconds << 34 | self.seconds
             if data64 & 0xffffffff00000000 == 0:
                 # nanoseconds is zero and seconds < 2**32, so timestamp 32
-                data = self.seconds.to_bytes(4, "big", signed=False)
+                data = struct.pack("!L", data64)
             else:
                 # timestamp 64
-                data = data64.to_bytes(8, "big", signed=False)
+                data = struct.pack("!Q", data64)
         else:
             # timestamp 96
             data = struct.pack("!Iq", self.nanoseconds, self.seconds)
