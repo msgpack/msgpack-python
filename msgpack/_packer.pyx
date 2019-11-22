@@ -4,8 +4,9 @@ from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 
 cdef ExtType
+cdef TimestampType
 
-from . import ExtType
+from . import ExtType, TimestampType
 
 
 cdef extern from "Python.h":
@@ -251,6 +252,15 @@ cdef class Packer(object):
                 L = len(o.data)
                 if L > ITEM_LIMIT:
                     raise ValueError("EXT data is too large")
+                ret = msgpack_pack_ext(&self.pk, longval, L)
+                ret = msgpack_pack_raw_body(&self.pk, rawval, L)
+            elif type(o) is TimestampType if strict_types else isinstance(o, TimestampType):
+                # This should also be before Tuple because TimestampType is namedtuple.
+                code = -1
+                data = o.to_bytes()
+                L = len(data)
+                longval = code
+                rawval = data
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyList_CheckExact(o) if strict_types else (PyTuple_Check(o) or PyList_Check(o)):
