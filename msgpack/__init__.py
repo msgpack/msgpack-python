@@ -3,7 +3,6 @@ from ._version import version
 from .exceptions import *
 
 from collections import namedtuple
-import math
 from numbers import Number, Integral
 
 
