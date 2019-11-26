@@ -37,6 +37,7 @@ cdef extern from "pack.h":
     int msgpack_pack_bin(msgpack_packer* pk, size_t l)
     int msgpack_pack_raw_body(msgpack_packer* pk, char* body, size_t l)
     int msgpack_pack_ext(msgpack_packer* pk, char typecode, size_t l)
+    int msgpack_pack_timestamp(msgpack_packer* x, long long seconds, unsigned long nanoseconds);
     int msgpack_pack_unicode(msgpack_packer* pk, object o, long long limit)
 
 cdef extern from "buff_converter.h":
@@ -151,6 +152,7 @@ cdef class Packer(object):
     cdef int _pack(self, object o, int nest_limit=DEFAULT_RECURSE_LIMIT) except -1:
         cdef long long llval
         cdef unsigned long long ullval
+        cdef unsigned long ulval
         cdef long longval
         cdef float fval
         cdef double dval
@@ -254,15 +256,10 @@ cdef class Packer(object):
                     raise ValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-            elif type(o) is TimestampType if strict_types else isinstance(o, TimestampType):
-                # This should also be before Tuple because TimestampType is namedtuple.
-                code = -1
-                data = o.to_bytes()
-                L = len(data)
-                longval = code
-                rawval = data
-                ret = msgpack_pack_ext(&self.pk, longval, L)
-                ret = msgpack_pack_raw_body(&self.pk, rawval, L)
+            elif type(o) is TimestampType:
+                llval = o.seconds
+                ulval = o.nanoseconds
+                ret = msgpack_pack_timestamp(&self.pk, llval, ulval)
             elif PyList_CheckExact(o) if strict_types else (PyTuple_Check(o) or PyList_Check(o)):
                 L = Py_SIZE(o)
                 if L > ITEM_LIMIT:
