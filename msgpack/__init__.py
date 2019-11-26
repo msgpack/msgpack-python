@@ -7,9 +7,6 @@ from collections import namedtuple
 import struct
 import sys
 
-if sys.version_info[0] > 2:
-    long = int
-
 class ExtType(namedtuple('ExtType', 'code data')):
     """ExtType represents ext type in msgpack."""
     def __new__(cls, code, data):
@@ -45,20 +42,20 @@ class TimestampType:
 
         Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
         """
-        if not isinstance(seconds, (int, long, float)):
+        if not isinstance(seconds, (int, float)):
             raise TypeError("seconds must be numeric")
         if not isinstance(nanoseconds, int):
             raise TypeError("nanoseconds must be an integer")
         if nanoseconds:
             if nanoseconds < 0 or nanoseconds % 1 != 0 or nanoseconds > (1e9 - 1):
                 raise ValueError("nanoseconds must be a non-negative integer less than 999999999.")
-            if not isinstance(seconds, (int, long)):
+            if not isinstance(seconds, int):
                 raise ValueError("seconds must be an integer if also providing nanoseconds.")
             self.nanoseconds = nanoseconds
         else:
             # round helps with floating point issues
             self.nanoseconds = int(round(seconds % 1 * 1e9, 0))
-        self.seconds = long(seconds // 1)
+        self.seconds = int(seconds // 1)
 
     def __repr__(self):
         """String representation of TimestampType."""
