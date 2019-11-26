@@ -7,8 +7,6 @@ from numbers import Number, Integral
 
 import struct
 import sys
-if sys.version_info[0] > 2:
-    long = int
 
 class ExtType(namedtuple('ExtType', 'code data')):
     """ExtType represents ext type in msgpack."""
@@ -48,7 +46,7 @@ class TimestampType(namedtuple('TimestampType', 'seconds, nanoseconds')):
         else:
             # round helps with floating point issues
             nanoseconds = int(round(seconds % 1 * 1e9, 0))
-        seconds = long(seconds // 1)
+        seconds = int(seconds // 1)
         return super(TimestampType, cls).__new__(cls, seconds, nanoseconds)
 
     @staticmethod
