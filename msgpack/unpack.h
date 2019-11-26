@@ -306,9 +306,6 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
         return -1;
     }
     // length also includes the typecode, so the actual data is length-1
-#if PY_MAJOR_VERSION == 2
-    py = PyObject_CallFunction(u->ext_hook, "(is#)", (int)typecode, pos, (Py_ssize_t)length-1);
-#else
     if (typecode == -1) {
         msgpack_timestamp ts;
         if (unpack_timestamp(pos, length-1, &ts) == 0) {
@@ -317,9 +314,12 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
             py = NULL;
         }
     } else {
+#if PY_MAJOR_VERSION == 2
+        py = PyObject_CallFunction(u->ext_hook, "(is#)", (int)typecode, pos, (Py_ssize_t)length-1);
+#else
         py = PyObject_CallFunction(u->ext_hook, "(iy#)", (int)typecode, pos, (Py_ssize_t)length-1);
-    }
 #endif
+    }
     if (!py)
         return -1;
     *o = py;
