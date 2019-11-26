@@ -21,16 +21,18 @@ class ExtType(namedtuple('ExtType', 'code data')):
             raise ValueError("code must be 0~127")
         return super(ExtType, cls).__new__(cls, code, data)
 
-class TimestampType(namedtuple('TimestampType', 'seconds, nanoseconds')):
+
+class TimestampType:
+    __slots__ = ["seconds", "nanoseconds"]
     """TimestampType represents the Timestamp extension type in msgpack."""
-    def __new__(cls, seconds, nanoseconds=0):
-        """Create TimestampType namedtuple.
+    def __init__(self, seconds, nanoseconds=0):
+        """Create TimestampType.
 
         seconds: numeric
             Number of seconds since the UNIX epoch (00:00:00 UTC Jan 1 1970, minus leap seconds).
             May be negative.
         nanoseconds: int
-            Number of nanoseconds to add to `seconds` to get fractional time. Maximum is 999_999_999
+            Number of nanoseconds to add to `seconds` to get fractional time. Maximum is 999_999_999. Default is 0.
 
         Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
         """
@@ -43,11 +45,15 @@ class TimestampType(namedtuple('TimestampType', 'seconds, nanoseconds')):
                 raise ValueError("nanoseconds must be a non-negative integer less than 999999999.")
             if not isinstance(seconds, Integral):
                 raise ValueError("seconds must be an integer if also providing nanoseconds.")
+            self.nanoseconds = nanoseconds
         else:
             # round helps with floating point issues
-            nanoseconds = int(round(seconds % 1 * 1e9, 0))
-        seconds = int(seconds // 1)
-        return super(TimestampType, cls).__new__(cls, seconds, nanoseconds)
+            self.nanoseconds = int(round(seconds % 1 * 1e9, 0))
+        self.seconds = int(seconds // 1)
+
+    def __repr__(self):
+        """String representation of TimestampType."""
+        return str.format("TimestampType(seconds={0}, nanoseconds={1})", self.seconds, self.nanoseconds)
 
     @staticmethod
     def from_bytes(b):
@@ -83,6 +89,7 @@ class TimestampType(namedtuple('TimestampType', 'seconds, nanoseconds')):
     def to_float_s(self):
         """Return a floating-point posix timestamp"""
         return self.seconds + self.nanoseconds/1e9
+
 
 import os
 if os.environ.get('MSGPACK_PUREPYTHON'):
