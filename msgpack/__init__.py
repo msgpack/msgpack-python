@@ -3,7 +3,6 @@ from ._version import version
 from .exceptions import *
 
 from collections import namedtuple
-from numbers import Number, Integral
 
 import struct
 import sys
@@ -36,14 +35,14 @@ class TimestampType:
 
         Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
         """
-        if not isinstance(seconds, Number):
+        if not isinstance(seconds, (int, float)):
             raise TypeError("seconds must be numeric")
-        if not isinstance(nanoseconds, Number):
-            raise TypeError("nanoseconds must be numeric")
+        if not isinstance(nanoseconds, int):
+            raise TypeError("nanoseconds must be an integer")
         if nanoseconds:
             if nanoseconds < 0 or nanoseconds % 1 != 0 or nanoseconds > (1e9 - 1):
                 raise ValueError("nanoseconds must be a non-negative integer less than 999999999.")
-            if not isinstance(seconds, Integral):
+            if not isinstance(seconds, int):
                 raise ValueError("seconds must be an integer if also providing nanoseconds.")
             self.nanoseconds = nanoseconds
         else:
@@ -73,7 +72,7 @@ class TimestampType:
 
     def to_bytes(self):
         """Pack TimestampType into bytes."""
-        if 0 <= self.seconds < 17179869184:  # seconds is nonnegative and fits in 34 bits
+        if (self.seconds >> 34) == 0:  # seconds is non-negative and fits in 34 bits
             data64 = self.nanoseconds << 34 | self.seconds
             if data64 & 0xffffffff00000000 == 0:
                 # nanoseconds is zero and seconds < 2**32, so timestamp 32
