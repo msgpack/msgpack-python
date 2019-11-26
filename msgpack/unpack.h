@@ -27,6 +27,7 @@ typedef struct unpack_user {
     PyObject *object_hook;
     PyObject *list_hook;
     PyObject *ext_hook;
+    PyObject *timestamp_t;
     const char *encoding;
     const char *unicode_errors;
     Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
@@ -259,6 +260,38 @@ static inline int unpack_callback_bin(unpack_user* u, const char* b, const char*
     return 0;
 }
 
+typedef struct msgpack_timestamp {
+    int64_t tv_sec;
+    uint32_t tv_nsec;
+} msgpack_timestamp;
+
+/*
+ * Unpack ext buffer to a timestamp. Pulled from msgpack-c timestamp.h.
+ */
+static inline int unpack_timestamp(const char* buf, unsigned int buflen, msgpack_timestamp* ts) {
+    switch (buflen) {
+    case 4:
+        ts->tv_nsec = 0;
+        {
+            uint32_t v = _msgpack_load32(uint32_t, buf);
+            ts->tv_sec = (int64_t)v;
+        }
+        return 0;
+    case 8: {
+        uint64_t value =_msgpack_load64(uint64_t, buf);
+        ts->tv_nsec = (uint32_t)(value >> 34);
+        ts->tv_sec = value & 0x00000003ffffffffLL;
+        return 0;
+    }
+    case 12:
+        ts->tv_nsec = _msgpack_load32(uint32_t, buf);
+        ts->tv_sec = _msgpack_load64(int64_t, buf + 4);
+        return 0;
+    default:
+        return -1;
+    }
+}
+
 static inline int unpack_callback_ext(unpack_user* u, const char* base, const char* pos,
                                       unsigned int length, msgpack_unpack_object* o)
 {
@@ -276,7 +309,16 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
 #if PY_MAJOR_VERSION == 2
     py = PyObject_CallFunction(u->ext_hook, "(is#)", (int)typecode, pos, (Py_ssize_t)length-1);
 #else
-    py = PyObject_CallFunction(u->ext_hook, "(iy#)", (int)typecode, pos, (Py_ssize_t)length-1);
+    if (typecode == -1) {
+        msgpack_timestamp ts;
+        if (unpack_timestamp(pos, length-1, &ts) == 0) {
+            py = PyObject_CallFunction(u->timestamp_t, "(Lk)", ts.tv_sec, ts.tv_nsec);
+        } else {
+            py = NULL;
+        }
+    } else {
+        py = PyObject_CallFunction(u->ext_hook, "(iy#)", (int)typecode, pos, (Py_ssize_t)length-1);
+    }
 #endif
     if (!py)
         return -1;

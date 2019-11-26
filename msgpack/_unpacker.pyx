@@ -19,7 +19,7 @@ from .exceptions import (
     FormatError,
     StackError,
 )
-from . import ExtType
+from . import ExtType, TimestampType
 
 
 cdef extern from "unpack.h":
@@ -31,6 +31,7 @@ cdef extern from "unpack.h":
         PyObject* object_hook
         PyObject* list_hook
         PyObject* ext_hook
+        PyObject* timestamp_t
         char *encoding
         char *unicode_errors
         Py_ssize_t max_str_len
@@ -98,6 +99,9 @@ cdef inline init_ctx(unpack_context *ctx,
         if not PyCallable_Check(ext_hook):
             raise TypeError("ext_hook must be a callable.")
         ctx.user.ext_hook = <PyObject*>ext_hook
+
+    # Add Timestamp type to the user object so it may be used in unpack.h
+    ctx.user.timestamp_t = <PyObject*>TimestampType
 
     ctx.user.encoding = encoding
     ctx.user.unicode_errors = unicode_errors
