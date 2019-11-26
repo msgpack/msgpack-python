@@ -27,6 +27,10 @@ API reference
 
 .. autoclass:: ExtType
 
+.. autoclass:: TimestampType
+    :members:
+    :special-members: __init__
+
 exceptions
 ----------
 
