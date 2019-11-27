@@ -9,6 +9,11 @@ from setuptools import setup, Extension
 
 from distutils.command.build_ext import build_ext
 
+
+PYPY = hasattr(sys, "pypy_version_info")
+PY2 = sys.version_info[0] == 2
+
+
 # for building transitional package.
 TRANSITIONAL = False
 
@@ -64,14 +69,11 @@ version_str = '.'.join(str(x) for x in version[:3])
 if len(version) > 3 and version[3] != 'final':
     version_str += version[3]
 
-# take care of extension modules.
-if have_cython:
-    class Sdist(sdist):
-        def __init__(self, *args, **kwargs):
-            cythonize('msgpack/_cmsgpack.pyx')
-            sdist.__init__(self, *args, **kwargs)
-else:
-    Sdist = sdist
+# Cython is required for sdist
+class Sdist(sdist):
+    def __init__(self, *args, **kwargs):
+        cythonize('msgpack/_cmsgpack.pyx')
+        sdist.__init__(self, *args, **kwargs)
 
 libraries = []
 if sys.platform == 'win32':
@@ -83,7 +85,7 @@ else:
     macros = [('__LITTLE_ENDIAN__', '1')]
 
 ext_modules = []
-if not hasattr(sys, 'pypy_version_info'):
+if not PYPY and not PY2:
     ext_modules.append(Extension('msgpack._cmsgpack',
                                  sources=['msgpack/_cmsgpack.cpp'],
                                  libraries=libraries,
