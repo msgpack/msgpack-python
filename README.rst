@@ -79,7 +79,9 @@ Install
 PyPy
 ^^^^
 
-msgpack provides a pure Python implementation.  PyPy can use this.
+msgpack provides a pure Python implementation (``msgpack.fallback``).
+PyPy and Python 2 use it automatically.
+
 
 Windows
 ^^^^^^^
@@ -87,12 +89,6 @@ Windows
 When you can't use a binary distribution, you need to install Visual Studio
 or Windows SDK on Windows.
 Without extension, using pure Python implementation on CPython runs slowly.
-
-For Python 2.7, `Microsoft Visual C++ Compiler for Python 2.7 <https://www.microsoft.com/en-us/download/details.aspx?id=44266>`_
-is recommended solution.
-
-For Python 3.5, `Microsoft Visual Studio 2015 <https://www.visualstudio.com/en-us/products/vs-2015-product-editions.aspx>`_
-Community Edition or Express Edition can be used to build extension module.
 
 
 How to use
