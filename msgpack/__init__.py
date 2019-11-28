@@ -2,6 +2,8 @@
 from ._version import version
 from .exceptions import *
 
+import os
+import sys
 from collections import namedtuple
 
 
@@ -17,8 +19,7 @@ class ExtType(namedtuple('ExtType', 'code data')):
         return super(ExtType, cls).__new__(cls, code, data)
 
 
-import os
-if os.environ.get('MSGPACK_PUREPYTHON'):
+if os.environ.get('MSGPACK_PUREPYTHON') or sys.version_info[0] == 2:
     from .fallback import Packer, unpackb, Unpacker
 else:
     try:

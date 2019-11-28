@@ -5,13 +5,12 @@ import struct
 import warnings
 
 
-if sys.version_info[0] == 2:
-    PY2 = True
+PY2 = sys.version_info[0] == 2
+if PY2:
     int_types = (int, long)
     def dict_iteritems(d):
         return d.iteritems()
 else:
-    PY2 = False
     int_types = int
     unicode = str
     xrange = range

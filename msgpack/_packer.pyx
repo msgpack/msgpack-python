@@ -130,10 +130,7 @@ cdef class Packer(object):
 
         self._bencoding = encoding
         if encoding is None:
-            if PY_MAJOR_VERSION < 3:
-                self.encoding = 'utf-8'
-            else:
-                self.encoding = NULL
+            self.encoding = 'utf-8'
         else:
             self.encoding = self._bencoding
 

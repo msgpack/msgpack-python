@@ -6,7 +6,6 @@ python:
   # Available Python (PyPy) can be listed by:
   #
   #   $ aws s3 ls s3://travis-python-archives/binaries/ubuntu/16.04/x86_64/
-  - "2.7"
   - "3.4"
   - "3.5"
   - "3.6"
@@ -41,7 +40,14 @@ matrix:
         - pip install -e .
       script:
         - pytest -v test
-
+    - name: "Python 2 (fallback)"
+      python: "2.7"
+      install:
+        - pip install -U pip
+        - pip install -U pytest
+        - pip install .
+      script:
+        - pytest -v test
 
 install:
   - pip install -U pip
