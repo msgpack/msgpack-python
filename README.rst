@@ -76,11 +76,17 @@ Install
 
    $ pip install msgpack
 
-PyPy
-^^^^
+Pure Python implementation
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-msgpack provides a pure Python implementation (``msgpack.fallback``).
-PyPy and Python 2 use it automatically.
+The extension module in msgpack (``msgpack._cmsgpack``) does not support
+Python 2 and PyPy.
+
+But msgpack provides a pure Python implementation (``msgpack.fallback``)
+for PyPy and Python 2.
+
+Since the [pip](https://pip.pypa.io/) uses the pure Python implementation,
+Python 2 support will not be dropped in foreseeable feature.
 
 
 Windows
