@@ -176,8 +176,6 @@ class Unpacker(object):
         near future.  So you must specify it explicitly for keeping backward
         compatibility.
 
-        *encoding* option which is deprecated overrides this option.
-
     :param bool strict_map_key:
         If true, only str or bytes are accepted for map (dict) keys.
         It's False by default for backward-compatibility.
@@ -193,13 +191,10 @@ class Unpacker(object):
         Unpacker calls it with a list of key-value pairs after unpacking msgpack map.
         (See also simplejson)
 
-    :param str encoding:
-        Encoding used for decoding msgpack raw.
-        If it is None (default), msgpack raw is deserialized to Python bytes.
-
     :param str unicode_errors:
-        (deprecated) Used for decoding msgpack raw with *encoding*.
-        (default: `'strict'`)
+        The error handler for decoding unicode. (default: 'strict')
+        This option should be used only when you have msgpack data which
+        contains invalid UTF-8 string.
 
     :param int max_buffer_size:
         Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
@@ -252,18 +247,13 @@ class Unpacker(object):
 
     def __init__(self, file_like=None, read_size=0, use_list=True, raw=True, strict_map_key=False,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
-                 encoding=None, unicode_errors=None, max_buffer_size=0,
+                 unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
                  max_str_len=-1,
                  max_bin_len=-1,
                  max_array_len=-1,
                  max_map_len=-1,
                  max_ext_len=-1):
-        if encoding is not None:
-            warnings.warn(
-                "encoding is deprecated, Use raw=False instead.",
-                DeprecationWarning, stacklevel=2)
-
         if unicode_errors is None:
             unicode_errors = 'strict'
 
@@ -306,7 +296,6 @@ class Unpacker(object):
         self._read_size = read_size or min(self._max_buffer_size, 16*1024)
         self._raw = bool(raw)
         self._strict_map_key = bool(strict_map_key)
-        self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
         self._list_hook = list_hook
@@ -662,9 +651,7 @@ class Unpacker(object):
         if execute == EX_SKIP:
             return
         if typ == TYPE_RAW:
-            if self._encoding is not None:
-                obj = obj.decode(self._encoding, self._unicode_errors)
-            elif self._raw:
+            if self._raw:
                 obj = bytes(obj)
             else:
                 obj = obj.decode('utf_8', self._unicode_errors)
