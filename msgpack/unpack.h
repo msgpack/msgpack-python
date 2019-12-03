@@ -193,6 +193,9 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
         PyErr_Format(PyExc_ValueError, "%.100s is not allowed for map key", Py_TYPE(k)->tp_name);
         return -1;
     }
+    if (PyUnicode_CheckExact(k)) {
+        PyUnicode_InternInPlace(&k);
+    }
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);
         if (!item)
