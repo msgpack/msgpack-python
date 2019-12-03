@@ -667,7 +667,7 @@ class Unpacker(object):
             elif self._raw:
                 obj = bytes(obj)
             else:
-                obj = obj.decode('utf_8')
+                obj = obj.decode('utf_8', self._unicode_errors)
             return obj
         if typ == TYPE_EXT:
             return self._ext_hook(n, bytes(obj))

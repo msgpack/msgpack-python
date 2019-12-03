@@ -55,7 +55,8 @@ def testPackByteArrays():
         check(td)
 
 def testIgnoreUnicodeErrors():
-    re = unpackb(packb(b'abc\xeddef', use_bin_type=False), raw=False, unicode_errors='ignore', use_list=1)
+    re = unpackb(packb(b'abc\xeddef', use_bin_type=False),
+                 raw=False, unicode_errors='ignore')
     assert re == "abcdef"
 
 def testStrictUnicodeUnpack():
