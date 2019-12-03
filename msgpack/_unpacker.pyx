@@ -139,7 +139,7 @@ cdef inline int get_data_from_buffer(object obj,
                      1)
         return 1
 
-def unpackb(object packed, object object_hook=None, object list_hook=None,
+def unpackb(object packed, *, object object_hook=None, object list_hook=None,
             bint use_list=True, bint raw=True, bint strict_map_key=False,
             unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
