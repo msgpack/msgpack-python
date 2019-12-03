@@ -14,32 +14,54 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Install Dependencies
+      - name: Cythonize
         shell: bash
         run: |
-          pip install -U Cython setuptools wheel pytest
+          pip install -U Cython
           make cython
           #python setup.py sdist
 
       - name: Python 3.6 (amd64)
+        env:
+          PYTHON: "py -3.6-64"
         shell: bash
-        run: |
-          py -3.6-64 -VV
-          py -3.6-64 -m pip install setuptools wheel pytest
-          py -3.6-64 setup.py build_ext -if
-          py -3.6-64 -c "from msgpack import _cmsgpack"
-          py -3.6-64 setup.py bdist_wheel
-          py -3.6-64 -m pytest -v test
+        run: &testscript |
+          ${PYTHON} -VV
+          ${PYTHON} -m pip install setuptools wheel pytest
+          ${PYTHON} setup.py build_ext -if
+          ${PYTHON} -c "from msgpack import _cmsgpack"
+          ${PYTHON} setup.py bdist_wheel
+          ${PYTHON} -m pytest -v test
 
       - name: Python 3.6 (x86)
+        env:
+          PYTHON: "py -3.6-32"
         shell: bash
-        run: |
-          py -3.6-32 -VV
-          py -3.6-32 -m pip install setuptools wheel pytest
-          py -3.6-32 setup.py build_ext -if
-          py -3.6-32 -c "from msgpack import _cmsgpack"
-          py -3.6-32 setup.py bdist_wheel
-          py -3.6-32 -m pytest -v test
+        run: *testscript
+
+      - name: Python 3.7 (amd64)
+        env:
+          PYTHON: "py -3.7-64"
+        shell: bash
+        run: *testscript
+
+      - name: Python 3.7 (x86)
+        env:
+          PYTHON: "py -3.7-32"
+        shell: bash
+        run: *testscript
+
+      - name: Python 3.8 (amd64)
+        env:
+          PYTHON: "py -3.8-64"
+        shell: bash
+        run: *testscript
+
+      - name: Python 3.8 (x86)
+        env:
+          PYTHON: "py -3.8-32"
+        shell: bash
+        run: *testscript
 
       - name: Upload Wheels
         uses: actions/upload-artifact@v1
