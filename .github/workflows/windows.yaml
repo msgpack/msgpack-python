@@ -1,0 +1,48 @@
+name: Build and test windows wheels
+on:
+  push:
+    branches:
+      - master
+      - test
+  pull_request:
+  create:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Install Dependencies
+        shell: bash
+        run: |
+          pip install -U Cython setuptools wheel pytest
+          make cython
+          #python setup.py sdist
+
+      - name: Python 3.6 (amd64)
+        shell: bash
+        run: |
+          py -3.6-64 -VV
+          py -3.6-64 -m pip install setuptools wheel pytest
+          py -3.6-64 setup.py build_ext -if
+          py -3.6-64 -c "from msgpack import _cmsgpack"
+          py -3.6-64 setup.py bdist_wheel
+          py -3.6-64 -m pytest -v test
+
+      - name: Python 3.6 (x86)
+        shell: bash
+        run: |
+          py -3.6-32 -VV
+          py -3.6-32 -m pip install setuptools wheel pytest
+          py -3.6-32 setup.py build_ext -if
+          py -3.6-32 -c "from msgpack import _cmsgpack"
+          py -3.6-32 setup.py bdist_wheel
+          py -3.6-32 -m pytest -v test
+
+      - name: Upload Wheels
+        uses: actions/upload-artifact@v1
+        with:
+          name: win-wheels
+          path: ./dist
