@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from collections import OrderedDict
 from io import BytesIO
 import struct
+import sys
 
 import pytest
 from pytest import raises, xfail
@@ -54,6 +55,7 @@ def testPackByteArrays():
     for td in test_data:
         check(td)
 
+@pytest.mark.skipif(sys.version_info < (3,0), "Python 2 passes invalid surrogates")
 def testIgnoreUnicodeErrors():
     re = unpackb(packb(b'abc\xeddef', use_bin_type=False),
                  raw=False, unicode_errors='ignore')
