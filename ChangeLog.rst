@@ -5,7 +5,7 @@ Release Date: TBD
 
 * Remove Python 2 support from the ``msgpack/_cmsgpack``.
   ``msgpack/fallback`` still supports Python 2.
-* Remove ``encoding`` option from the Packer.
+* Remove ``encoding`` option from the Packer and Unpacker.
 
 
 0.6.2

@@ -27,7 +27,6 @@ typedef struct unpack_user {
     PyObject *object_hook;
     PyObject *list_hook;
     PyObject *ext_hook;
-    const char *encoding;
     const char *unicode_errors;
     Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
 } unpack_user;
@@ -232,9 +231,7 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
 
     PyObject *py;
 
-    if (u->encoding) {
-        py = PyUnicode_Decode(p, l, u->encoding, u->unicode_errors);
-    } else if (u->raw) {
+    if (u->raw) {
         py = PyBytes_FromStringAndSize(p, l);
     } else {
         py = PyUnicode_DecodeUTF8(p, l, u->unicode_errors);
