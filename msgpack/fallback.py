@@ -764,7 +764,7 @@ class Packer(object):
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
-        self._unicode_errors = unicode_errors
+        self._unicode_errors = unicode_errors or "strict"
         self._buffer = StringIO()
         if default is not None:
             if not callable(default):
