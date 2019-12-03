@@ -55,7 +55,7 @@ def testPackByteArrays():
     for td in test_data:
         check(td)
 
-@pytest.mark.skipif(sys.version_info < (3,0), "Python 2 passes invalid surrogates")
+@pytest.mark.skipif(sys.version_info < (3,0), reason="Python 2 passes invalid surrogates")
 def testIgnoreUnicodeErrors():
     re = unpackb(packb(b'abc\xeddef', use_bin_type=False),
                  raw=False, unicode_errors='ignore')
