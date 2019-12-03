@@ -89,9 +89,15 @@ cdef class Packer(object):
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
         for python types.
+
+    :param str unicode_errors:
+        The error handler for encoding unicode. (default: 'strict')
+        DO NOT USE THIS!!  This option is kept for very specific usage.
     """
     cdef msgpack_packer pk
     cdef object _default
+    cdef object _berrors
+    cdef const char *unicode_errors
     cdef bint strict_types
     cdef bool use_float
     cdef bint autoreset
@@ -104,10 +110,8 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, default=None,
-                 bint use_single_float=False,
-                 bint autoreset=True,
-                 bint use_bin_type=False,
+    def __init__(self, *, default=None, unicode_errors=None,
+                 bint use_single_float=False, bint autoreset=True, bint use_bin_type=False,
                  bint strict_types=False):
         self.use_float = use_single_float
         self.strict_types = strict_types
@@ -117,6 +121,12 @@ cdef class Packer(object):
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
         self._default = default
+
+        self._berrors = unicode_errors
+        if unicode_errors is None:
+            self.unicode_errors = NULL
+        else:
+            self.unicode_errors = self._berrors
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
@@ -183,9 +193,19 @@ cdef class Packer(object):
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyUnicode_CheckExact(o) if strict_types else PyUnicode_Check(o):
-                ret = msgpack_pack_unicode(&self.pk, o, ITEM_LIMIT);
-                if ret == -2:
-                    raise ValueError("unicode string is too large")
+                if self.unicode_errors == NULL:
+                    ret = msgpack_pack_unicode(&self.pk, o, ITEM_LIMIT);
+                    if ret == -2:
+                        raise ValueError("unicode string is too large")
+                else:
+                    o = PyUnicode_AsEncodedString(o, NULL, self.unicode_errors)
+                    L = Py_SIZE(o)
+                    if L > ITEM_LIMIT:
+                        raise ValueError("unicode string is too large")
+                    ret = msgpack_pack_raw(&self.pk, L)
+                    if ret == 0:
+                        rawval = o
+                        ret = msgpack_pack_raw_body(&self.pk, rawval, L)
             elif PyDict_CheckExact(o):
                 d = <dict>o
                 L = len(d)

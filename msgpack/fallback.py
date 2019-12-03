@@ -667,7 +667,7 @@ class Unpacker(object):
             elif self._raw:
                 obj = bytes(obj)
             else:
-                obj = obj.decode('utf_8')
+                obj = obj.decode('utf_8', self._unicode_errors)
             return obj
         if typ == TYPE_EXT:
             return self._ext_hook(n, bytes(obj))
@@ -752,14 +752,19 @@ class Packer(object):
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
         for python types.
+
+    :param str unicode_errors:
+        The error handler for encoding unicode. (default: 'strict')
+        DO NOT USE THIS!!  This option is kept for very specific usage.
     """
-    def __init__(self, default=None,
+    def __init__(self, default=None, unicode_errors=None,
                  use_single_float=False, autoreset=True, use_bin_type=False,
                  strict_types=False):
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
+        self._unicode_errors = unicode_errors or "strict"
         self._buffer = StringIO()
         if default is not None:
             if not callable(default):
@@ -816,7 +821,7 @@ class Packer(object):
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
             if check(obj, unicode):
-                obj = obj.encode("utf-8")
+                obj = obj.encode("utf-8", self._unicode_errors)
                 n = len(obj)
                 if n >= 2**32:
                     raise ValueError("String is too large")

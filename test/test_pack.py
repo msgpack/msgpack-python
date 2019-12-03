@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from collections import OrderedDict
 from io import BytesIO
 import struct
+import sys
 
 import pytest
 from pytest import raises, xfail
@@ -54,13 +55,24 @@ def testPackByteArrays():
     for td in test_data:
         check(td)
 
+@pytest.mark.skipif(sys.version_info < (3,0), reason="Python 2 passes invalid surrogates")
+def testIgnoreUnicodeErrors():
+    re = unpackb(packb(b'abc\xeddef', use_bin_type=False),
+                 raw=False, unicode_errors='ignore')
+    assert re == "abcdef"
+
 def testStrictUnicodeUnpack():
-    packed = packb(b'abc\xeddef')
+    packed = packb(b'abc\xeddef', use_bin_type=False)
     with pytest.raises(UnicodeDecodeError):
         unpackb(packed, raw=False, use_list=1)
 
+@pytest.mark.skipif(sys.version_info < (3,0), reason="Python 2 passes invalid surrogates")
+def testIgnoreErrorsPack():
+    re = unpackb(packb(u"abc\uDC80\uDCFFdef", use_bin_type=True, unicode_errors='ignore'), raw=False, use_list=1)
+    assert re == "abcdef"
+
 def testDecodeBinary():
-    re = unpackb(packb(b"abc"), encoding=None, use_list=1)
+    re = unpackb(packb(b"abc"), use_list=1)
     assert re == b"abc"
 
 def testPackFloat():
