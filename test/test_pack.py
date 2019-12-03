@@ -64,7 +64,7 @@ def testStrictUnicodeUnpack():
         unpackb(packed, raw=False, use_list=1)
 
 def testIgnoreErrorsPack():
-    re = unpackb(packb("abcФФФdef", use_bin_type=True, unicode_errors='ignore'), raw=False, use_list=1)
+    re = unpackb(packb(u"abc\uDC80\uDCFFdef", use_bin_type=True, unicode_errors='ignore'), raw=False, use_list=1)
     assert re == "abcdef"
 
 def testDecodeBinary():
