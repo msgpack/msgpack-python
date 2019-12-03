@@ -66,6 +66,7 @@ def testStrictUnicodeUnpack():
     with pytest.raises(UnicodeDecodeError):
         unpackb(packed, raw=False, use_list=1)
 
+@pytest.mark.skipif(sys.version_info < (3,0), reason="Python 2 passes invalid surrogates")
 def testIgnoreErrorsPack():
     re = unpackb(packb(u"abc\uDC80\uDCFFdef", use_bin_type=True, unicode_errors='ignore'), raw=False, use_list=1)
     assert re == "abcdef"
