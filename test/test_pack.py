@@ -63,9 +63,9 @@ def testStrictUnicodeUnpack():
     with pytest.raises(UnicodeDecodeError):
         unpackb(packed, raw=False, use_list=1)
 
-def testIgnoreErrorsPack():  # deprecated
+def testIgnoreErrorsPack():
     with pytest.deprecated_call():
-        re = unpackb(packb("abcФФФdef", encoding='ascii', unicode_errors='ignore'), raw=False, use_list=1)
+        re = unpackb(packb("abcФФФdef", unicode_errors='ignore'), raw=False, use_list=1)
     assert re == "abcdef"
 
 def testDecodeBinary():

@@ -760,9 +760,6 @@ class Packer(object):
     def __init__(self, default=None, unicode_errors=None,
                  use_single_float=False, autoreset=True, use_bin_type=False,
                  strict_types=False):
-        if unicode_errors is None:
-            unicode_errors = 'strict'
-
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset

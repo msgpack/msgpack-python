@@ -96,9 +96,7 @@ cdef class Packer(object):
     """
     cdef msgpack_packer pk
     cdef object _default
-    cdef object _bencoding
     cdef object _berrors
-    cdef const char *encoding
     cdef const char *unicode_errors
     cdef bint strict_types
     cdef bool use_float
