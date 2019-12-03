@@ -40,21 +40,6 @@ def testPackUnicode():
         re = Unpacker(BytesIO(data), raw=False, use_list=1).unpack()
         assert re == td
 
-def testPackUTF32():  # deprecated
-    try:
-        test_data = [
-            "",
-            "abcd",
-            ["defgh"],
-            "Русский текст",
-            ]
-        for td in test_data:
-            with pytest.deprecated_call():
-                re = unpackb(packb(td, encoding='utf-32'), use_list=1, encoding='utf-32')
-            assert re == td
-    except LookupError as e:
-        xfail(e)
-
 def testPackBytes():
     test_data = [
         b"", b"abcd", (b"defgh",),
@@ -69,20 +54,14 @@ def testPackByteArrays():
     for td in test_data:
         check(td)
 
-def testIgnoreUnicodeErrors(): # deprecated
-    with pytest.deprecated_call():
-        re = unpackb(packb(b'abc\xeddef'), encoding='utf-8', unicode_errors='ignore', use_list=1)
+def testIgnoreUnicodeErrors():
+    re = unpackb(packb(b'abc\xeddef', use_bin_type=False), unicode_errors='ignore', use_list=1)
     assert re == "abcdef"
 
 def testStrictUnicodeUnpack():
-    packed = packb(b'abc\xeddef')
+    packed = packb(b'abc\xeddef', use_bin_type=False)
     with pytest.raises(UnicodeDecodeError):
         unpackb(packed, raw=False, use_list=1)
-
-def testStrictUnicodePack():  # deprecated
-    with raises(UnicodeEncodeError):
-        with pytest.deprecated_call():
-            packb("abc\xeddef", encoding='ascii', unicode_errors='strict')
 
 def testIgnoreErrorsPack():  # deprecated
     with pytest.deprecated_call():
@@ -90,7 +69,7 @@ def testIgnoreErrorsPack():  # deprecated
     assert re == "abcdef"
 
 def testDecodeBinary():
-    re = unpackb(packb(b"abc"), encoding=None, use_list=1)
+    re = unpackb(packb(b"abc"), use_list=1)
     assert re == b"abc"
 
 def testPackFloat():
