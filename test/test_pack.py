@@ -55,7 +55,7 @@ def testPackByteArrays():
         check(td)
 
 def testIgnoreUnicodeErrors():
-    re = unpackb(packb(b'abc\xeddef', use_bin_type=False), unicode_errors='ignore', use_list=1)
+    re = unpackb(packb(b'abc\xeddef', use_bin_type=False), raw=False, unicode_errors='ignore', use_list=1)
     assert re == "abcdef"
 
 def testStrictUnicodeUnpack():
@@ -64,8 +64,7 @@ def testStrictUnicodeUnpack():
         unpackb(packed, raw=False, use_list=1)
 
 def testIgnoreErrorsPack():
-    with pytest.deprecated_call():
-        re = unpackb(packb("abcФФФdef", unicode_errors='ignore'), raw=False, use_list=1)
+    re = unpackb(packb("abcФФФdef", unicode_errors='ignore'), raw=False, use_list=1)
     assert re == "abcdef"
 
 def testDecodeBinary():
