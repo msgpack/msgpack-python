@@ -28,7 +28,6 @@ typedef struct unpack_user {
     PyObject *list_hook;
     PyObject *ext_hook;
     PyObject *timestamp_t;
-    const char *encoding;
     const char *unicode_errors;
     Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
 } unpack_user;
@@ -194,6 +193,9 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
         PyErr_Format(PyExc_ValueError, "%.100s is not allowed for map key", Py_TYPE(k)->tp_name);
         return -1;
     }
+    if (PyUnicode_CheckExact(k)) {
+        PyUnicode_InternInPlace(&k);
+    }
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);
         if (!item)
@@ -233,9 +235,7 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
 
     PyObject *py;
 
-    if (u->encoding) {
-        py = PyUnicode_Decode(p, l, u->encoding, u->unicode_errors);
-    } else if (u->raw) {
+    if (u->raw) {
         py = PyBytes_FromStringAndSize(p, l);
     } else {
         py = PyUnicode_DecodeUTF8(p, l, u->unicode_errors);
@@ -306,9 +306,6 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
         return -1;
     }
     // length also includes the typecode, so the actual data is length-1
-#if PY_MAJOR_VERSION == 2
-    py = PyObject_CallFunction(u->ext_hook, "(is#)", (int)typecode, pos, (Py_ssize_t)length-1);
-#else
     if (typecode == -1) {
         msgpack_timestamp ts;
         if (unpack_timestamp(pos, length-1, &ts) == 0) {
@@ -319,7 +316,6 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
     } else {
         py = PyObject_CallFunction(u->ext_hook, "(iy#)", (int)typecode, pos, (Py_ssize_t)length-1);
     }
-#endif
     if (!py)
         return -1;
     *o = py;

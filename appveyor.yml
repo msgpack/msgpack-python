@@ -29,6 +29,10 @@ test_script:
   - ci\\runtests.bat
   - set PYTHON="C:\\Python37-x64"
   - ci\\runtests.bat
+  - set PYTHON="C:\\Python38"
+  - ci\\runtests.bat
+  - set PYTHON="C:\\Python38-x64"
+  - ci\\runtests.bat
 
 after_test:
   # This step builds your wheels.

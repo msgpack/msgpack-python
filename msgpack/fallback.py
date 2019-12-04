@@ -5,13 +5,12 @@ import struct
 import warnings
 
 
-if sys.version_info[0] == 2:
-    PY2 = True
+PY2 = sys.version_info[0] == 2
+if PY2:
     int_types = (int, long)
     def dict_iteritems(d):
         return d.iteritems()
 else:
-    PY2 = False
     int_types = int
     unicode = str
     xrange = range
@@ -177,8 +176,6 @@ class Unpacker(object):
         near future.  So you must specify it explicitly for keeping backward
         compatibility.
 
-        *encoding* option which is deprecated overrides this option.
-
     :param bool strict_map_key:
         If true, only str or bytes are accepted for map (dict) keys.
         It's False by default for backward-compatibility.
@@ -194,13 +191,10 @@ class Unpacker(object):
         Unpacker calls it with a list of key-value pairs after unpacking msgpack map.
         (See also simplejson)
 
-    :param str encoding:
-        Encoding used for decoding msgpack raw.
-        If it is None (default), msgpack raw is deserialized to Python bytes.
-
     :param str unicode_errors:
-        (deprecated) Used for decoding msgpack raw with *encoding*.
-        (default: `'strict'`)
+        The error handler for decoding unicode. (default: 'strict')
+        This option should be used only when you have msgpack data which
+        contains invalid UTF-8 string.
 
     :param int max_buffer_size:
         Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
@@ -253,18 +247,13 @@ class Unpacker(object):
 
     def __init__(self, file_like=None, read_size=0, use_list=True, raw=True, strict_map_key=False,
                  object_hook=None, object_pairs_hook=None, list_hook=None,
-                 encoding=None, unicode_errors=None, max_buffer_size=0,
+                 unicode_errors=None, max_buffer_size=0,
                  ext_hook=ExtType,
                  max_str_len=-1,
                  max_bin_len=-1,
                  max_array_len=-1,
                  max_map_len=-1,
                  max_ext_len=-1):
-        if encoding is not None:
-            warnings.warn(
-                "encoding is deprecated, Use raw=False instead.",
-                DeprecationWarning, stacklevel=2)
-
         if unicode_errors is None:
             unicode_errors = 'strict'
 
@@ -307,7 +296,6 @@ class Unpacker(object):
         self._read_size = read_size or min(self._max_buffer_size, 16*1024)
         self._raw = bool(raw)
         self._strict_map_key = bool(strict_map_key)
-        self._encoding = encoding
         self._unicode_errors = unicode_errors
         self._use_list = use_list
         self._list_hook = list_hook
@@ -656,6 +644,8 @@ class Unpacker(object):
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (unicode, bytes):
                         raise ValueError("%s is not allowed for map key" % str(type(key)))
+                    if not PY2 and type(key) is str:
+                        key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
                     ret = self._object_hook(ret)
@@ -663,12 +653,10 @@ class Unpacker(object):
         if execute == EX_SKIP:
             return
         if typ == TYPE_RAW:
-            if self._encoding is not None:
-                obj = obj.decode(self._encoding, self._unicode_errors)
-            elif self._raw:
+            if self._raw:
                 obj = bytes(obj)
             else:
-                obj = obj.decode('utf_8')
+                obj = obj.decode('utf_8', self._unicode_errors)
             return obj
         if typ == TYPE_EXT:
             return self._ext_hook(n, bytes(obj))
@@ -754,31 +742,18 @@ class Packer(object):
         This is useful when trying to implement accurate serialization
         for python types.
 
-    :param str encoding:
-        (deprecated) Convert unicode to bytes with this encoding. (default: 'utf-8')
-
     :param str unicode_errors:
-        Error handler for encoding unicode. (default: 'strict')
+        The error handler for encoding unicode. (default: 'strict')
+        DO NOT USE THIS!!  This option is kept for very specific usage.
     """
-    def __init__(self, default=None, encoding=None, unicode_errors=None,
+    def __init__(self, default=None, unicode_errors=None,
                  use_single_float=False, autoreset=True, use_bin_type=False,
                  strict_types=False):
-        if encoding is None:
-            encoding = 'utf_8'
-        else:
-            warnings.warn(
-                "encoding is deprecated, Use raw=False instead.",
-                DeprecationWarning, stacklevel=2)
-
-        if unicode_errors is None:
-            unicode_errors = 'strict'
-
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
-        self._encoding = encoding
-        self._unicode_errors = unicode_errors
+        self._unicode_errors = unicode_errors or "strict"
         self._buffer = StringIO()
         if default is not None:
             if not callable(default):
@@ -835,11 +810,7 @@ class Packer(object):
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
             if check(obj, unicode):
-                if self._encoding is None:
-                    raise TypeError(
-                        "Can't encode unicode string: "
-                        "no encoding is specified")
-                obj = obj.encode(self._encoding, self._unicode_errors)
+                obj = obj.encode("utf-8", self._unicode_errors)
                 n = len(obj)
                 if n >= 2**32:
                     raise ValueError("String is too large")

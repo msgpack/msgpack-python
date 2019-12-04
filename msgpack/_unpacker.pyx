@@ -32,7 +32,6 @@ cdef extern from "unpack.h":
         PyObject* list_hook
         PyObject* ext_hook
         PyObject* timestamp_t
-        char *encoding
         char *unicode_errors
         Py_ssize_t max_str_len
         Py_ssize_t max_bin_len
@@ -59,7 +58,7 @@ cdef inline init_ctx(unpack_context *ctx,
                      object object_hook, object object_pairs_hook,
                      object list_hook, object ext_hook,
                      bint use_list, bint raw, bint strict_map_key,
-                     const char* encoding, const char* unicode_errors,
+                     const char* unicode_errors,
                      Py_ssize_t max_str_len, Py_ssize_t max_bin_len,
                      Py_ssize_t max_array_len, Py_ssize_t max_map_len,
                      Py_ssize_t max_ext_len):
@@ -102,8 +101,6 @@ cdef inline init_ctx(unpack_context *ctx,
 
     # Add Timestamp type to the user object so it may be used in unpack.h
     ctx.user.timestamp_t = <PyObject*>TimestampType
-
-    ctx.user.encoding = encoding
     ctx.user.unicode_errors = unicode_errors
 
 def default_read_extended_type(typecode, data):
@@ -145,9 +142,9 @@ cdef inline int get_data_from_buffer(object obj,
                      1)
         return 1
 
-def unpackb(object packed, object object_hook=None, object list_hook=None,
+def unpackb(object packed, *, object object_hook=None, object list_hook=None,
             bint use_list=True, bint raw=True, bint strict_map_key=False,
-            encoding=None, unicode_errors=None,
+            unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
             Py_ssize_t max_str_len=-1,
             Py_ssize_t max_bin_len=-1,
@@ -174,13 +171,8 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
     cdef Py_buffer view
     cdef char* buf = NULL
     cdef Py_ssize_t buf_len
-    cdef const char* cenc = NULL
     cdef const char* cerr = NULL
     cdef int new_protocol = 0
-
-    if encoding is not None:
-        PyErr_WarnEx(DeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
-        cenc = encoding
 
     if unicode_errors is not None:
         cerr = unicode_errors
@@ -200,7 +192,7 @@ def unpackb(object packed, object object_hook=None, object list_hook=None,
 
     try:
         init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
-                 use_list, raw, strict_map_key, cenc, cerr,
+                 use_list, raw, strict_map_key, cerr,
                  max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
         ret = unpack_construct(&ctx, buf, buf_len, &off)
     finally:
@@ -254,8 +246,6 @@ cdef class Unpacker(object):
         near future.  So you must specify it explicitly for keeping backward
         compatibility.
 
-        *encoding* option which is deprecated overrides this option.
-
     :param bool strict_map_key:
         If true, only str or bytes are accepted for map (dict) keys.
         It's False by default for backward-compatibility.
@@ -294,11 +284,6 @@ cdef class Unpacker(object):
         Deprecated, use *max_buffer_size* instead.
         Limits max size of ext type. (default: max_buffer_size or 1024*1024)
 
-    :param str encoding:
-        Deprecated, use ``raw=False`` instead.
-        Encoding used for decoding msgpack raw.
-        If it is None (default), msgpack raw is deserialized to Python bytes.
-
     :param str unicode_errors:
         Error handler used for decoding str type.  (default: `'strict'`)
 
@@ -334,7 +319,7 @@ cdef class Unpacker(object):
     cdef Py_ssize_t read_size
     # To maintain refcnt.
     cdef object object_hook, object_pairs_hook, list_hook, ext_hook
-    cdef object encoding, unicode_errors
+    cdef object unicode_errors
     cdef Py_ssize_t max_buffer_size
     cdef uint64_t stream_offset
 
@@ -345,17 +330,16 @@ cdef class Unpacker(object):
         PyMem_Free(self.buf)
         self.buf = NULL
 
-    def __init__(self, file_like=None, Py_ssize_t read_size=0,
+    def __init__(self, file_like=None, *, Py_ssize_t read_size=0,
                  bint use_list=True, bint raw=True, bint strict_map_key=False,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
-                 encoding=None, unicode_errors=None, Py_ssize_t max_buffer_size=0,
+                 unicode_errors=None, Py_ssize_t max_buffer_size=0,
                  object ext_hook=ExtType,
                  Py_ssize_t max_str_len=-1,
                  Py_ssize_t max_bin_len=-1,
                  Py_ssize_t max_array_len=-1,
                  Py_ssize_t max_map_len=-1,
                  Py_ssize_t max_ext_len=-1):
-        cdef const char *cenc=NULL,
         cdef const char *cerr=NULL
 
         self.object_hook = object_hook
@@ -396,17 +380,12 @@ cdef class Unpacker(object):
         self.buf_tail = 0
         self.stream_offset = 0
 
-        if encoding is not None:
-            PyErr_WarnEx(DeprecationWarning, "encoding is deprecated, Use raw=False instead.", 1)
-            self.encoding = encoding
-            cenc = encoding
-
         if unicode_errors is not None:
             self.unicode_errors = unicode_errors
             cerr = unicode_errors
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
-                 ext_hook, use_list, raw, strict_map_key, cenc, cerr,
+                 ext_hook, use_list, raw, strict_map_key, cerr,
                  max_str_len, max_bin_len, max_array_len,
                  max_map_len, max_ext_len)
 
