@@ -182,7 +182,7 @@ else:
 class Unpacker(object):
     """Streaming unpacker.
 
-    arguments:
+    Arguments:
 
     :param file_like:
         File-like object having `.read(n)` method.
@@ -196,12 +196,8 @@ class Unpacker(object):
         Otherwise, unpack to Python tuple. (default: True)
 
     :param bool raw:
-        If true, unpack msgpack raw to Python bytes (default).
-        Otherwise, unpack to Python str (or unicode on Python 2) by decoding
-        with UTF-8 encoding (recommended).
-        Currently, the default is true, but it will be changed to false in
-        near future.  So you must specify it explicitly for keeping backward
-        compatibility.
+        If true, unpack msgpack raw to Python bytes.
+        Otherwise, unpack to Python str by decoding with UTF-8 encoding (default).
 
     :param bool strict_map_key:
         If true, only str or bytes are accepted for map (dict) keys.
@@ -250,13 +246,13 @@ class Unpacker(object):
 
     Example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like, raw=False, max_buffer_size=10*1024*1024)
+        unpacker = Unpacker(file_like, max_buffer_size=10*1024*1024)
         for o in unpacker:
             process(o)
 
     Example of streaming deserialize from socket::
 
-        unpacker = Unpacker(raw=False, max_buffer_size=10*1024*1024)
+        unpacker = Unpacker(max_buffer_size=10*1024*1024)
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -277,7 +273,7 @@ class Unpacker(object):
         file_like=None,
         read_size=0,
         use_list=True,
-        raw=True,
+        raw=False,
         strict_map_key=False,
         object_hook=None,
         object_pairs_hook=None,
@@ -772,7 +768,7 @@ class Packer(object):
 
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
-        It also enables str8 type for unicode.
+        It also enables str8 type for unicode. (default: True)
 
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
@@ -793,7 +789,7 @@ class Packer(object):
         unicode_errors=None,
         use_single_float=False,
         autoreset=True,
-        use_bin_type=False,
+        use_bin_type=True,
         strict_types=False,
     ):
         self._strict_types = strict_types

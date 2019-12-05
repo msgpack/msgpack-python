@@ -131,7 +131,7 @@ cdef inline int get_data_from_buffer(object obj,
 
 
 def unpackb(object packed, *, object object_hook=None, object list_hook=None,
-            bint use_list=True, bint raw=True, bint strict_map_key=False,
+            bint use_list=True, bint raw=False, bint strict_map_key=False,
             unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
             Py_ssize_t max_str_len=-1,
@@ -225,12 +225,8 @@ cdef class Unpacker(object):
         Otherwise, unpack to Python tuple. (default: True)
 
     :param bool raw:
-        If true, unpack msgpack raw to Python bytes (default).
-        Otherwise, unpack to Python str (or unicode on Python 2) by decoding
-        with UTF-8 encoding (recommended).
-        Currently, the default is true, but it will be changed to false in
-        near future.  So you must specify it explicitly for keeping backward
-        compatibility.
+        If true, unpack msgpack raw to Python bytes.
+        Otherwise, unpack to Python str by decoding with UTF-8 encoding (default).
 
     :param bool strict_map_key:
         If true, only str or bytes are accepted for map (dict) keys.
@@ -276,13 +272,13 @@ cdef class Unpacker(object):
 
     Example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like, raw=False, max_buffer_size=10*1024*1024)
+        unpacker = Unpacker(file_like, max_buffer_size=10*1024*1024)
         for o in unpacker:
             process(o)
 
     Example of streaming deserialize from socket::
 
-        unpacker = Unpacker(raw=False, max_buffer_size=10*1024*1024)
+        unpacker = Unpacker(max_buffer_size=10*1024*1024)
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -317,7 +313,7 @@ cdef class Unpacker(object):
         self.buf = NULL
 
     def __init__(self, file_like=None, *, Py_ssize_t read_size=0,
-                 bint use_list=True, bint raw=True, bint strict_map_key=False,
+                 bint use_list=True, bint raw=False, bint strict_map_key=False,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  unicode_errors=None, Py_ssize_t max_buffer_size=0,
                  object ext_hook=ExtType,
