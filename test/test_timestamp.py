@@ -1,13 +1,8 @@
-import sys
-import warnings
-
 import msgpack
 from msgpack import Timestamp
 
-def test_timestamp_type():
-    if sys.version_info[0] < 3:
-        warnings.warn("msgpack-python does not support Timestamp in Python2.")
-        return
+
+def test_timestamp():
     # timestamp32
     ts = Timestamp(2**32 - 1)
     assert ts.to_bytes() == b"\xff\xff\xff\xff"
