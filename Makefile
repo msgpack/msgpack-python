@@ -2,6 +2,10 @@
 all: cython
 	python setup.py build_ext -i -f
 
+.PHONY: black
+black:
+	black .
+
 .PHONY: cython
 cython:
 	cython --cplus msgpack/_cmsgpack.pyx

@@ -14,8 +14,15 @@ python:
 
 matrix:
   include:
+    - name: Black
+      language: python
+      python: 3.8
+      install:
+        - pip install black
+      script:
+        - black --check --diff .
+
     - name: 32bit build
-      sudo: required
       language: python
       services:
         - docker
