@@ -6,7 +6,7 @@ from array import array
 from msgpack import packb, unpackb
 import sys
 
-pytest.mark.skipif(sys.version_info[0] < 3, "Only Python 3 supports buffer protocol")
+pytest.mark.skipif(sys.version_info[0] < 3, "Only Python 3 supports buffer protocol", allow_module_level=True)
 
 make_memoryview = memoryview
 
