@@ -17,11 +17,14 @@ PY2 = sys.version_info[0] == 2
 # for building transitional package.
 TRANSITIONAL = False
 
+
 class NoCython(Exception):
     pass
 
+
 try:
     import Cython.Compiler.Main as cython_compiler
+
     have_cython = True
 except ImportError:
     have_cython = False
@@ -31,16 +34,19 @@ def cythonize(src):
     sys.stderr.write("cythonize: %r\n" % (src,))
     cython_compiler.compile([src], cplus=True)
 
+
 def ensure_source(src):
-    pyx = os.path.splitext(src)[0] + '.pyx'
+    pyx = os.path.splitext(src)[0] + ".pyx"
 
     if not os.path.exists(src):
         if not have_cython:
             raise NoCython
         cythonize(pyx)
-    elif (os.path.exists(pyx) and
-          os.stat(src).st_mtime < os.stat(pyx).st_mtime and
-          have_cython):
+    elif (
+        os.path.exists(pyx)
+        and os.stat(src).st_mtime < os.stat(pyx).st_mtime
+        and have_cython
+    ):
         cythonize(pyx)
     return src
 
@@ -63,77 +69,82 @@ class BuildExt(build_ext):
             print(e)
 
 
-exec(open('msgpack/_version.py').read())
+exec(open("msgpack/_version.py").read())
 
-version_str = '.'.join(str(x) for x in version[:3])
-if len(version) > 3 and version[3] != 'final':
+version_str = ".".join(str(x) for x in version[:3])
+if len(version) > 3 and version[3] != "final":
     version_str += version[3]
 
 # Cython is required for sdist
 class Sdist(sdist):
     def __init__(self, *args, **kwargs):
-        cythonize('msgpack/_cmsgpack.pyx')
+        cythonize("msgpack/_cmsgpack.pyx")
         sdist.__init__(self, *args, **kwargs)
 
-libraries = []
-if sys.platform == 'win32':
-    libraries.append('ws2_32')
 
-if sys.byteorder == 'big':
-    macros = [('__BIG_ENDIAN__', '1')]
+libraries = []
+if sys.platform == "win32":
+    libraries.append("ws2_32")
+
+if sys.byteorder == "big":
+    macros = [("__BIG_ENDIAN__", "1")]
 else:
-    macros = [('__LITTLE_ENDIAN__', '1')]
+    macros = [("__LITTLE_ENDIAN__", "1")]
 
 ext_modules = []
 if not PYPY and not PY2:
-    ext_modules.append(Extension('msgpack._cmsgpack',
-                                 sources=['msgpack/_cmsgpack.cpp'],
-                                 libraries=libraries,
-                                 include_dirs=['.'],
-                                 define_macros=macros,
-                                 ))
+    ext_modules.append(
+        Extension(
+            "msgpack._cmsgpack",
+            sources=["msgpack/_cmsgpack.cpp"],
+            libraries=libraries,
+            include_dirs=["."],
+            define_macros=macros,
+        )
+    )
 del libraries, macros
 
 
-desc = 'MessagePack (de)serializer.'
-with io.open('README.rst', encoding='utf-8') as f:
+desc = "MessagePack (de)serializer."
+with io.open("README.rst", encoding="utf-8") as f:
     long_desc = f.read()
 del f
 
-name = 'msgpack'
+name = "msgpack"
 
 if TRANSITIONAL:
-    name = 'msgpack-python'
+    name = "msgpack-python"
     long_desc = "This package is deprecated.  Install msgpack instead."
 
-setup(name=name,
-      author='INADA Naoki',
-      author_email='songofacandy@gmail.com',
-      version=version_str,
-      cmdclass={'build_ext': BuildExt, 'sdist': Sdist},
-      ext_modules=ext_modules,
-      packages=['msgpack'],
-      description=desc,
-      long_description=long_desc,
-      long_description_content_type="text/x-rst",
-      url='https://msgpack.org/',
-      project_urls = {
-          'Documentation': 'https://msgpack-python.readthedocs.io/',
-          'Source': 'https://github.com/msgpack/msgpack-python',
-          'Tracker': 'https://github.com/msgpack/msgpack-python/issues',
-      },
-      license='Apache 2.0',
-      classifiers=[
-          'Programming Language :: Python :: 2',
-          'Programming Language :: Python :: 2.7',
-          'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.5',
-          'Programming Language :: Python :: 3.6',
-          'Programming Language :: Python :: 3.7',
-          'Programming Language :: Python :: 3.8',
-          'Programming Language :: Python :: Implementation :: CPython',
-          'Programming Language :: Python :: Implementation :: PyPy',
-          'Intended Audience :: Developers',
-          'License :: OSI Approved :: Apache Software License',
-      ],
+setup(
+    name=name,
+    author="INADA Naoki",
+    author_email="songofacandy@gmail.com",
+    version=version_str,
+    cmdclass={"build_ext": BuildExt, "sdist": Sdist},
+    ext_modules=ext_modules,
+    packages=["msgpack"],
+    description=desc,
+    long_description=long_desc,
+    long_description_content_type="text/x-rst",
+    url="https://msgpack.org/",
+    project_urls={
+        "Documentation": "https://msgpack-python.readthedocs.io/",
+        "Source": "https://github.com/msgpack/msgpack-python",
+        "Tracker": "https://github.com/msgpack/msgpack-python/issues",
+    },
+    license="Apache 2.0",
+    classifiers=[
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: Apache Software License",
+    ],
 )
