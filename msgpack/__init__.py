@@ -7,7 +7,7 @@ import os
 import sys
 
 
-if os.environ.get('MSGPACK_PUREPYTHON') or sys.version_info[0] == 2:
+if os.environ.get("MSGPACK_PUREPYTHON") or sys.version_info[0] == 2:
     from .fallback import Packer, unpackb, Unpacker
 else:
     try:

@@ -9,8 +9,9 @@ if not PY2:
     long = int
 
 
-class ExtType(namedtuple('ExtType', 'code data')):
+class ExtType(namedtuple("ExtType", "code data")):
     """ExtType represents ext type in msgpack."""
+
     def __new__(cls, code, data):
         if not isinstance(code, int):
             raise TypeError("code must be int")
@@ -29,6 +30,7 @@ class Timestamp(object):
     When built with Cython, msgpack uses C methods to pack and unpack `Timestamp`. When using pure-Python
     msgpack, :func:`to_bytes` and :func:`from_bytes` are used to pack and unpack `Timestamp`.
     """
+
     __slots__ = ["seconds", "nanoseconds"]
 
     def __init__(self, seconds, nanoseconds=0):
@@ -50,9 +52,13 @@ class Timestamp(object):
             raise TypeError("nanoseconds must be an integer")
         if nanoseconds:
             if nanoseconds < 0 or nanoseconds % 1 != 0 or nanoseconds > (1e9 - 1):
-                raise ValueError("nanoseconds must be a non-negative integer less than 999999999.")
+                raise ValueError(
+                    "nanoseconds must be a non-negative integer less than 999999999."
+                )
             if not isinstance(seconds, (int, long)):
-                raise ValueError("seconds must be an integer if also providing nanoseconds.")
+                raise ValueError(
+                    "seconds must be an integer if also providing nanoseconds."
+                )
             self.nanoseconds = nanoseconds
         else:
             # round helps with floating point issues
@@ -61,12 +67,16 @@ class Timestamp(object):
 
     def __repr__(self):
         """String representation of Timestamp."""
-        return "Timestamp(seconds={0}, nanoseconds={1})".format(self.seconds, self.nanoseconds)
+        return "Timestamp(seconds={0}, nanoseconds={1})".format(
+            self.seconds, self.nanoseconds
+        )
 
     def __eq__(self, other):
         """Check for equality with another Timestamp object"""
         if type(other) is self.__class__:
-            return self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
+            return (
+                self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
+            )
         return False
 
     def __ne__(self, other):
@@ -90,12 +100,14 @@ class Timestamp(object):
             nanoseconds = 0
         elif len(b) == 8:
             data64 = struct.unpack("!Q", b)[0]
-            seconds = data64 & 0x00000003ffffffff
+            seconds = data64 & 0x00000003FFFFFFFF
             nanoseconds = data64 >> 34
         elif len(b) == 12:
             nanoseconds, seconds = struct.unpack("!Iq", b)
         else:
-            raise ValueError("Timestamp type can only be created from 32, 64, or 96-bit byte objects")
+            raise ValueError(
+                "Timestamp type can only be created from 32, 64, or 96-bit byte objects"
+            )
         return Timestamp(seconds, nanoseconds)
 
     def to_bytes(self):
@@ -108,7 +120,7 @@ class Timestamp(object):
         """
         if (self.seconds >> 34) == 0:  # seconds is non-negative and fits in 34 bits
             data64 = self.nanoseconds << 34 | self.seconds
-            if data64 & 0xffffffff00000000 == 0:
+            if data64 & 0xFFFFFFFF00000000 == 0:
                 # nanoseconds is zero and seconds < 2**32, so timestamp 32
                 data = struct.pack("!L", data64)
             else:
@@ -125,7 +137,7 @@ class Timestamp(object):
         :returns: posix timestamp
         :rtype: float
         """
-        return self.seconds + self.nanoseconds/1e9
+        return self.seconds + self.nanoseconds / 1e9
 
     def to_unix_ns(self):
         """Get the timestamp as a unixtime in nanoseconds.
