@@ -37,36 +37,16 @@ Sadly, this doesn't work for upgrade install.  After `pip install -U msgpack-pyt
 msgpack is removed and `import msgpack` fail.
 
 
-Deprecating encoding option
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Compatibility with old format
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-encoding and unicode_errors options are deprecated.
+You can use ``use_bin_type=False`` option to pack ``bytes``
+object into raw type in old msgpack spec, instead of bin type in new msgpack spec.
 
-In case of packer, use UTF-8 always.  Storing other than UTF-8 is not recommended.
+You can unpack old msgpack formatk using ``raw=True`` option.
+It unpacks str (raw) type in msgpack into Python bytes.
 
-For backward compatibility, you can use ``use_bin_type=False`` and pack ``bytes``
-object into msgpack raw type.
-
-In case of unpacker, there is new ``raw`` option.  It is ``True`` by default
-for backward compatibility, but it is changed to ``False`` in near future.
-You can use ``raw=False`` instead of ``encoding='utf-8'``.
-
-Planned backward incompatible changes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When msgpack 1.0, I planning these breaking changes:
-
-* packer and unpacker: Remove ``encoding`` and ``unicode_errors`` option.
-* packer: Change default of ``use_bin_type`` option from False to True.
-* unpacker: Change default of ``raw`` option from True to False.
-* unpacker: Reduce all ``max_xxx_len`` options for typical usage.
-* unpacker: Remove ``write_bytes`` option from all methods.
-
-To avoid these breaking changes breaks your application, please:
-
-* Don't use deprecated options.
-* Pass ``use_bin_type`` and ``raw`` options explicitly.
-* If your application handle large (>1MB) data, specify ``max_xxx_len`` options too.
+See note in below for detail.
 
 
 Install
@@ -75,6 +55,7 @@ Install
 ::
 
    $ pip install msgpack
+
 
 Pure Python implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -99,6 +80,13 @@ Without extension, using pure Python implementation on CPython runs slowly.
 
 How to use
 ----------
+
+.. note::
+
+   In examples below, I use ``raw=False`` and ``use_bin_type=True`` for users
+   using msgpack < 1.0.
+   These options are default from msgpack 1.0 so you can omit them.
+
 
 One-shot pack & unpack
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -252,36 +240,18 @@ Notes
 string and binary type
 ^^^^^^^^^^^^^^^^^^^^^^
 
-Early versions of msgpack didn't distinguish string and binary types (like Python 1).
+Early versions of msgpack didn't distinguish string and binary types.
 The type for representing both string and binary types was named **raw**.
 
-For backward compatibility reasons, msgpack-python will still default all
-strings to byte strings, unless you specify the ``use_bin_type=True`` option in
-the packer. If you do so, it will use a non-standard type called **bin** to
-serialize byte arrays, and **raw** becomes to mean **str**. If you want to
-distinguish **bin** and **raw** in the unpacker, specify ``raw=False``.
-
-Note that Python 2 defaults to byte-arrays over Unicode strings:
+You can pack into and unpack from this old spec using ``use_bin_type=False``
+and ``raw=True`` options.
 
 .. code-block:: pycon
 
     >>> import msgpack
-    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs']))
-    ['spam', 'eggs']
-    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True),
-                        raw=False)
-    ['spam', u'eggs']
-
-This is the same code in Python 3 (same behaviour, but Python 3 has a
-different default):
-
-.. code-block:: pycon
-
-    >>> import msgpack
-    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs']))
+    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=False), raw=True)
     [b'spam', b'eggs']
-    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True),
-                        raw=False)
+    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True), raw=False)
     [b'spam', 'eggs']
 
 

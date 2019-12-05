@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 from msgpack import packb, unpackb
 
 
-def check(length, obj):
-    v = packb(obj)
+def check(length, obj, use_bin_type=True):
+    v = packb(obj, use_bin_type=use_bin_type)
     assert len(v) == length, "%r length should be %r but get %r" % (obj, length, len(v))
-    assert unpackb(v, use_list=0) == obj
+    assert unpackb(v, use_list=0, raw=not use_bin_type) == obj
 
 
 def test_1():
@@ -56,7 +55,7 @@ def test_9():
 
 
 def check_raw(overhead, num):
-    check(num + overhead, b" " * num)
+    check(num + overhead, b" " * num, use_bin_type=False)
 
 
 def test_fixraw():
@@ -135,4 +134,4 @@ def test_match():
 
 
 def test_unicode():
-    assert unpackb(packb("foobar"), use_list=1) == b"foobar"
+    assert unpackb(packb(u"foobar"), use_list=1) == u"foobar"

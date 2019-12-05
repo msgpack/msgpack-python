@@ -17,7 +17,7 @@ def test_unpack_buffer():
 
 
 def test_unpack_bytearray():
-    buf = bytearray(packb(("foo", "bar")))
+    buf = bytearray(packb((b"foo", b"bar")))
     obj = unpackb(buf, use_list=1)
     assert [b"foo", b"bar"] == obj
     expected_type = bytes
@@ -25,7 +25,7 @@ def test_unpack_bytearray():
 
 
 def test_unpack_memoryview():
-    buf = bytearray(packb(("foo", "bar")))
+    buf = bytearray(packb((b"foo", b"bar")))
     view = memoryview(buf)
     obj = unpackb(view, use_list=1)
     assert [b"foo", b"bar"] == obj

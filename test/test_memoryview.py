@@ -1,50 +1,33 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import pytest
 from array import array
 from msgpack import packb, unpackb
 import sys
 
 
-# For Python < 3:
-#  - array type only supports old buffer interface
-#  - array.frombytes is not available, must use deprecated array.fromstring
-if sys.version_info[0] < 3:
-
-    def make_memoryview(obj):
-        return memoryview(buffer(obj))
-
-    def make_array(f, data):
-        a = array(f)
-        a.fromstring(data)
-        return a
-
-    def get_data(a):
-        return a.tostring()
+pytestmark = pytest.mark.skipif(
+    sys.version_info[0] < 3, reason="Only Python 3 supports buffer protocol"
+)
 
 
-else:
-    make_memoryview = memoryview
-
-    def make_array(f, data):
-        a = array(f)
-        a.frombytes(data)
-        return a
-
-    def get_data(a):
-        return a.tobytes()
+def make_array(f, data):
+    a = array(f)
+    a.frombytes(data)
+    return a
 
 
 def _runtest(format, nbytes, expected_header, expected_prefix, use_bin_type):
     # create a new array
     original_array = array(format)
     original_array.fromlist([255] * (nbytes // original_array.itemsize))
-    original_data = get_data(original_array)
-    view = make_memoryview(original_array)
+    original_data = original_array.tobytes()
+    view = memoryview(original_array)
 
     # pack, unpack, and reconstruct array
     packed = packb(view, use_bin_type=use_bin_type)
-    unpacked = unpackb(packed)
+    unpacked = unpackb(packed, raw=(not use_bin_type))
     reconstructed_array = make_array(format, unpacked)
 
     # check that we got the right amount of data

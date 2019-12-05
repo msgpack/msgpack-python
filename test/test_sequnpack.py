@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding: utf-8
-
 import io
 from msgpack import Unpacker, BufferFull
 from msgpack import pack
@@ -26,7 +25,7 @@ def test_partialdata():
     with raises(StopIteration):
         next(iter(unpacker))
     unpacker.feed(b"o")
-    assert next(iter(unpacker)) == b"hallo"
+    assert next(iter(unpacker)) == "hallo"
 
 
 def test_foobar():
@@ -98,13 +97,13 @@ def test_readbytes():
 def test_issue124():
     unpacker = Unpacker()
     unpacker.feed(b"\xa1?\xa1!")
-    assert tuple(unpacker) == (b"?", b"!")
+    assert tuple(unpacker) == ("?", "!")
     assert tuple(unpacker) == ()
     unpacker.feed(b"\xa1?\xa1")
-    assert tuple(unpacker) == (b"?",)
+    assert tuple(unpacker) == ("?",)
     assert tuple(unpacker) == ()
     unpacker.feed(b"!")
-    assert tuple(unpacker) == (b"!",)
+    assert tuple(unpacker) == ("!",)
     assert tuple(unpacker) == ()
 
 

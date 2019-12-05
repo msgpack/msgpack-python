@@ -80,9 +80,7 @@ cdef class Packer(object):
 
     :param bool use_bin_type:
         Use bin type introduced in msgpack spec 2.0 for bytes.
-        It also enables str8 type for unicode.
-        Current default value is false, but it will be changed to true
-        in future version.  You should specify it explicitly.
+        It also enables str8 type for unicode. (default: True)
 
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
@@ -113,7 +111,7 @@ cdef class Packer(object):
         self.pk.length = 0
 
     def __init__(self, *, default=None, unicode_errors=None,
-                 bint use_single_float=False, bint autoreset=True, bint use_bin_type=False,
+                 bint use_single_float=False, bint autoreset=True, bint use_bin_type=True,
                  bint strict_types=False):
         self.use_float = use_single_float
         self.strict_types = strict_types
