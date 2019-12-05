@@ -7,7 +7,9 @@ from msgpack import packb, unpackb
 import sys
 
 
-pytestmark = pytest.mark.skipif(sys.version_info[0] < 3, reason="Only Python 3 supports buffer protocol")
+pytestmark = pytest.mark.skipif(
+    sys.version_info[0] < 3, reason="Only Python 3 supports buffer protocol"
+)
 
 
 def make_array(f, data):

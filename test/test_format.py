@@ -63,7 +63,7 @@ def testRaw():
         b"\x96\xda\x00\x00\xda\x00\x01a\xda\x00\x02ab\xdb\x00\x00"
         b"\x00\x00\xdb\x00\x00\x00\x01a\xdb\x00\x00\x00\x02ab",
         ("", "a", "ab", "", "a", "ab"),
-        raw=False
+        raw=False,
     )
 
 
