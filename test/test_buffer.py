@@ -1,17 +1,17 @@
 #!/usr/bin/env python
 # coding: utf-8
 
+import sys
+import pytest
 from msgpack import packb, unpackb
 
 
+@pytest.mark.skipif(sys.version_info[0] == 2, reason="Python 2 is not supported")
 def test_unpack_buffer():
     from array import array
 
     buf = array("b")
-    try:
-        buf.frombytes(packb((b"foo", b"bar")))
-    except AttributeError:  # PY2
-        buf.fromstring(packb((b"foo", b"bar")))
+    buf.frombytes(packb((b"foo", b"bar")))
     obj = unpackb(buf, use_list=1)
     assert [b"foo", b"bar"] == obj
 
