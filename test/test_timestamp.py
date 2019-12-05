@@ -12,7 +12,6 @@ def test_timestamp():
     assert ts == unpacked
     assert ts.seconds == 2**32 - 1 and ts.nanoseconds == 0
 
-
     # timestamp64
     ts = Timestamp(2**34 - 1, 999999999)
     assert ts.to_bytes() == b"\xee\x6b\x27\xff\xff\xff\xff\xff"
@@ -39,3 +38,9 @@ def test_timestamp():
     unpacked = msgpack.unpackb(packed)
     assert ts == unpacked
     assert ts.seconds == -3 and ts.nanoseconds == 700000000
+
+
+def test_timestamp_to():
+    t = Timestamp(42, 14)
+    assert t.to_float_s() == 42.000000014
+    assert t.to_unix_ns() == 42000000014

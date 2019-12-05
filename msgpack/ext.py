@@ -1,6 +1,12 @@
 # coding: utf-8
 from collections import namedtuple
+import sys
 import struct
+
+
+PY2 = sys.version_info[0] == 2
+if not PY2:
+    long = int
 
 
 class ExtType(namedtuple('ExtType', 'code data')):
@@ -17,7 +23,7 @@ class ExtType(namedtuple('ExtType', 'code data')):
         return super(ExtType, cls).__new__(cls, code, data)
 
 
-class Timestamp:
+class Timestamp(object):
     """Timestamp represents the Timestamp extension type in msgpack.
 
     When built with Cython, msgpack uses C methods to pack and unpack `Timestamp`. When using pure-Python
@@ -38,14 +44,14 @@ class Timestamp:
 
         Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
         """
-        if not isinstance(seconds, (int, float)):
+        if not isinstance(seconds, (int, long, float)):
             raise TypeError("seconds must be numeric")
-        if not isinstance(nanoseconds, int):
+        if not isinstance(nanoseconds, (int, long)):
             raise TypeError("nanoseconds must be an integer")
         if nanoseconds:
             if nanoseconds < 0 or nanoseconds % 1 != 0 or nanoseconds > (1e9 - 1):
                 raise ValueError("nanoseconds must be a non-negative integer less than 999999999.")
-            if not isinstance(seconds, int):
+            if not isinstance(seconds, (int, long)):
                 raise ValueError("seconds must be an integer if also providing nanoseconds.")
             self.nanoseconds = nanoseconds
         else:
@@ -55,7 +61,7 @@ class Timestamp:
 
     def __repr__(self):
         """String representation of Timestamp."""
-        return str.format("Timestamp(seconds={0}, nanoseconds={1})", self.seconds, self.nanoseconds)
+        return "Timestamp(seconds={0}, nanoseconds={1})".format(self.seconds, self.nanoseconds)
 
     def __eq__(self, other):
         """Check for equality with another Timestamp object"""
@@ -121,4 +127,10 @@ class Timestamp:
         """
         return self.seconds + self.nanoseconds/1e9
 
+    def to_unix_ns(self):
+        """Get the timestamp as a unixtime in nanoseconds.
 
+        :returns: posix timestamp in nanoseconds
+        :rtype: int
+        """
+        return int(self.seconds * 1e9 + self.nanoseconds)
