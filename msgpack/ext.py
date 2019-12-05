@@ -11,22 +11,22 @@ class ExtType(namedtuple('ExtType', 'code data')):
         if not isinstance(data, bytes):
             raise TypeError("data must be bytes")
         if code == -1:
-            return TimestampType.from_bytes(data)
+            return Timestamp.from_bytes(data)
         if not 0 <= code <= 127:
             raise ValueError("code must be 0~127")
         return super(ExtType, cls).__new__(cls, code, data)
 
 
-class TimestampType:
-    """TimestampType represents the Timestamp extension type in msgpack.
+class Timestamp:
+    """Timestamp represents the Timestamp extension type in msgpack.
 
-    When built with Cython, msgpack-python uses C methods to pack and unpack `TimestampType`. When using pure-Python
-    msgpack-python, :func:`to_bytes` and :func:`from_bytes` are used to pack and unpack `TimestampType`.
+    When built with Cython, msgpack uses C methods to pack and unpack `Timestamp`. When using pure-Python
+    msgpack, :func:`to_bytes` and :func:`from_bytes` are used to pack and unpack `Timestamp`.
     """
     __slots__ = ["seconds", "nanoseconds"]
 
     def __init__(self, seconds, nanoseconds=0):
-        """Initialize a TimestampType object.
+        """Initialize a Timestamp object.
 
         :param seconds: Number of seconds since the UNIX epoch (00:00:00 UTC Jan 1 1970, minus leap seconds). May be
             negative. If :code:`seconds` includes a fractional part, :code:`nanoseconds` must be 0.
@@ -54,11 +54,11 @@ class TimestampType:
         self.seconds = int(seconds // 1)
 
     def __repr__(self):
-        """String representation of TimestampType."""
-        return str.format("TimestampType(seconds={0}, nanoseconds={1})", self.seconds, self.nanoseconds)
+        """String representation of Timestamp."""
+        return str.format("Timestamp(seconds={0}, nanoseconds={1})", self.seconds, self.nanoseconds)
 
     def __eq__(self, other):
-        """Check for equality with another TimestampType object"""
+        """Check for equality with another Timestamp object"""
         if type(other) is self.__class__:
             return self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
         return False
@@ -69,15 +69,15 @@ class TimestampType:
 
     @staticmethod
     def from_bytes(b):
-        """Unpack bytes into a `TimestampType` object.
+        """Unpack bytes into a `Timestamp` object.
 
         Used for pure-Python msgpack unpacking.
 
         :param b: Payload from msgpack ext message with code -1
         :type b: bytes
 
-        :returns: TimestampType object unpacked from msgpack ext payload
-        :rtype: TimestampType
+        :returns: Timestamp object unpacked from msgpack ext payload
+        :rtype: Timestamp
         """
         if len(b) == 4:
             seconds = struct.unpack("!L", b)[0]
@@ -90,10 +90,10 @@ class TimestampType:
             nanoseconds, seconds = struct.unpack("!Iq", b)
         else:
             raise ValueError("Timestamp type can only be created from 32, 64, or 96-bit byte objects")
-        return TimestampType(seconds, nanoseconds)
+        return Timestamp(seconds, nanoseconds)
 
     def to_bytes(self):
-        """Pack this TimestampType object into bytes.
+        """Pack this Timestamp object into bytes.
 
         Used for pure-Python msgpack packing.
 

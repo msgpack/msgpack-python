@@ -19,7 +19,7 @@ from .exceptions import (
     FormatError,
     StackError,
 )
-from .ext import ExtType, TimestampType
+from .ext import ExtType, Timestamp
 
 
 cdef extern from "unpack.h":
@@ -100,7 +100,7 @@ cdef inline init_ctx(unpack_context *ctx,
         ctx.user.ext_hook = <PyObject*>ext_hook
 
     # Add Timestamp type to the user object so it may be used in unpack.h
-    ctx.user.timestamp_t = <PyObject*>TimestampType
+    ctx.user.timestamp_t = <PyObject*>Timestamp
     ctx.user.unicode_errors = unicode_errors
 
 def default_read_extended_type(typecode, data):

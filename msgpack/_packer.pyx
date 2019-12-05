@@ -4,9 +4,9 @@ from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 
 cdef ExtType
-cdef TimestampType
+cdef Timestamp
 
-from .ext import ExtType, TimestampType
+from .ext import ExtType, Timestamp
 
 
 cdef extern from "Python.h":
@@ -241,7 +241,7 @@ cdef class Packer(object):
                     raise ValueError("EXT data is too large")
                 ret = msgpack_pack_ext(&self.pk, longval, L)
                 ret = msgpack_pack_raw_body(&self.pk, rawval, L)
-            elif type(o) is TimestampType:
+            elif type(o) is Timestamp:
                 llval = o.seconds
                 ulval = o.nanoseconds
                 ret = msgpack_pack_timestamp(&self.pk, llval, ulval)

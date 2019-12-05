@@ -1,7 +1,7 @@
 # coding: utf-8
 from ._version import version
 from .exceptions import *
-from .ext import ExtType, TimestampType
+from .ext import ExtType, Timestamp
 
 import os
 import sys
