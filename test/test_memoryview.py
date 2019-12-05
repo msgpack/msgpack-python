@@ -6,25 +6,22 @@ from array import array
 from msgpack import packb, unpackb
 import sys
 
-pytest.mark.skipif(sys.version_info[0] < 3, "Only Python 3 supports buffer protocol", allow_module_level=True)
 
-make_memoryview = memoryview
+pytestmark = pytest.mark.skipif(sys.version_info[0] < 3, reason="Only Python 3 supports buffer protocol")
+
 
 def make_array(f, data):
     a = array(f)
     a.frombytes(data)
     return a
 
-def get_data(a):
-    return a.tobytes()
-
 
 def _runtest(format, nbytes, expected_header, expected_prefix, use_bin_type):
     # create a new array
     original_array = array(format)
     original_array.fromlist([255] * (nbytes // original_array.itemsize))
-    original_data = get_data(original_array)
-    view = make_memoryview(original_array)
+    original_data = original_array.tobytes()
+    view = memoryview(original_array)
 
     # pack, unpack, and reconstruct array
     packed = packb(view, use_bin_type=use_bin_type)
