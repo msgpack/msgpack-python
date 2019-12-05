@@ -8,9 +8,9 @@ def test_read_array_header():
     unpacker = Unpacker()
     unpacker.feed(packb(["a", "b", "c"]))
     assert unpacker.read_array_header() == 3
-    assert unpacker.unpack() == b"a"
-    assert unpacker.unpack() == b"b"
-    assert unpacker.unpack() == b"c"
+    assert unpacker.unpack() == "a"
+    assert unpacker.unpack() == "b"
+    assert unpacker.unpack() == "c"
     try:
         unpacker.unpack()
         assert 0, "should raise exception"
@@ -22,8 +22,8 @@ def test_read_map_header():
     unpacker = Unpacker()
     unpacker.feed(packb({"a": "A"}))
     assert unpacker.read_map_header() == 1
-    assert unpacker.unpack() == b"a"
-    assert unpacker.unpack() == b"A"
+    assert unpacker.unpack() == "a"
+    assert unpacker.unpack() == "A"
     try:
         unpacker.unpack()
         assert 0, "should raise exception"

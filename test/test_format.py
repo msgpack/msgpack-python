@@ -4,8 +4,8 @@
 from msgpack import unpackb
 
 
-def check(src, should, use_list=0):
-    assert unpackb(src, use_list=use_list) == should
+def check(src, should, use_list=0, raw=True):
+    assert unpackb(src, use_list=use_list, raw=raw) == should
 
 
 def testSimpleValue():
@@ -58,6 +58,12 @@ def testRaw():
         b"\x96\xda\x00\x00\xda\x00\x01a\xda\x00\x02ab\xdb\x00\x00"
         b"\x00\x00\xdb\x00\x00\x00\x01a\xdb\x00\x00\x00\x02ab",
         (b"", b"a", b"ab", b"", b"a", b"ab"),
+    )
+    check(
+        b"\x96\xda\x00\x00\xda\x00\x01a\xda\x00\x02ab\xdb\x00\x00"
+        b"\x00\x00\xdb\x00\x00\x00\x01a\xdb\x00\x00\x00\x02ab",
+        ("", "a", "ab", "", "a", "ab"),
+        raw=False
     )
 
 

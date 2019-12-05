@@ -10,14 +10,16 @@ def test_str8():
     assert len(b) == len(data) + 2
     assert b[0:2] == header + b"\x20"
     assert b[2:] == data
-    assert unpackb(b) == data
+    assert unpackb(b, raw=True) == data
+    assert unpackb(b, raw=False) == data.decode()
 
     data = b"x" * 255
     b = packb(data.decode(), use_bin_type=True)
     assert len(b) == len(data) + 2
     assert b[0:2] == header + b"\xff"
     assert b[2:] == data
-    assert unpackb(b) == data
+    assert unpackb(b, raw=True) == data
+    assert unpackb(b, raw=False) == data.decode()
 
 
 def test_bin8():
