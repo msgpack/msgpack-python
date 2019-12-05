@@ -200,14 +200,6 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
     raise ValueError("Unpack failed: error = %d" % (ret,))
 
 
-def unpack(object stream, **kwargs):
-    PyErr_WarnEx(
-        DeprecationWarning,
-        "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.", 1)
-    data = stream.read()
-    return unpackb(data, **kwargs)
-
-
 cdef class Unpacker(object):
     """Streaming unpacker.
 

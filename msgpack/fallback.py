@@ -111,34 +111,10 @@ def _check_type_strict(obj, t, type=type, tuple=tuple):
 
 
 def _get_data_from_buffer(obj):
-    try:
-        view = memoryview(obj)
-    except TypeError:
-        # try to use legacy buffer protocol if 2.7, otherwise re-raise
-        if PY2:
-            view = memoryview(buffer(obj))
-            warnings.warn(
-                "using old buffer interface to unpack %s; "
-                "this leads to unpacking errors if slicing is used and "
-                "will be removed in a future version" % type(obj),
-                RuntimeWarning,
-                stacklevel=3,
-            )
-        else:
-            raise
+    view = memoryview(obj)
     if view.itemsize != 1:
         raise ValueError("cannot unpack from multi-byte object")
     return view
-
-
-def unpack(stream, **kwargs):
-    warnings.warn(
-        "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    data = stream.read()
-    return unpackb(data, **kwargs)
 
 
 def unpackb(packed, **kwargs):
