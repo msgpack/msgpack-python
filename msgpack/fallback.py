@@ -131,16 +131,6 @@ def _get_data_from_buffer(obj):
     return view
 
 
-def unpack(stream, **kwargs):
-    warnings.warn(
-        "Direct calling implementation's unpack() is deprecated, Use msgpack.unpack() or unpackb() instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    data = stream.read()
-    return unpackb(data, **kwargs)
-
-
 def unpackb(packed, **kwargs):
     """
     Unpack an object from `packed`.
