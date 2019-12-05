@@ -66,7 +66,7 @@ from .exceptions import (
     StackError,
 )
 
-from . import ExtType
+from .ext import ExtType, Timestamp
 
 
 EX_SKIP                 = 0
@@ -826,9 +826,13 @@ class Packer(object):
                 if self._use_float:
                     return self._buffer.write(struct.pack(">Bf", 0xca, obj))
                 return self._buffer.write(struct.pack(">Bd", 0xcb, obj))
-            if check(obj, ExtType):
-                code = obj.code
-                data = obj.data
+            if check(obj, (ExtType, Timestamp)):
+                if check(obj, Timestamp):
+                    code = -1
+                    data = obj.to_bytes()
+                else:
+                    code = obj.code
+                    data = obj.data
                 assert isinstance(code, int)
                 assert isinstance(data, bytes)
                 L = len(data)
