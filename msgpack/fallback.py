@@ -66,7 +66,7 @@ from .exceptions import (
     StackError,
 )
 
-from . import ExtType, TimestampType
+from .ext import ExtType, TimestampType
 
 
 EX_SKIP                 = 0

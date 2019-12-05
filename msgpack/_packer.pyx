@@ -6,7 +6,7 @@ from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 cdef ExtType
 cdef TimestampType
 
-from . import ExtType, TimestampType
+from .ext import ExtType, TimestampType
 
 
 cdef extern from "Python.h":

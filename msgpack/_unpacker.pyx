@@ -19,7 +19,7 @@ from .exceptions import (
     FormatError,
     StackError,
 )
-from . import ExtType, TimestampType
+from .ext import ExtType, TimestampType
 
 
 cdef extern from "unpack.h":
