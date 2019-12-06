@@ -50,7 +50,12 @@ See note below for detail.
 
 
 Major breaking changes in msgpack 1.0
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Python 2
+
+  * The extension module does not support Python 2 anymore.
+    The pure Python implementation (``msgpack.fallback``) is used for Python 2.
 
 * Packer
 
@@ -58,7 +63,6 @@ Major breaking changes in msgpack 1.0
     **If you are still sing Python 2, you must use unicode for all string types.**
     You can use ``use_bin_type=False`` to encode into old msgpack format.
   * ``encoding`` option is removed.  UTF-8 is used always.
-
 
 * Unpacker
 
@@ -69,6 +73,7 @@ Major breaking changes in msgpack 1.0
   * Default value of ``strict_map_key`` is changed to True to avoid hashdos.
     You need to pass ``strict_map_key=False`` if you have data which contain map keys
     which type is not bytes or str.
+
 
 Install
 -------
