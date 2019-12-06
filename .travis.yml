@@ -51,14 +51,14 @@ matrix:
       python: "2.7"
       install:
         - pip install -U pip
-        - pip install -U pytest
+        - pip install -U pytest pytest-cov codecov
         - pip install .
       script:
         - pytest -v test
 
 install:
   - pip install -U pip
-  - pip install -U pytest
+  - pip install -U pytest pytest-cov codecov
   - pip install -r requirements.txt
   - make cython
   - pip install -e .
@@ -68,5 +68,10 @@ script:
   - python -c 'from msgpack import _cmsgpack'
   - pytest -v test
   - MSGPACK_PUREPYTHON=x pytest -v test
+
+after_success:
+  - if [ -f .coverage ]; then
+      codecov
+    fi
 
 # vim: sw=2 ts=2
