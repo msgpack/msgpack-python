@@ -4,7 +4,7 @@ all: cython
 
 .PHONY: black
 black:
-	black .
+	black msgpack/ test/
 
 .PHONY: cython
 cython:

@@ -2,7 +2,6 @@
 
 import sys
 import struct
-import warnings
 
 
 PY2 = sys.version_info[0] == 2
