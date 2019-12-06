@@ -5,7 +5,7 @@ from msgpack import unpackb
 
 
 def check(src, should, use_list=0, raw=True):
-    assert unpackb(src, use_list=use_list, raw=raw) == should
+    assert unpackb(src, use_list=use_list, raw=raw, strict_map_key=False) == should
 
 
 def testSimpleValue():

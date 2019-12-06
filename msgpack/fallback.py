@@ -175,9 +175,7 @@ class Unpacker(object):
         Otherwise, unpack to Python str by decoding with UTF-8 encoding (default).
 
     :param bool strict_map_key:
-        If true, only str or bytes are accepted for map (dict) keys.
-        It's False by default for backward-compatibility.
-        But it will be True from msgpack 1.0.
+        If true (default), only str or bytes are accepted for map (dict) keys.
 
     :param callable object_hook:
         When specified, it should be callable.
@@ -249,7 +247,7 @@ class Unpacker(object):
         read_size=0,
         use_list=True,
         raw=False,
-        strict_map_key=False,
+        strict_map_key=True,
         object_hook=None,
         object_pairs_hook=None,
         list_hook=None,

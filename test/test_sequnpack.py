@@ -132,7 +132,7 @@ def test_unpack_tell():
         pack(m, stream)
         offsets.append(stream.tell())
     stream.seek(0)
-    unpacker = Unpacker(stream)
+    unpacker = Unpacker(stream, strict_map_key=False)
     for m, o in zip(messages, offsets):
         m2 = next(unpacker)
         assert m == m2

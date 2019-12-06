@@ -14,7 +14,7 @@ from msgpack import packb, unpackb, Unpacker, Packer, pack
 
 
 def check(data, use_list=False):
-    re = unpackb(packb(data), use_list=use_list)
+    re = unpackb(packb(data), use_list=use_list, strict_map_key=False)
     assert re == data
 
 
@@ -166,7 +166,7 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
             bio.write(packer.pack(i * 2))  # value
 
     bio.seek(0)
-    unpacker = Unpacker(bio)
+    unpacker = Unpacker(bio, strict_map_key=False)
     for size in sizes:
         assert unpacker.unpack() == dict((i, i * 2) for i in range(size))
 
@@ -186,7 +186,7 @@ def test_pairlist():
     pairlist = [(b"a", 1), (2, b"b"), (b"foo", b"bar")]
     packer = Packer()
     packed = packer.pack_map_pairs(pairlist)
-    unpacked = unpackb(packed, object_pairs_hook=list)
+    unpacked = unpackb(packed, object_pairs_hook=list, strict_map_key=False)
     assert pairlist == unpacked
 
 
