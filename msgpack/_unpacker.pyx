@@ -171,9 +171,9 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
     if max_bin_len == -1:
         max_bin_len = buf_len
     if max_array_len == -1:
-        max_array_len = buf_len//4
+        max_array_len = buf_len
     if max_map_len == -1:
-        max_map_len = buf_len//8
+        max_map_len = buf_len//2
     if max_ext_len == -1:
         max_ext_len = buf_len
 
