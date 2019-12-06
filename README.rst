@@ -34,19 +34,19 @@ I upload transitional package (msgpack-python 0.5 which depending on msgpack)
 for smooth transition from msgpack-python to msgpack.
 
 Sadly, this doesn't work for upgrade install.  After `pip install -U msgpack-python`,
-msgpack is removed and `import msgpack` fail.
+msgpack is removed, and `import msgpack` fail.
 
 
-Compatibility with old format
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Compatibility with the old format
+^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
 
 You can use ``use_bin_type=False`` option to pack ``bytes``
-object into raw type in old msgpack spec, instead of bin type in new msgpack spec.
+object into raw type in the old msgpack spec, instead of bin type in new msgpack spec.
 
-You can unpack old msgpack formatk using ``raw=True`` option.
+You can unpack old msgpack format using ``raw=True`` option.
 It unpacks str (raw) type in msgpack into Python bytes.
 
-See note in below for detail.
+See note below for detail.
 
 
 Install
@@ -67,7 +67,7 @@ But msgpack provides a pure Python implementation (``msgpack.fallback``)
 for PyPy and Python 2.
 
 Since the [pip](https://pip.pypa.io/) uses the pure Python implementation,
-Python 2 support will not be dropped in foreseeable feature.
+Python 2 support will not be dropped in the foreseeable future.
 
 
 Windows
