@@ -12,11 +12,20 @@ python:
   - "3.7"
   - "3.8-dev"
 
+
+_pure: &pure
+  install:
+    - pip install -U pip
+    - pip install -U pytest pytest-cov codecov
+    - pip install .
+  script:
+    - pytest --cov=msgpack -v test
+
 matrix:
   include:
     - name: Black
       language: python
-      python: 3.8
+      python: 3.7
       install:
         - pip install black
       script:
@@ -35,43 +44,35 @@ matrix:
         - docker pull $DOCKER_IMAGE
       script:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
-    - name: "pypy2.7"
-      python: "pypy2.7-7.1.1"
-      install:
-        - pip install -e .
-      script:
-        - py.test -v test
-    - name: "pypy3"
-      python: "pypy3.6-7.1.1"
-      install:
-        - pip install -e .
-      script:
-        - pytest -v test
+
     - name: "Python 2 (fallback)"
       python: "2.7"
-      install:
-        - pip install -U pip
-        - pip install -U pytest pytest-cov codecov
-        - pip install .
-      script:
-        - pytest -v test
+      <<: *pure
+
+    - name: "pypy2.7"
+      python: "pypy2.7-7.1.1"
+      <<: *pure
+
+    - name: "pypy3"
+      python: "pypy3.6-7.1.1"
+      <<: *pure
 
 install:
   - pip install -U pip
   - pip install -U pytest pytest-cov codecov
-  - pip install -r requirements.txt
+  - pip install -r requirements.txt  # Cython
   - make cython
   - pip install -e .
 
 script:
   - python -c 'import sys; print(hex(sys.maxsize))'
   - python -c 'from msgpack import _cmsgpack'
-  - pytest -v test
-  - MSGPACK_PUREPYTHON=x pytest -v test
+  - pytest --cov=msgpack -v test
+  - MSGPACK_PUREPYTHON=x pytest --cov=msgpack -v test
 
 after_success:
   - if [ -f .coverage ]; then
-      codecov
+      codecov;
     fi
 
 # vim: sw=2 ts=2
