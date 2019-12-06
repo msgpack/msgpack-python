@@ -95,11 +95,11 @@ def test_readbytes():
 
     # Issue 352
     u = Unpacker()
-    u.feed(b'x')
+    u.feed(b"x")
     assert bytes(u.read_bytes(1)) == b"x"
     with raises(StopIteration):
         next(u)
-    u.feed(b'\1')
+    u.feed(b"\1")
     assert next(u) == 1
 
 
