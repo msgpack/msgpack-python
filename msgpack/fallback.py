@@ -195,39 +195,40 @@ class Unpacker(object):
         contains invalid UTF-8 string.
 
     :param int max_buffer_size:
-        Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
+        Limits size of data waiting unpacked.  0 means 2**32-1.
+        The default value is 100*1024*1024 (100MiB).
         Raises `BufferFull` exception when it is insufficient.
         You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
         Deprecated, use *max_buffer_size* instead.
-        Limits max length of str. (default: max_buffer_size or 1024*1024)
+        Limits max length of str. (default: max_buffer_size)
 
     :param int max_bin_len:
         Deprecated, use *max_buffer_size* instead.
-        Limits max length of bin. (default: max_buffer_size or 1024*1024)
+        Limits max length of bin. (default: max_buffer_size)
 
     :param int max_array_len:
         Limits max length of array.
-        (default: max_buffer_size or 128*1024)
+        (default: max_buffer_size)
 
     :param int max_map_len:
         Limits max length of map.
-        (default: max_buffer_size//2 or 32*1024)
+        (default: max_buffer_size//2)
 
     :param int max_ext_len:
         Deprecated, use *max_buffer_size* instead.
-        Limits max size of ext type.  (default: max_buffer_size or 1024*1024)
+        Limits max size of ext type.  (default: max_buffer_size)
 
     Example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like, max_buffer_size=10*1024*1024)
+        unpacker = Unpacker(file_like)
         for o in unpacker:
             process(o)
 
     Example of streaming deserialize from socket::
 
-        unpacker = Unpacker(max_buffer_size=10*1024*1024)
+        unpacker = Unpacker(max_buffer_size)
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -254,7 +255,7 @@ class Unpacker(object):
         object_pairs_hook=None,
         list_hook=None,
         unicode_errors=None,
-        max_buffer_size=0,
+        max_buffer_size=100*1024*1024,
         ext_hook=ExtType,
         max_str_len=-1,
         max_bin_len=-1,
@@ -287,18 +288,20 @@ class Unpacker(object):
         # state, which _buf_checkpoint records.
         self._buf_checkpoint = 0
 
+        if not max_buffer_size:
+            max_buffer_size = 2 ** 31 - 1
         if max_str_len == -1:
-            max_str_len = max_buffer_size or 1024 * 1024
+            max_str_len = max_buffer_size
         if max_bin_len == -1:
-            max_bin_len = max_buffer_size or 1024 * 1024
+            max_bin_len = max_buffer_size
         if max_array_len == -1:
-            max_array_len = max_buffer_size or 128 * 1024
+            max_array_len = max_buffer_size
         if max_map_len == -1:
-            max_map_len = max_buffer_size // 2 or 32 * 1024
+            max_map_len = max_buffer_size // 2
         if max_ext_len == -1:
-            max_ext_len = max_buffer_size or 1024 * 1024
+            max_ext_len = max_buffer_size
 
-        self._max_buffer_size = max_buffer_size or 2 ** 31 - 1
+        self._max_buffer_size = max_buffer_size
         if read_size > self._max_buffer_size:
             raise ValueError("read_size must be smaller than max_buffer_size")
         self._read_size = read_size or min(self._max_buffer_size, 16 * 1024)

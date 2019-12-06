@@ -236,27 +236,28 @@ cdef class Unpacker(object):
         (See also simplejson)
 
     :param int max_buffer_size:
-        Limits size of data waiting unpacked.  0 means system's INT_MAX (default).
+        Limits size of data waiting unpacked.  0 means system's INT_MAX.
+        The default value is 100*1024*1024 (100MiB).
         Raises `BufferFull` exception when it is insufficient.
         You should set this parameter when unpacking data from untrusted source.
 
     :param int max_str_len:
         Deprecated, use *max_buffer_size* instead.
-        Limits max length of str. (default: max_buffer_size or 1024*1024)
+        Limits max length of str. (default: max_buffer_size)
 
     :param int max_bin_len:
         Deprecated, use *max_buffer_size* instead.
-        Limits max length of bin. (default: max_buffer_size or 1024*1024)
+        Limits max length of bin. (default: max_buffer_size)
 
     :param int max_array_len:
-        Limits max length of array. (default: max_buffer_size or 128*1024)
+        Limits max length of array. (default: max_buffer_size)
 
     :param int max_map_len:
-        Limits max length of map. (default: max_buffer_size//2 or 32*1024)
+        Limits max length of map. (default: max_buffer_size//2)
 
     :param int max_ext_len:
         Deprecated, use *max_buffer_size* instead.
-        Limits max size of ext type. (default: max_buffer_size or 1024*1024)
+        Limits max size of ext type. (default: max_buffer_size)
 
     :param str unicode_errors:
         Error handler used for decoding str type.  (default: `'strict'`)
@@ -264,13 +265,13 @@ cdef class Unpacker(object):
 
     Example of streaming deserialize from file-like object::
 
-        unpacker = Unpacker(file_like, max_buffer_size=10*1024*1024)
+        unpacker = Unpacker(file_like)
         for o in unpacker:
             process(o)
 
     Example of streaming deserialize from socket::
 
-        unpacker = Unpacker(max_buffer_size=10*1024*1024)
+        unpacker = Unpacker()
         while True:
             buf = sock.recv(1024**2)
             if not buf:
@@ -307,7 +308,7 @@ cdef class Unpacker(object):
     def __init__(self, file_like=None, *, Py_ssize_t read_size=0,
                  bint use_list=True, bint raw=False, bint strict_map_key=False,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
-                 unicode_errors=None, Py_ssize_t max_buffer_size=0,
+                 unicode_errors=None, Py_ssize_t max_buffer_size=100*1024*1024,
                  object ext_hook=ExtType,
                  Py_ssize_t max_str_len=-1,
                  Py_ssize_t max_bin_len=-1,
@@ -327,23 +328,24 @@ cdef class Unpacker(object):
             if not PyCallable_Check(self.file_like_read):
                 raise TypeError("`file_like.read` must be a callable.")
 
-        if max_str_len == -1:
-            max_str_len = max_buffer_size or 1024*1024
-        if max_bin_len == -1:
-            max_bin_len = max_buffer_size or 1024*1024
-        if max_array_len == -1:
-            max_array_len = max_buffer_size or 128*1024
-        if max_map_len == -1:
-            max_map_len = max_buffer_size//2 or 32*1024
-        if max_ext_len == -1:
-            max_ext_len = max_buffer_size or 1024*1024
-
         if not max_buffer_size:
             max_buffer_size = INT_MAX
+        if max_str_len == -1:
+            max_str_len = max_buffer_size
+        if max_bin_len == -1:
+            max_bin_len = max_buffer_size
+        if max_array_len == -1:
+            max_array_len = max_buffer_size
+        if max_map_len == -1:
+            max_map_len = max_buffer_size//2
+        if max_ext_len == -1:
+            max_ext_len = max_buffer_size
+
         if read_size > max_buffer_size:
             raise ValueError("read_size should be less or equal to max_buffer_size")
         if not read_size:
             read_size = min(max_buffer_size, 1024**2)
+
         self.max_buffer_size = max_buffer_size
         self.read_size = read_size
         self.buf = <char*>PyMem_Malloc(read_size)
