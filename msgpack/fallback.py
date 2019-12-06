@@ -255,7 +255,7 @@ class Unpacker(object):
         object_pairs_hook=None,
         list_hook=None,
         unicode_errors=None,
-        max_buffer_size=100*1024*1024,
+        max_buffer_size=100 * 1024 * 1024,
         ext_hook=ExtType,
         max_str_len=-1,
         max_bin_len=-1,
