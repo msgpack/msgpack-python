@@ -131,7 +131,7 @@ cdef inline int get_data_from_buffer(object obj,
 
 
 def unpackb(object packed, *, object object_hook=None, object list_hook=None,
-            bint use_list=True, bint raw=False, bint strict_map_key=False,
+            bint use_list=True, bint raw=False, bint strict_map_key=True,
             unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
             Py_ssize_t max_str_len=-1,
@@ -221,9 +221,7 @@ cdef class Unpacker(object):
         Otherwise, unpack to Python str by decoding with UTF-8 encoding (default).
 
     :param bool strict_map_key:
-        If true, only str or bytes are accepted for map (dict) keys.
-        It's False by default for backward-compatibility.
-        But it will be True from msgpack 1.0.
+        If true (default), only str or bytes are accepted for map (dict) keys.
 
     :param callable object_hook:
         When specified, it should be callable.
@@ -305,7 +303,7 @@ cdef class Unpacker(object):
         self.buf = NULL
 
     def __init__(self, file_like=None, *, Py_ssize_t read_size=0,
-                 bint use_list=True, bint raw=False, bint strict_map_key=False,
+                 bint use_list=True, bint raw=False, bint strict_map_key=True,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  unicode_errors=None, Py_ssize_t max_buffer_size=0,
                  object ext_hook=ExtType,

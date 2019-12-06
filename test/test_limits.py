@@ -87,11 +87,11 @@ def test_max_map_len():
     d = {1: 2, 3: 4, 5: 6}
     packed = packb(d)
 
-    unpacker = Unpacker(max_map_len=3)
+    unpacker = Unpacker(max_map_len=3, strict_map_key=False)
     unpacker.feed(packed)
     assert unpacker.unpack() == d
 
-    unpacker = Unpacker(max_map_len=2)
+    unpacker = Unpacker(max_map_len=2, strict_map_key=False)
     with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
