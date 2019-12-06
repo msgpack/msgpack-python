@@ -23,14 +23,6 @@ _pure: &pure
 
 matrix:
   include:
-    - name: Black
-      language: python
-      python: 3.7
-      install:
-        - pip install black
-      script:
-        - black --check --diff .
-
     - name: 32bit build
       language: python
       services:
