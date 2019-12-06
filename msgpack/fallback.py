@@ -210,11 +210,11 @@ class Unpacker(object):
 
     :param int max_array_len:
         Limits max length of array.
-        (default: max_buffer_size//4)
+        (default: max_buffer_size)
 
     :param int max_map_len:
         Limits max length of map.
-        (default: max_buffer_size//8)
+        (default: max_buffer_size//2)
 
     :param int max_ext_len:
         Deprecated, use *max_buffer_size* instead.
@@ -295,9 +295,9 @@ class Unpacker(object):
         if max_bin_len == -1:
             max_bin_len = max_buffer_size
         if max_array_len == -1:
-            max_array_len = max_buffer_size // 4
+            max_array_len = max_buffer_size
         if max_map_len == -1:
-            max_map_len = max_buffer_size // 8
+            max_map_len = max_buffer_size // 2
         if max_ext_len == -1:
             max_ext_len = max_buffer_size
 
