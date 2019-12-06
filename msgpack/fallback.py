@@ -357,7 +357,9 @@ class Unpacker(object):
         return self._buffer[self._buff_i :]
 
     def read_bytes(self, n):
-        return self._read(n)
+        ret = self._read(n)
+        self._consume()
+        return ret
 
     def _read(self, n):
         # (int) -> bytearray

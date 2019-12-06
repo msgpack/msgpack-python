@@ -93,6 +93,15 @@ def test_readbytes():
     assert unpacker.unpack() == ord(b"a")
     assert unpacker.unpack() == ord(b"r")
 
+    # Issue 352
+    u = Unpacker()
+    u.feed(b"x")
+    assert bytes(u.read_bytes(1)) == b"x"
+    with raises(StopIteration):
+        next(u)
+    u.feed(b"\1")
+    assert next(u) == 1
+
 
 def test_issue124():
     unpacker = Unpacker()
