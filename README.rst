@@ -38,7 +38,7 @@ msgpack is removed, and `import msgpack` fail.
 
 
 Compatibility with the old format
-^^^^^^^^^^^^^^^^^^^^^^----^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 You can use ``use_bin_type=False`` option to pack ``bytes``
 object into raw type in the old msgpack spec, instead of bin type in new msgpack spec.
@@ -47,6 +47,32 @@ You can unpack old msgpack format using ``raw=True`` option.
 It unpacks str (raw) type in msgpack into Python bytes.
 
 See note below for detail.
+
+
+Major breaking changes in msgpack 1.0
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Python 2
+
+  * The extension module does not support Python 2 anymore.
+    The pure Python implementation (``msgpack.fallback``) is used for Python 2.
+
+* Packer
+
+  * ``use_bin_type=True`` by default.  bytes are encoded in bin type in msgpack.
+    **If you are still sing Python 2, you must use unicode for all string types.**
+    You can use ``use_bin_type=False`` to encode into old msgpack format.
+  * ``encoding`` option is removed.  UTF-8 is used always.
+
+* Unpacker
+
+  * ``raw=False`` by default.  It assumes str types are valid UTF-8 string
+    and decode them to Python str (unicode) object.
+  * ``encdoding`` option is rmeoved.  You can use ``raw=True`` to support old format.
+  * Default value of ``max_buffer_size`` is changed from 0 to 100 MiB.
+  * Default value of ``strict_map_key`` is changed to True to avoid hashdos.
+    You need to pass ``strict_map_key=False`` if you have data which contain map keys
+    which type is not bytes or str.
 
 
 Install
@@ -270,26 +296,31 @@ To use the **ext** type, pass ``msgpack.ExtType`` object to packer.
 You can use it with ``default`` and ``ext_hook``. See below.
 
 
-Note about performance
-----------------------
+Security
+^^^^^^^^
 
-GC
-^^
+To unpacking data received from unreliable source, msgpack provides
+two security options.
+
+``max_buffer_size`` (default: 100*1024*1024) limits the internal buffer size.
+It is used to limit the preallocated list size too.
+
+``strict_map_key`` (default: ``True``) limits the type of map keys to bytes and str.
+While msgpack spec doesn't limit the types of the map keys,
+there is a risk of the hashdos.
+If you need to support other types for map keys, use ``strict_map_key=False``.
+
+
+Performance tips
+^^^^^^^^^^^^^^^^
 
 CPython's GC starts when growing allocated object.
 This means unpacking may cause useless GC.
 You can use ``gc.disable()`` when unpacking large message.
 
-use_list option
-^^^^^^^^^^^^^^^
-
 List is the default sequence type of Python.
 But tuple is lighter than list.
 You can use ``use_list=False`` while unpacking when performance is important.
-
-Python's dict can't use list as key and MessagePack allows array for key of mapping.
-``use_list=False`` allows unpacking such message.
-Another way to unpacking such object is using ``object_pairs_hook``.
 
 
 Development

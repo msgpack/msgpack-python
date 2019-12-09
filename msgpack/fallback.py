@@ -747,7 +747,7 @@ class Packer(object):
 
     :param bool strict_types:
         If set to true, types will be checked to be exact. Derived classes
-        from serializeable types will not be serialized and will be
+        from serializable types will not be serialized and will be
         treated as unsupported type and forwarded to default.
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
@@ -1014,7 +1014,7 @@ class Packer(object):
     def reset(self):
         """Reset internal buffer.
 
-        This method is usaful only when autoreset=False.
+        This method is useful only when autoreset=False.
         """
         self._buffer = StringIO()
 
