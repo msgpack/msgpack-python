@@ -24,10 +24,13 @@ typedef struct unpack_user {
     bool raw;
     bool has_pairs_hook;
     bool strict_map_key;
+    int timestamp;
     PyObject *object_hook;
     PyObject *list_hook;
     PyObject *ext_hook;
     PyObject *timestamp_t;
+    PyObject *giga;
+    PyObject *utc;
     const char *unicode_errors;
     Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
 } unpack_user;
@@ -268,7 +271,7 @@ typedef struct msgpack_timestamp {
 /*
  * Unpack ext buffer to a timestamp. Pulled from msgpack-c timestamp.h.
  */
-static inline int unpack_timestamp(const char* buf, unsigned int buflen, msgpack_timestamp* ts) {
+static int unpack_timestamp(const char* buf, unsigned int buflen, msgpack_timestamp* ts) {
     switch (buflen) {
     case 4:
         ts->tv_nsec = 0;
@@ -292,10 +295,11 @@ static inline int unpack_timestamp(const char* buf, unsigned int buflen, msgpack
     }
 }
 
-static inline int unpack_callback_ext(unpack_user* u, const char* base, const char* pos,
-                                      unsigned int length, msgpack_unpack_object* o)
+#include "datetime.h"
+
+static int unpack_callback_ext(unpack_user* u, const char* base, const char* pos,
+                               unsigned int length, msgpack_unpack_object* o)
 {
-    PyObject *py;
     int8_t typecode = (int8_t)*pos++;
     if (!u->ext_hook) {
         PyErr_SetString(PyExc_AssertionError, "u->ext_hook cannot be NULL");
@@ -305,13 +309,67 @@ static inline int unpack_callback_ext(unpack_user* u, const char* base, const ch
         PyErr_Format(PyExc_ValueError, "%u exceeds max_ext_len(%zd)", length, u->max_ext_len);
         return -1;
     }
+
+    PyObject *py = NULL;
     // length also includes the typecode, so the actual data is length-1
     if (typecode == -1) {
         msgpack_timestamp ts;
-        if (unpack_timestamp(pos, length-1, &ts) == 0) {
+        if (unpack_timestamp(pos, length-1, &ts) < 0) {
+            return -1;
+        }
+
+        if (u->timestamp == 2) {  // int
+            PyObject *a = PyLong_FromLongLong(ts.tv_sec);
+            if (a == NULL) return -1;
+
+            PyObject *c = PyNumber_Multiply(a, u->giga);
+            Py_DECREF(a);
+            if (c == NULL) {
+                return -1;
+            }
+
+            PyObject *b = PyLong_FromUnsignedLong(ts.tv_nsec);
+            if (b == NULL) {
+                Py_DECREF(c);
+                return -1;
+            }
+
+            py = PyNumber_Add(c, b);
+            Py_DECREF(c);
+            Py_DECREF(b);
+        }
+        else if (u->timestamp == 0) {  // Timestamp
             py = PyObject_CallFunction(u->timestamp_t, "(Lk)", ts.tv_sec, ts.tv_nsec);
-        } else {
-            py = NULL;
+        }
+        else { // float or datetime
+            PyObject *a = PyFloat_FromDouble((double)ts.tv_nsec);
+            if (a == NULL) return -1;
+
+            PyObject *b = PyNumber_TrueDivide(a, u->giga);
+            Py_DECREF(a);
+            if (b == NULL) return -1;
+
+            PyObject *c = PyLong_FromLongLong(ts.tv_sec);
+            if (c == NULL) {
+                Py_DECREF(b);
+                return -1;
+            }
+
+            a = PyNumber_Add(b, c);
+            Py_DECREF(b);
+            Py_DECREF(c);
+
+            if (u->timestamp == 3) {  // datetime
+                PyObject *t = PyTuple_Pack(2, a, u->utc);
+                Py_DECREF(a);
+                if (t == NULL) {
+                    return -1;
+                }
+                py = PyDateTime_FromTimestamp(t);
+                Py_DECREF(t);
+            } else { // float
+                py = a;
+            }
         }
     } else {
         py = PyObject_CallFunction(u->ext_hook, "(iy#)", (int)typecode, pos, (Py_ssize_t)length-1);

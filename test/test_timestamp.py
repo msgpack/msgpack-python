@@ -1,5 +1,8 @@
+import pytest
+import sys
+import datetime
 import msgpack
-from msgpack import Timestamp
+from msgpack.ext import Timestamp, _utc
 
 
 def test_timestamp():
@@ -42,5 +45,19 @@ def test_timestamp():
 
 def test_timestamp_to():
     t = Timestamp(42, 14)
-    assert t.to_float_s() == 42.000000014
+    assert t.to_float() == 42.000000014
     assert t.to_unix_ns() == 42000000014
+
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
+def test_timestamp_datetime():
+    t = Timestamp(42, 14)
+    assert t.to_datetime() == datetime.datetime(1970, 1, 1, 0, 0, 42, 0, tzinfo=_utc)
+
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
+def test_unpack_datetime():
+    t = Timestamp(42, 14)
+    packed = msgpack.packb(t)
+    unpacked = msgpack.unpackb(packed, timestamp=3)
+    assert unpacked == datetime.datetime(1970, 1, 1, 0, 0, 42, 0, tzinfo=_utc)

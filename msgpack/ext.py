@@ -1,7 +1,14 @@
 # coding: utf-8
 from collections import namedtuple
+import datetime
 import sys
 import struct
+
+
+try:
+    _utc = datetime.timezone.utc
+except AttributeError:
+    _utc = datetime.timezone(datetime.timedelta(0))
 
 
 PY2 = sys.version_info[0] == 2
@@ -131,7 +138,7 @@ class Timestamp(object):
             data = struct.pack("!Iq", self.nanoseconds, self.seconds)
         return data
 
-    def to_float_s(self):
+    def to_float(self):
         """Get the timestamp as a floating-point value.
 
         :returns: posix timestamp
@@ -146,3 +153,12 @@ class Timestamp(object):
         :rtype: int
         """
         return int(self.seconds * 1e9 + self.nanoseconds)
+
+    if not PY2:
+
+        def to_datetime(self):
+            """Get the timestamp as a UTC datetime.
+
+            :rtype: datetime.
+            """
+            return datetime.datetime.fromtimestamp(self.to_float(), _utc)
