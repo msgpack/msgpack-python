@@ -341,7 +341,7 @@ cdef class Packer(object):
     def reset(self):
         """Reset internal buffer.
 
-        This method is usaful only when autoreset=False.
+        This method is useful only when autoreset=False.
         """
         self.pk.length = 0
 
