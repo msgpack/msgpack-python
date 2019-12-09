@@ -153,11 +153,10 @@ cdef class Packer(object):
         while True:
             if o is None:
                 ret = msgpack_pack_nil(&self.pk)
-            elif PyBool_Check(o) if strict_types else isinstance(o, bool):
-                if o:
-                    ret = msgpack_pack_true(&self.pk)
-                else:
-                    ret = msgpack_pack_false(&self.pk)
+            elif o is True:
+                ret = msgpack_pack_true(&self.pk)
+            elif o is False:
+                ret = msgpack_pack_false(&self.pk)
             elif PyLong_CheckExact(o) if strict_types else PyLong_Check(o):
                 # PyInt_Check(long) is True for Python 3.
                 # So we should test long before int.
