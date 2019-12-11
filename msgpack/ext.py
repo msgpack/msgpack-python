@@ -1,12 +1,18 @@
 # coding: utf-8
 from collections import namedtuple
+import datetime
 import sys
 import struct
 
 
 PY2 = sys.version_info[0] == 2
+
 if not PY2:
     long = int
+    try:
+        _utc = datetime.timezone.utc
+    except AttributeError:
+        _utc = datetime.timezone(datetime.timedelta(0))
 
 
 class ExtType(namedtuple("ExtType", "code data")):
@@ -131,13 +137,19 @@ class Timestamp(object):
             data = struct.pack("!Iq", self.nanoseconds, self.seconds)
         return data
 
-    def to_float_s(self):
+    def to_float(self):
         """Get the timestamp as a floating-point value.
 
         :returns: posix timestamp
         :rtype: float
         """
         return self.seconds + self.nanoseconds / 1e9
+
+    @staticmethod
+    def from_float(unix_float):
+        seconds = int(unix_float)
+        nanoseconds = int((unix_float % 1) * 1000000000)
+        return Timestamp(seconds, nanoseconds)
 
     def to_unix_ns(self):
         """Get the timestamp as a unixtime in nanoseconds.
@@ -146,3 +158,16 @@ class Timestamp(object):
         :rtype: int
         """
         return int(self.seconds * 1e9 + self.nanoseconds)
+
+    if not PY2:
+
+        def to_datetime(self):
+            """Get the timestamp as a UTC datetime.
+
+            :rtype: datetime.
+            """
+            return datetime.datetime.fromtimestamp(self.to_float(), _utc)
+
+        @staticmethod
+        def from_datetime(dt):
+            return Timestamp.from_float(dt.timestamp())

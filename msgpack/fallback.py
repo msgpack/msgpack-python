@@ -1,5 +1,6 @@
 """Fallback pure Python implementation of msgpack"""
 
+from datetime import datetime as _DateTime
 import sys
 import struct
 
@@ -174,6 +175,14 @@ class Unpacker(object):
         If true, unpack msgpack raw to Python bytes.
         Otherwise, unpack to Python str by decoding with UTF-8 encoding (default).
 
+    :param int timestamp:
+        Control how timestamp type is unpacked:
+
+            0 - Tiemstamp
+            1 - float  (Seconds from the EPOCH)
+            2 - int  (Nanoseconds from the EPOCH)
+            3 - datetime.datetime  (UTC).  Python 2 is not supported.
+
     :param bool strict_map_key:
         If true (default), only str or bytes are accepted for map (dict) keys.
 
@@ -248,6 +257,7 @@ class Unpacker(object):
         read_size=0,
         use_list=True,
         raw=False,
+        timestamp=0,
         strict_map_key=True,
         object_hook=None,
         object_pairs_hook=None,
@@ -307,6 +317,9 @@ class Unpacker(object):
         self._strict_map_key = bool(strict_map_key)
         self._unicode_errors = unicode_errors
         self._use_list = use_list
+        if not (0 <= timestamp <= 3):
+            raise ValueError("timestamp must be 0..3")
+        self._timestamp = timestamp
         self._list_hook = list_hook
         self._object_hook = object_hook
         self._object_pairs_hook = object_pairs_hook
@@ -672,10 +685,21 @@ class Unpacker(object):
             else:
                 obj = obj.decode("utf_8", self._unicode_errors)
             return obj
-        if typ == TYPE_EXT:
-            return self._ext_hook(n, bytes(obj))
         if typ == TYPE_BIN:
             return bytes(obj)
+        if typ == TYPE_EXT:
+            if n == -1:  # timestamp
+                ts = Timestamp.from_bytes(bytes(obj))
+                if self._timestamp == 1:
+                    return ts.to_float()
+                elif self._timestamp == 2:
+                    return ts.to_unix_ns()
+                elif self._timestamp == 3:
+                    return ts.to_datetime()
+                else:
+                    return ts
+            else:
+                return self._ext_hook(n, bytes(obj))
         assert typ == TYPE_IMMEDIATE
         return obj
 
@@ -756,6 +780,12 @@ class Packer(object):
         This is useful when trying to implement accurate serialization
         for python types.
 
+    :param bool datetime:
+        If set to true, datetime with tzinfo is packed into Timestamp type.
+        Note that the tzinfo is stripped in the timestamp.
+        You can get UTC datetime with `timestamp=3` option of the Unapcker.
+        (Python 2 is not supported).
+
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')
         DO NOT USE THIS!!  This option is kept for very specific usage.
@@ -764,18 +794,22 @@ class Packer(object):
     def __init__(
         self,
         default=None,
-        unicode_errors=None,
         use_single_float=False,
         autoreset=True,
         use_bin_type=True,
         strict_types=False,
+        datetime=False,
+        unicode_errors=None,
     ):
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
-        self._unicode_errors = unicode_errors or "strict"
         self._buffer = StringIO()
+        if PY2 and datetime:
+            raise ValueError("datetime is not supported in Python 2")
+        self._datetime = bool(datetime)
+        self._unicode_errors = unicode_errors or "strict"
         if default is not None:
             if not callable(default):
                 raise TypeError("default must be callable")
@@ -891,6 +925,12 @@ class Packer(object):
                 return self._pack_map_pairs(
                     len(obj), dict_iteritems(obj), nest_limit - 1
                 )
+
+            if self._datetime and check(obj, _DateTime):
+                obj = Timestamp.from_datetime(obj)
+                default_used = 1
+                continue
+
             if not default_used and self._default is not None:
                 obj = self._default(obj)
                 default_used = 1

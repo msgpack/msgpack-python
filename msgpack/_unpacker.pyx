@@ -1,7 +1,6 @@
 # coding: utf-8
 
 from cpython cimport *
-
 cdef extern from "Python.h":
     ctypedef struct PyObject
     cdef int PyObject_AsReadBuffer(object o, const void** buff, Py_ssize_t* buf_len) except -1
@@ -21,6 +20,8 @@ from .exceptions import (
 )
 from .ext import ExtType, Timestamp
 
+cdef object giga = 1_000_000_000
+
 
 cdef extern from "unpack.h":
     ctypedef struct msgpack_user:
@@ -28,10 +29,13 @@ cdef extern from "unpack.h":
         bint raw
         bint has_pairs_hook # call object_hook with k-v pairs
         bint strict_map_key
+        int timestamp
         PyObject* object_hook
         PyObject* list_hook
         PyObject* ext_hook
         PyObject* timestamp_t
+        PyObject *giga;
+        PyObject *utc;
         char *unicode_errors
         Py_ssize_t max_str_len
         Py_ssize_t max_bin_len
@@ -57,7 +61,8 @@ cdef extern from "unpack.h":
 cdef inline init_ctx(unpack_context *ctx,
                      object object_hook, object object_pairs_hook,
                      object list_hook, object ext_hook,
-                     bint use_list, bint raw, bint strict_map_key,
+                     bint use_list, bint raw, int timestamp,
+                     bint strict_map_key,
                      const char* unicode_errors,
                      Py_ssize_t max_str_len, Py_ssize_t max_bin_len,
                      Py_ssize_t max_array_len, Py_ssize_t max_map_len,
@@ -99,8 +104,14 @@ cdef inline init_ctx(unpack_context *ctx,
             raise TypeError("ext_hook must be a callable.")
         ctx.user.ext_hook = <PyObject*>ext_hook
 
+    if timestamp < 0 or 3 < timestamp:
+        raise ValueError("timestamp must be 0..3")
+
     # Add Timestamp type to the user object so it may be used in unpack.h
+    ctx.user.timestamp = timestamp
     ctx.user.timestamp_t = <PyObject*>Timestamp
+    ctx.user.giga = <PyObject*>giga
+    ctx.user.utc = <PyObject*>utc
     ctx.user.unicode_errors = unicode_errors
 
 def default_read_extended_type(typecode, data):
@@ -131,7 +142,7 @@ cdef inline int get_data_from_buffer(object obj,
 
 
 def unpackb(object packed, *, object object_hook=None, object list_hook=None,
-            bint use_list=True, bint raw=False, bint strict_map_key=True,
+            bint use_list=True, bint raw=False, int timestamp=0, bint strict_map_key=True,
             unicode_errors=None,
             object_pairs_hook=None, ext_hook=ExtType,
             Py_ssize_t max_str_len=-1,
@@ -179,7 +190,7 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
 
     try:
         init_ctx(&ctx, object_hook, object_pairs_hook, list_hook, ext_hook,
-                 use_list, raw, strict_map_key, cerr,
+                 use_list, raw, timestamp, strict_map_key, cerr,
                  max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
         ret = unpack_construct(&ctx, buf, buf_len, &off)
     finally:
@@ -304,7 +315,7 @@ cdef class Unpacker(object):
         self.buf = NULL
 
     def __init__(self, file_like=None, *, Py_ssize_t read_size=0,
-                 bint use_list=True, bint raw=False, bint strict_map_key=True,
+                 bint use_list=True, bint raw=False, int timestamp=0, bint strict_map_key=True,
                  object object_hook=None, object object_pairs_hook=None, object list_hook=None,
                  unicode_errors=None, Py_ssize_t max_buffer_size=100*1024*1024,
                  object ext_hook=ExtType,
@@ -359,7 +370,7 @@ cdef class Unpacker(object):
             cerr = unicode_errors
 
         init_ctx(&self.ctx, object_hook, object_pairs_hook, list_hook,
-                 ext_hook, use_list, raw, strict_map_key, cerr,
+                 ext_hook, use_list, raw, timestamp, strict_map_key, cerr,
                  max_str_len, max_bin_len, max_array_len,
                  max_map_len, max_ext_len)
 

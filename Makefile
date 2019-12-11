@@ -4,7 +4,7 @@ all: cython
 
 .PHONY: black
 black:
-	black msgpack/ test/
+	black msgpack/ test/ setup.py
 
 .PHONY: cython
 cython:
