@@ -5,15 +5,14 @@ import sys
 import struct
 
 
-try:
-    _utc = datetime.timezone.utc
-except AttributeError:
-    _utc = datetime.timezone(datetime.timedelta(0))
-
-
 PY2 = sys.version_info[0] == 2
+
 if not PY2:
     long = int
+    try:
+        _utc = datetime.timezone.utc
+    except AttributeError:
+        _utc = datetime.timezone(datetime.timedelta(0))
 
 
 class ExtType(namedtuple("ExtType", "code data")):
