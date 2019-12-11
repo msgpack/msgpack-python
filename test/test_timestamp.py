@@ -2,7 +2,10 @@ import pytest
 import sys
 import datetime
 import msgpack
-from msgpack.ext import Timestamp, _utc
+from msgpack.ext import Timestamp
+
+if sys.version_info[0] > 2:
+    from msgpack.ext import _utc
 
 
 def test_timestamp():
