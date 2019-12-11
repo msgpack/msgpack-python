@@ -149,7 +149,7 @@ class Timestamp(object):
     @staticmethod
     def from_float(unix_float):
         seconds = int(unix_float)
-        nanoseconds = int((unix_float % 1) * 1000_000_000)
+        nanoseconds = int((unix_float % 1) * 1000000000)
         return Timestamp(seconds, nanoseconds)
 
     def to_unix_ns(self):
