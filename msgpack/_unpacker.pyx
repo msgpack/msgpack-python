@@ -1,7 +1,5 @@
 # coding: utf-8
 
-from cpython.datetime import import_datetime
-
 from cpython cimport *
 cdef extern from "Python.h":
     ctypedef struct PyObject
@@ -22,10 +20,6 @@ from .exceptions import (
 )
 from .ext import ExtType, Timestamp
 
-import_datetime()
-import datetime
-
-cdef object utc = datetime.timezone.utc
 cdef object giga = 1_000_000_000
 
 

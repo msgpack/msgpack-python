@@ -146,6 +146,12 @@ class Timestamp(object):
         """
         return self.seconds + self.nanoseconds / 1e9
 
+    @staticmethod
+    def from_float(unix_float):
+        seconds = int(unix_float)
+        nanoseconds = int((unix_float % 1) * 1000_000_000)
+        return Timestamp(seconds, nanoseconds)
+
     def to_unix_ns(self):
         """Get the timestamp as a unixtime in nanoseconds.
 
@@ -162,3 +168,7 @@ class Timestamp(object):
             :rtype: datetime.
             """
             return datetime.datetime.fromtimestamp(self.to_float(), _utc)
+
+        @staticmethod
+        def from_datetime(dt):
+            return Timestamp.from_float(dt.timestamp())

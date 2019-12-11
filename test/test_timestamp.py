@@ -61,3 +61,27 @@ def test_unpack_datetime():
     packed = msgpack.packb(t)
     unpacked = msgpack.unpackb(packed, timestamp=3)
     assert unpacked == datetime.datetime(1970, 1, 1, 0, 0, 42, 0, tzinfo=_utc)
+
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
+def test_pack_datetime():
+    t = Timestamp(42, 14000)
+    dt = t.to_datetime()
+    assert dt == datetime.datetime(1970, 1, 1, 0, 0, 42, 14, tzinfo=_utc)
+
+    packed = msgpack.packb(dt, datetime=True)
+    packed2 = msgpack.packb(t)
+    assert packed == packed2
+
+    unpacked = msgpack.unpackb(packed)
+    print(packed, unpacked)
+    assert unpacked == t
+
+    unpacked = msgpack.unpackb(packed, timestamp=3)
+    assert unpacked == dt
+
+    x = []
+    packed = msgpack.packb(dt, datetime=False, default=x.append)
+    assert x
+    assert x[0] == dt
+    assert msgpack.unpackb(packed) is None

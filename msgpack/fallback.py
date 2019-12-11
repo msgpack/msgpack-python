@@ -1,5 +1,6 @@
 """Fallback pure Python implementation of msgpack"""
 
+from datetime import datetime as _DateTime
 import sys
 import struct
 
@@ -779,6 +780,12 @@ class Packer(object):
         This is useful when trying to implement accurate serialization
         for python types.
 
+    :param bool datetime:
+        If set to true, datetime with tzinfo is packed into Timestamp type.
+        Note that the tzinfo is stripped in the timestamp.
+        You can get UTC datetime with `timestamp=3` option of the Unapcker.
+        (Python 2 is not supported).
+
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')
         DO NOT USE THIS!!  This option is kept for very specific usage.
@@ -787,18 +794,22 @@ class Packer(object):
     def __init__(
         self,
         default=None,
-        unicode_errors=None,
         use_single_float=False,
         autoreset=True,
         use_bin_type=True,
         strict_types=False,
+        datetime=False,
+        unicode_errors=None,
     ):
         self._strict_types = strict_types
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
-        self._unicode_errors = unicode_errors or "strict"
         self._buffer = StringIO()
+        if PY2 and datetime:
+            raise ValueError("datetime is not supported in Python 2")
+        self._datetime = bool(datetime)
+        self._unicode_errors = unicode_errors or "strict"
         if default is not None:
             if not callable(default):
                 raise TypeError("default must be callable")
@@ -914,6 +925,12 @@ class Packer(object):
                 return self._pack_map_pairs(
                     len(obj), dict_iteritems(obj), nest_limit - 1
                 )
+
+            if self._datetime and check(obj, _DateTime):
+                obj = Timestamp.from_datetime(obj)
+                default_used = 1
+                continue
+
             if not default_used and self._default is not None:
                 obj = self._default(obj)
                 default_used = 1

@@ -2,6 +2,10 @@
 
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
+from cpython.datetime cimport (
+    PyDateTime_CheckExact, PyDelta_CheckExact,
+    datetime_tzinfo, timedelta_days, timedelta_seconds, timedelta_microseconds,
+)
 
 cdef ExtType
 cdef Timestamp
@@ -99,8 +103,9 @@ cdef class Packer(object):
     cdef object _berrors
     cdef const char *unicode_errors
     cdef bint strict_types
-    cdef bool use_float
+    cdef bint use_float
     cdef bint autoreset
+    cdef bint datetime
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
@@ -110,12 +115,13 @@ cdef class Packer(object):
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
-    def __init__(self, *, default=None, unicode_errors=None,
+    def __init__(self, *, default=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=True,
-                 bint strict_types=False):
+                 bint strict_types=False, bint datetime=False, unicode_errors=None):
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
+        self.datetime = datetime
         self.pk.use_bin_type = use_bin_type
         if default is not None:
             if not PyCallable_Check(default):
@@ -263,6 +269,13 @@ cdef class Packer(object):
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
                 PyBuffer_Release(&view);
+            elif self.datetime and PyDateTime_CheckExact(o) and datetime_tzinfo(o) is not None:
+                delta = o - epoch
+                if not PyDelta_CheckExact(delta):
+                    raise ValueError("failed to calculate delta")
+                llval = timedelta_days(delta) * <long long>(24*60*60) + timedelta_seconds(delta)
+                ulval = timedelta_microseconds(delta) * 1000
+                ret = msgpack_pack_timestamp(&self.pk, llval, ulval)
             elif not default_used and self._default:
                 o = self._default(o)
                 default_used = 1
