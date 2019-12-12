@@ -80,6 +80,10 @@ class Timestamp(object):
             )
         return False
 
+    def __ne__(self, other):
+        """not-equals method (see :func:`__eq__()`)"""
+        return not self.__eq__(other)
+
     def __hash__(self):
         return hash((self.seconds, self.nanoseconds))
 
