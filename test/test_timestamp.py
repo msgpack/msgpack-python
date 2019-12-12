@@ -37,19 +37,25 @@ def test_timestamp():
     assert ts.seconds == 2 ** 63 - 1 and ts.nanoseconds == 999999999
 
     # negative fractional
-    ts = Timestamp(-2.3)  # s: -3, ns: 700000000
+    ts = Timestamp.from_unix(-2.3)  # s: -3, ns: 700000000
+    assert ts.seconds == -3 and ts.nanoseconds == 700000000
     assert ts.to_bytes() == b"\x29\xb9\x27\x00\xff\xff\xff\xff\xff\xff\xff\xfd"
     packed = msgpack.packb(ts)
     assert packed == b"\xc7\x0c\xff" + ts.to_bytes()
     unpacked = msgpack.unpackb(packed)
     assert ts == unpacked
-    assert ts.seconds == -3 and ts.nanoseconds == 700000000
+
+
+def test_timestamp_from():
+    t = Timestamp(42, 14000)
+    assert Timestamp.from_unix(42.000014) == t
+    assert Timestamp.from_unix_nano(42000014000) == t
 
 
 def test_timestamp_to():
-    t = Timestamp(42, 14)
-    assert t.to_float() == 42.000000014
-    assert t.to_unix_ns() == 42000000014
+    t = Timestamp(42, 14000)
+    assert t.to_unix() == 42.000014
+    assert t.to_unix_nano() == 42000014000
 
 
 @pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")

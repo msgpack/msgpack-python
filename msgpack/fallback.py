@@ -691,9 +691,9 @@ class Unpacker(object):
             if n == -1:  # timestamp
                 ts = Timestamp.from_bytes(bytes(obj))
                 if self._timestamp == 1:
-                    return ts.to_float()
+                    return ts.to_unix()
                 elif self._timestamp == 2:
-                    return ts.to_unix_ns()
+                    return ts.to_unix_nano()
                 elif self._timestamp == 3:
                     return ts.to_datetime()
                 else:

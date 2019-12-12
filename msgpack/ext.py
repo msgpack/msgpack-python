@@ -7,8 +7,11 @@ import struct
 
 PY2 = sys.version_info[0] == 2
 
-if not PY2:
-    long = int
+if PY2:
+    int_types = (int, long)
+    _utc = None
+else:
+    int_types = int
     try:
         _utc = datetime.timezone.utc
     except AttributeError:
@@ -23,8 +26,6 @@ class ExtType(namedtuple("ExtType", "code data")):
             raise TypeError("code must be int")
         if not isinstance(data, bytes):
             raise TypeError("data must be bytes")
-        if code == -1:
-            return Timestamp.from_bytes(data)
         if not 0 <= code <= 127:
             raise ValueError("code must be 0~127")
         return super(ExtType, cls).__new__(cls, code, data)
@@ -42,34 +43,26 @@ class Timestamp(object):
     def __init__(self, seconds, nanoseconds=0):
         """Initialize a Timestamp object.
 
-        :param seconds: Number of seconds since the UNIX epoch (00:00:00 UTC Jan 1 1970, minus leap seconds). May be
-            negative. If :code:`seconds` includes a fractional part, :code:`nanoseconds` must be 0.
-        :type seconds: int or float
+        :param int seconds:
+            Number of seconds since the UNIX epoch (00:00:00 UTC Jan 1 1970, minus leap seconds).
+            May be negative.
 
-        :param nanoseconds: Number of nanoseconds to add to `seconds` to get fractional time. Maximum is 999_999_999.
-            Default is 0.
-        :type nanoseconds: int
+        :param int nanoseconds:
+            Number of nanoseconds to add to `seconds` to get fractional time.
+            Maximum is 999_999_999.  Default is 0.
 
         Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
         """
-        if not isinstance(seconds, (int, long, float)):
-            raise TypeError("seconds must be numeric")
-        if not isinstance(nanoseconds, (int, long)):
+        if not isinstance(seconds, int_types):
+            raise TypeError("seconds must be an interger")
+        if not isinstance(nanoseconds, int_types):
             raise TypeError("nanoseconds must be an integer")
-        if nanoseconds:
-            if nanoseconds < 0 or nanoseconds % 1 != 0 or nanoseconds > (1e9 - 1):
-                raise ValueError(
-                    "nanoseconds must be a non-negative integer less than 999999999."
-                )
-            if not isinstance(seconds, (int, long)):
-                raise ValueError(
-                    "seconds must be an integer if also providing nanoseconds."
-                )
-            self.nanoseconds = nanoseconds
-        else:
-            # round helps with floating point issues
-            self.nanoseconds = int(round(seconds % 1 * 1e9, 0))
-        self.seconds = int(seconds // 1)
+        if not (0 <= nanoseconds < 10 ** 9):
+            raise ValueError(
+                "nanoseconds must be a non-negative integer less than 999999999."
+            )
+        self.seconds = seconds
+        self.nanoseconds = nanoseconds
 
     def __repr__(self):
         """String representation of Timestamp."""
@@ -137,7 +130,18 @@ class Timestamp(object):
             data = struct.pack("!Iq", self.nanoseconds, self.seconds)
         return data
 
-    def to_float(self):
+    @staticmethod
+    def from_unix(unix_sec):
+        """Create a Timestamp from posix timestamp in seconds.
+
+        :param unix_float: Posix timestamp in seconds.
+        :type unix_float: int or float.
+        """
+        seconds = int(unix_sec // 1)
+        nanoseconds = int((unix_sec % 1) * 10 ** 9)
+        return Timestamp(seconds, nanoseconds)
+
+    def to_unix(self):
         """Get the timestamp as a floating-point value.
 
         :returns: posix timestamp
@@ -146,28 +150,37 @@ class Timestamp(object):
         return self.seconds + self.nanoseconds / 1e9
 
     @staticmethod
-    def from_float(unix_float):
-        seconds = int(unix_float)
-        nanoseconds = int((unix_float % 1) * 1000000000)
-        return Timestamp(seconds, nanoseconds)
+    def from_unix_nano(unix_ns):
+        """Create a Timestamp from posix timestamp in nanoseconds.
 
-    def to_unix_ns(self):
+        :param int unix_ns: Posix timestamp in nanoseconds.
+        :rtype: Timestamp
+        """
+        return Timestamp(*divmod(unix_ns, 10 ** 9))
+
+    def to_unix_nano(self):
         """Get the timestamp as a unixtime in nanoseconds.
 
         :returns: posix timestamp in nanoseconds
         :rtype: int
         """
-        return int(self.seconds * 1e9 + self.nanoseconds)
+        return self.seconds * 10 ** 9 + self.nanoseconds
 
-    if not PY2:
+    def to_datetime(self):
+        """Get the timestamp as a UTC datetime.
 
-        def to_datetime(self):
-            """Get the timestamp as a UTC datetime.
+        Python 2 is not supported.
 
-            :rtype: datetime.
-            """
-            return datetime.datetime.fromtimestamp(self.to_float(), _utc)
+        :rtype: datetime.
+        """
+        return datetime.datetime.fromtimestamp(self.to_unix(), _utc)
 
-        @staticmethod
-        def from_datetime(dt):
-            return Timestamp.from_float(dt.timestamp())
+    @staticmethod
+    def from_datetime(dt):
+        """Create a Timestamp from datetime with tzinfo.
+
+        Python 2 is not supported.
+
+        :rtype: Timestamp
+        """
+        return Timestamp.from_unix(dt.timestamp())
