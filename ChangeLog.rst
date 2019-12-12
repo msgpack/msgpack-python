@@ -6,6 +6,14 @@ Release Date: TBD
 * Remove Python 2 support from the ``msgpack/_cmsgpack``.
   ``msgpack/fallback`` still supports Python 2.
 * Remove ``encoding`` option from the Packer and Unpacker.
+* Unpacker: The default value of ``max_buffer_type`` is changed to 100MiB.
+* Unpacker: ``strict_map_key`` is True by default now.
+* Unpacker: String map keys are interned.
+* Drop old buffer protocol support.
+* Support Timestamp type.
+* Support serializing and decerializing ``datetime`` object
+  with tzinfo.
+* Unpacker: ``Fix Unpacker.read_bytes()`` in fallback implementation. (#352)
 
 
 0.6.2
