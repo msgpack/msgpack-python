@@ -36,6 +36,8 @@ class Timestamp(object):
 
     When built with Cython, msgpack uses C methods to pack and unpack `Timestamp`. When using pure-Python
     msgpack, :func:`to_bytes` and :func:`from_bytes` are used to pack and unpack `Timestamp`.
+
+    This class is immutable: Do not override seconds and nanoseconds.
     """
 
     __slots__ = ["seconds", "nanoseconds"]
@@ -78,9 +80,8 @@ class Timestamp(object):
             )
         return False
 
-    def __ne__(self, other):
-        """not-equals method (see :func:`__eq__()`)"""
-        return not self.__eq__(other)
+    def __hash__(self):
+        return hash((self.seconds, self.nanoseconds))
 
     @staticmethod
     def from_bytes(b):
