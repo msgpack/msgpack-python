@@ -1,18 +1,9 @@
-======================
-MessagePack for Python
-======================
+# MessagePack for Python
 
-.. image:: https://travis-ci.org/msgpack/msgpack-python.svg?branch=master
-   :target: https://travis-ci.org/msgpack/msgpack-python
-   :alt: Build Status
+[![Build Status](https://travis-ci.org/msgpack/msgpack-python.svg?branch=master)](https://travis-ci.org/msgpack/msgpack-python)
+[![Documentation Status](https://readthedocs.org/projects/msgpack-python/badge/?version=latest)](https://msgpack-python.readthedocs.io/en/latest/?badge=latest)
 
-.. image:: https://readthedocs.org/projects/msgpack-python/badge/?version=latest
-   :target: https://msgpack-python.readthedocs.io/en/latest/?badge=latest
-   :alt: Documentation Status
-
-
-What's this
------------
+## What's this
 
 `MessagePack <https://msgpack.org/>`_ is an efficient binary serialization format.
 It lets you exchange data among multiple languages like JSON.
@@ -20,11 +11,9 @@ But it's faster and smaller.
 This package provides CPython bindings for reading and writing MessagePack data.
 
 
-Very important notes for existing users
----------------------------------------
+## Very important notes for existing users
 
-PyPI package name
-^^^^^^^^^^^^^^^^^
+### PyPI package name
 
 TL;DR: When upgrading from msgpack-0.4 or earlier, don't do `pip install -U msgpack-python`.
 Do `pip uninstall msgpack-python; pip install msgpack` instead.
@@ -37,8 +26,7 @@ Sadly, this doesn't work for upgrade install.  After `pip install -U msgpack-pyt
 msgpack is removed, and `import msgpack` fail.
 
 
-Compatibility with the old format
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### Compatibility with the old format
 
 You can use ``use_bin_type=False`` option to pack ``bytes``
 object into raw type in the old msgpack spec, instead of bin type in new msgpack spec.
@@ -49,8 +37,7 @@ It unpacks str (raw) type in msgpack into Python bytes.
 See note below for detail.
 
 
-Major breaking changes in msgpack 1.0
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### Major breaking changes in msgpack 1.0
 
 * Python 2
 
@@ -75,16 +62,13 @@ Major breaking changes in msgpack 1.0
     which type is not bytes or str.
 
 
-Install
--------
+## Install
 
-::
 
    $ pip install msgpack
 
 
-Pure Python implementation
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+### Pure Python implementation
 
 The extension module in msgpack (``msgpack._cmsgpack``) does not support
 Python 2 and PyPy.
@@ -96,26 +80,20 @@ Since the [pip](https://pip.pypa.io/) uses the pure Python implementation,
 Python 2 support will not be dropped in the foreseeable future.
 
 
-Windows
-^^^^^^^
+### Windows
 
 When you can't use a binary distribution, you need to install Visual Studio
 or Windows SDK on Windows.
 Without extension, using pure Python implementation on CPython runs slowly.
 
 
-How to use
-----------
+## How to use
 
-.. note::
-
-   In examples below, I use ``raw=False`` and ``use_bin_type=True`` for users
-   using msgpack < 1.0.
-   These options are default from msgpack 1.0 so you can omit them.
+NOTE: In examples below, I use ``raw=False`` and ``use_bin_type=True`` for users
+using msgpack < 1.0. These options are default from msgpack 1.0 so you can omit them.
 
 
-One-shot pack & unpack
-^^^^^^^^^^^^^^^^^^^^^^
+### One-shot pack & unpack
 
 Use ``packb`` for packing and ``unpackb`` for unpacking.
 msgpack provides ``dumps`` and ``loads`` as an alias for compatibility with
@@ -124,20 +102,20 @@ msgpack provides ``dumps`` and ``loads`` as an alias for compatibility with
 ``pack`` and ``dump`` packs to a file-like object.
 ``unpack`` and ``load`` unpacks from a file-like object.
 
-.. code-block:: pycon
-
+```pycon
    >>> import msgpack
    >>> msgpack.packb([1, 2, 3], use_bin_type=True)
    '\x93\x01\x02\x03'
    >>> msgpack.unpackb(_, raw=False)
    [1, 2, 3]
+```
 
 ``unpack`` unpacks msgpack's array to Python's list, but can also unpack to tuple:
 
-.. code-block:: pycon
-
+```pycon
    >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False, raw=False)
    (1, 2, 3)
+```
 
 You should always specify the ``use_list`` keyword argument for backward compatibility.
 See performance issues relating to `use_list option`_ below.
@@ -145,14 +123,12 @@ See performance issues relating to `use_list option`_ below.
 Read the docstring for other options.
 
 
-Streaming unpacking
-^^^^^^^^^^^^^^^^^^^
+### Streaming unpacking
 
 ``Unpacker`` is a "streaming unpacker". It unpacks multiple objects from one
 stream (or from bytes provided through its ``feed`` method).
 
-.. code-block:: python
-
+```py
    import msgpack
    from io import BytesIO
 
@@ -165,16 +141,15 @@ stream (or from bytes provided through its ``feed`` method).
    unpacker = msgpack.Unpacker(buf, raw=False)
    for unpacked in unpacker:
        print(unpacked)
+```
 
 
-Packing/unpacking of custom data type
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+### Packing/unpacking of custom data type
 
 It is also possible to pack/unpack custom data types. Here is an example for
 ``datetime.datetime``.
 
-.. code-block:: python
-
+```py
     import datetime
     import msgpack
 
@@ -196,19 +171,18 @@ It is also possible to pack/unpack custom data types. Here is an example for
 
     packed_dict = msgpack.packb(useful_dict, default=encode_datetime, use_bin_type=True)
     this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime, raw=False)
+```
 
 ``Unpacker``'s ``object_hook`` callback receives a dict; the
 ``object_pairs_hook`` callback may instead be used to receive a list of
 key-value pairs.
 
 
-Extended types
-^^^^^^^^^^^^^^
+### Extended types
 
 It is also possible to pack/unpack custom data types using the **ext** type.
 
-.. code-block:: pycon
-
+```pycon
     >>> import msgpack
     >>> import array
     >>> def default(obj):
@@ -228,10 +202,10 @@ It is also possible to pack/unpack custom data types using the **ext** type.
     >>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook, raw=False)
     >>> data == unpacked
     True
+```
 
 
-Advanced unpacking control
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+### Advanced unpacking control
 
 As an alternative to iteration, ``Unpacker`` objects provide ``unpack``,
 ``skip``, ``read_array_header`` and ``read_map_header`` methods. The former two
@@ -243,8 +217,7 @@ in a map, can be unpacked or skipped individually.
 Each of these methods may optionally write the packed data it reads to a
 callback function:
 
-.. code-block:: python
-
+```py
     from io import BytesIO
 
     def distribute(unpacker, get_worker):
@@ -258,13 +231,11 @@ callback function:
             bytestream = BytesIO()
             unpacker.skip(bytestream.write)
             worker.send(bytestream.getvalue())
+```
 
+## Notes
 
-Notes
------
-
-string and binary type
-^^^^^^^^^^^^^^^^^^^^^^
+### string and binary type
 
 Early versions of msgpack didn't distinguish string and binary types.
 The type for representing both string and binary types was named **raw**.
@@ -272,32 +243,29 @@ The type for representing both string and binary types was named **raw**.
 You can pack into and unpack from this old spec using ``use_bin_type=False``
 and ``raw=True`` options.
 
-.. code-block:: pycon
-
+```pycon
     >>> import msgpack
     >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=False), raw=True)
     [b'spam', b'eggs']
     >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True), raw=False)
     [b'spam', 'eggs']
+```
 
-
-ext type
-^^^^^^^^
+### ext type
 
 To use the **ext** type, pass ``msgpack.ExtType`` object to packer.
 
-.. code-block:: pycon
-
+```pycon
     >>> import msgpack
     >>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
     >>> msgpack.unpackb(packed)
     ExtType(code=42, data='xyzzy')
+```
 
 You can use it with ``default`` and ``ext_hook``. See below.
 
 
-Security
-^^^^^^^^
+### Security
 
 To unpacking data received from unreliable source, msgpack provides
 two security options.
@@ -311,8 +279,7 @@ there is a risk of the hashdos.
 If you need to support other types for map keys, use ``strict_map_key=False``.
 
 
-Performance tips
-^^^^^^^^^^^^^^^^
+### Performance tips
 
 CPython's GC starts when growing allocated object.
 This means unpacking may cause useless GC.
@@ -323,17 +290,13 @@ But tuple is lighter than list.
 You can use ``use_list=False`` while unpacking when performance is important.
 
 
-Development
------------
+## Development
 
-Test
-^^^^
+### Test
 
 MessagePack uses `pytest` for testing.
 Run test with following command:
 
+```
     $ make test
-
-
-..
-    vim: filetype=rst
+```

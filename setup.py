@@ -106,7 +106,7 @@ del libraries, macros
 
 
 desc = "MessagePack (de)serializer."
-with io.open("README.rst", encoding="utf-8") as f:
+with io.open("README.md", encoding="utf-8") as f:
     long_desc = f.read()
 del f
 
@@ -118,7 +118,7 @@ if TRANSITIONAL:
 
 setup(
     name=name,
-    author="INADA Naoki",
+    author="Inada Naoki",
     author_email="songofacandy@gmail.com",
     version=version_str,
     cmdclass={"build_ext": BuildExt, "sdist": Sdist},
@@ -126,7 +126,7 @@ setup(
     packages=["msgpack"],
     description=desc,
     long_description=long_desc,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     url="https://msgpack.org/",
     project_urls={
         "Documentation": "https://msgpack-python.readthedocs.io/",
