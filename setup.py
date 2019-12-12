@@ -14,10 +14,6 @@ PYPY = hasattr(sys, "pypy_version_info")
 PY2 = sys.version_info[0] == 2
 
 
-# for building transitional package.
-TRANSITIONAL = False
-
-
 class NoCython(Exception):
     pass
 
@@ -110,14 +106,8 @@ with io.open("README.md", encoding="utf-8") as f:
     long_desc = f.read()
 del f
 
-name = "msgpack"
-
-if TRANSITIONAL:
-    name = "msgpack-python"
-    long_desc = "This package is deprecated.  Install msgpack instead."
-
 setup(
-    name=name,
+    name="msgpack",
     author="Inada Naoki",
     author_email="songofacandy@gmail.com",
     version=version_str,
