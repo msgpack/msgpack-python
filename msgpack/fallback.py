@@ -41,7 +41,7 @@ else:
 
 
 if hasattr(sys, "pypy_version_info"):
-    # cStringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
+    # StringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
     # StringBuilder is fastest.
     from __pypy__ import newlist_hint
 
@@ -147,7 +147,7 @@ def unpackb(packed, **kwargs):
 if sys.version_info < (2, 7, 6):
 
     def _unpack_from(f, b, o=0):
-        """Explicit typcast for legacy struct.unpack_from"""
+        """Explicit type cast for legacy struct.unpack_from"""
         return struct.unpack_from(f, bytes(b), o)
 
 
@@ -178,7 +178,7 @@ class Unpacker(object):
     :param int timestamp:
         Control how timestamp type is unpacked:
 
-            0 - Tiemstamp
+            0 - Timestamp
             1 - float  (Seconds from the EPOCH)
             2 - int  (Nanoseconds from the EPOCH)
             3 - datetime.datetime  (UTC).  Python 2 is not supported.
@@ -749,7 +749,7 @@ class Packer(object):
     """
     MessagePack Packer
 
-    usage:
+    Usage:
 
         packer = Packer()
         astream.write(packer.pack(a))
@@ -783,7 +783,7 @@ class Packer(object):
     :param bool datetime:
         If set to true, datetime with tzinfo is packed into Timestamp type.
         Note that the tzinfo is stripped in the timestamp.
-        You can get UTC datetime with `timestamp=3` option of the Unapcker.
+        You can get UTC datetime with `timestamp=3` option of the Unpacker.
         (Python 2 is not supported).
 
     :param str unicode_errors:
