@@ -1,3 +1,4 @@
+version: ~> 1.0
 dist: xenial
 language: python
 cache: pip
