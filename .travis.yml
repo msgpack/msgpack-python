@@ -39,8 +39,9 @@ matrix:
         - docker pull $DOCKER_IMAGE
       script:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
+
     - arch: arm64
-      name: 32bit build
+      name: arm64 32bit build
       language: python
       services:
         - docker
@@ -55,11 +56,6 @@ matrix:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
 
     - name: "Python 2 (fallback)"
-      python: "2.7"
-      <<: *pure
-
-    - arch: arm64
-      name: "Python 2 (fallback)"
       python: "2.7"
       <<: *pure
 
