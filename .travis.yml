@@ -2,7 +2,9 @@ version: ~> 1.0
 dist: xenial
 language: python
 cache: pip
-
+arch:
+   - amd64
+   - arm64
 python:
   # Available Python (PyPy) can be listed by:
   #
@@ -37,8 +39,27 @@ matrix:
         - docker pull $DOCKER_IMAGE
       script:
         - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
+    - arch: arm64
+      name: 32bit build
+      language: python
+      services:
+        - docker
+      env:
+        - DOCKER_IMAGE=quay.io/pypa/manylinux2014_aarch64
+      install:
+        - pip install -U pip
+        - pip install -r requirements.txt
+        - make cython
+        - docker pull $DOCKER_IMAGE
+      script:
+        - docker run --rm -v `pwd`:/io -w /io $DOCKER_IMAGE /io/docker/runtests.sh
 
     - name: "Python 2 (fallback)"
+      python: "2.7"
+      <<: *pure
+
+    - arch: arm64
+      name: "Python 2 (fallback)"
       python: "2.7"
       <<: *pure
 
