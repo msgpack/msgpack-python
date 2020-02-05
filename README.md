@@ -55,7 +55,7 @@ See note below for detail.
 
   * ``raw=False`` by default.  It assumes str types are valid UTF-8 string
     and decode them to Python str (unicode) object.
-  * ``encdoding`` option is rmeoved.  You can use ``raw=True`` to support old format.
+  * ``encoding`` option is removed.  You can use ``raw=True`` to support old format.
   * Default value of ``max_buffer_size`` is changed from 0 to 100 MiB.
   * Default value of ``strict_map_key`` is changed to True to avoid hashdos.
     You need to pass ``strict_map_key=False`` if you have data which contain map keys
