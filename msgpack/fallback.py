@@ -77,13 +77,7 @@ else:
     newlist_hint = lambda size: []
 
 
-from .exceptions import (
-    BufferFull,
-    OutOfData,
-    ExtraData,
-    FormatError,
-    StackError,
-)
+from .exceptions import BufferFull, OutOfData, ExtraData, FormatError, StackError
 
 from .ext import ExtType, Timestamp
 

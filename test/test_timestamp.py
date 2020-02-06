@@ -46,6 +46,33 @@ def test_timestamp():
     assert ts == unpacked
 
 
+def test_unpack_timestamp():
+    # timestamp 32
+    assert msgpack.unpackb(b"\xd6\xff\x00\x00\x00\x00") == Timestamp(0)
+
+    # timestamp 64
+    assert msgpack.unpackb(b"\xd7\xff" + b"\x00" * 8) == Timestamp(0)
+    with pytest.raises(ValueError):
+        msgpack.unpackb(b"\xd7\xff" + b"\xff" * 8)
+
+    # timestamp 96
+    assert msgpack.unpackb(b"\xc7\x0c\xff" + b"\x00" * 12) == Timestamp(0)
+    with pytest.raises(ValueError):
+        msgpack.unpackb(b"\xc7\x0c\xff" + b"\xff" * 12) == Timestamp(0)
+
+    # Undefined
+    with pytest.raises(ValueError):
+        msgpack.unpackb(b"\xd4\xff\x00")  # fixext 1
+    with pytest.raises(ValueError):
+        msgpack.unpackb(b"\xd5\xff\x00\x00")  # fixext 2
+    with pytest.raises(ValueError):
+        msgpack.unpackb(b"\xc7\x00\xff")  # ext8 (len=0)
+    with pytest.raises(ValueError):
+        msgpack.unpackb(b"\xc7\x03\xff\0\0\0")  # ext8 (len=3)
+    with pytest.raises(ValueError):
+        msgpack.unpackb(b"\xc7\x05\xff\0\0\0\0\0")  # ext8 (len=5)
+
+
 def test_timestamp_from():
     t = Timestamp(42, 14000)
     assert Timestamp.from_unix(42.000014) == t
