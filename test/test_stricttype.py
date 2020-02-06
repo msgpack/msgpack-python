@@ -22,10 +22,7 @@ def test_tuple():
 
     def default(o):
         if isinstance(o, tuple):
-            return {
-                "__type__": "tuple",
-                "value": list(o),
-            }
+            return {"__type__": "tuple", "value": list(o)}
         raise TypeError("Unsupported type %s" % (type(o),))
 
     def convert(o):

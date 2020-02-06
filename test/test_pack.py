@@ -49,7 +49,7 @@ def testPack():
         False,
         (),
         ((),),
-        ((), None,),
+        ((), None),
         {None: 0},
         (1 << 23),
     ]
@@ -69,21 +69,13 @@ def testPackUnicode():
 
 
 def testPackBytes():
-    test_data = [
-        b"",
-        b"abcd",
-        (b"defgh",),
-    ]
+    test_data = [b"", b"abcd", (b"defgh",)]
     for td in test_data:
         check(td)
 
 
 def testPackByteArrays():
-    test_data = [
-        bytearray(b""),
-        bytearray(b"abcd"),
-        (bytearray(b"defgh"),),
-    ]
+    test_data = [bytearray(b""), bytearray(b"abcd"), (bytearray(b"defgh"),)]
     for td in test_data:
         check(td)
 
