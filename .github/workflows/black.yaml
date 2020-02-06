@@ -18,4 +18,4 @@ jobs:
       - name: Black Code Formatter
         run: |
           pip install black
-          black --diff --check msgpack/ test/
+          black --diff --check msgpack/ test/ setup.py
