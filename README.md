@@ -5,7 +5,7 @@
 
 ## What's this
 
-`MessagePack <https://msgpack.org/>`_ is an efficient binary serialization format.
+[MessagePack](https://msgpack.org/) is an efficient binary serialization format.
 It lets you exchange data among multiple languages like JSON.
 But it's faster and smaller.
 This package provides CPython bindings for reading and writing MessagePack data.
