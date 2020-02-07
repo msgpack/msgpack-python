@@ -27,7 +27,6 @@ else:
     SupportsRead = BinaryIO
     SupportsWrite = BinaryIO
 
-_U = TypeVar("_U", bound=Unpacker)
 _S = TypeVar("_S", bound=SupportsRead)
 
 _ObjectHook = Callable[[Dict[Any, Any]], Any]
@@ -57,6 +56,7 @@ class ExtType(NamedTuple):
     data: bytes
 
 class Unpacker(Generic[_S]):
+    _U = TypeVar("_U", bound="Unpacker[_S]")
     file_like: Optional[_S]
     def __init__(
         self,
