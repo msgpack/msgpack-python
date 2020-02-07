@@ -114,6 +114,7 @@ setup(
     cmdclass={"build_ext": BuildExt, "sdist": Sdist},
     ext_modules=ext_modules,
     packages=["msgpack"],
+    package_data={"msgpack": ["__init__.pyi", "py.typed"]},
     description=desc,
     long_description=long_desc,
     long_description_content_type="text/markdown",
