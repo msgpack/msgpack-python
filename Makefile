@@ -23,7 +23,7 @@ serve-doc: all
 .PHONY: clean
 clean:
 	rm -rf build
-	rm -f msgpack/_msgpack.cpp
+	rm -f msgpack/_cmsgpack.cpp
 	rm -rf msgpack/__pycache__
 	rm -rf test/__pycache__
 
