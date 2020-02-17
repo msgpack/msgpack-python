@@ -7,8 +7,6 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    env:
-      MACOSX_DEPLOYMENT_TARGET: "10.10"
 
     steps:
       - name: Checkout

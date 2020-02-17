@@ -10,7 +10,6 @@ echo "arch=$ARCH"
 for V in "${PYTHON_VERSIONS[@]}"; do
     PYBIN=/opt/python/$V/bin
     rm -rf build/       # Avoid lib build by narrow Python is used by wide python
-    #$PYBIN/python setup.py bdist_wheel -p manylinux2010_${ARCH}
     $PYBIN/python setup.py bdist_wheel
 done
 
