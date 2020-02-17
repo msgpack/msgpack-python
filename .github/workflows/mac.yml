@@ -7,6 +7,8 @@ on:
 jobs:
   build:
     runs-on: macos-latest
+    env:
+      MACOSX_DEPLOYMENT_TARGET: "10.10"
 
     steps:
       - name: Checkout
@@ -20,13 +22,12 @@ jobs:
       - name: Cythonize
         run: |
           pip install -U pip
-          pip install setuptools wheel -r requirements.txt
+          pip install -r requirements.txt
           make cython
 
-      - name: build wheel
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.10"
+      - name: Build wheel
         run: |
+          pip install setuptools wheel
           python setup.py bdist_wheel
 
       - name: Run test
@@ -41,10 +42,9 @@ jobs:
         with:
           python-version: "3.7"
 
-      - name: build wheel
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.10"
+      - name: Build wheel
         run: |
+          pip install setuptools wheel
           python setup.py bdist_wheel
 
       - name: Run test
@@ -59,10 +59,9 @@ jobs:
         with:
           python-version: "3.6"
 
-      - name: build wheel
-        env:
-          MACOSX_DEPLOYMENT_TARGET: "10.10"
+      - name: Build wheel
         run: |
+          pip install setuptools wheel
           python setup.py bdist_wheel
 
       - name: Run test
