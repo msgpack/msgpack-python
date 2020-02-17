@@ -1,7 +1,7 @@
 1.0.0
 =====
 
-Release Date: TBD
+Release Date: 2020-02-17
 
 * Remove Python 2 support from the ``msgpack/_cmsgpack``.
   ``msgpack/fallback`` still supports Python 2.
