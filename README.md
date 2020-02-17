@@ -270,15 +270,3 @@ You can use `gc.disable()` when unpacking large message.
 List is the default sequence type of Python.
 But tuple is lighter than list.
 You can use `use_list=False` while unpacking when performance is important.
-
-
-## Development
-
-### Test
-
-MessagePack uses `pytest` for testing.
-Run test with following command:
-
-```
-    $ make test
-```
