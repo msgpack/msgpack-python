@@ -11,10 +11,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.8
+
       - name: Cythonize
         shell: bash
         run: |
           pip install -U pip
+          pip -V
           pip install -r requirements.txt
           make cython
           #python setup.py sdist
