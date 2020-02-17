@@ -1,0 +1,46 @@
+name: Build macOS Wheels
+on:
+  push:
+  pull_request:
+  create:
+
+jobs:
+  build:
+    runs-on: 
+    strategy:
+      matrix:
+        python-version: [3.6, 3.7, 3.8]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cythonize
+        run: |
+          pip install -U pip
+          pip -V
+          pip install -r requirements.txt
+          make cython
+
+      - name: build wheel
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.10"
+        run: |
+          python setup.py bdist_wheel
+
+      - name: Run test
+        run: |
+          pip install dist/*.whl
+          make test
+
+      - name: Upload Wheels
+        uses: actions/upload-artifact@v1
+        with:
+          name: macos-wheels
+          path: ./dist/
+
