@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: 
+    runs-on: macos-latest
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
