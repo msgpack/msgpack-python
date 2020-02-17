@@ -30,10 +30,10 @@ clean:
 
 .PHONY: update-docker
 update-docker:
-	docker pull quay.io/pypa/manylinux1_i686
-	docker pull quay.io/pypa/manylinux1_x86_64
+	docker pull quay.io/pypa/manylinux2010_i686
+	docker pull quay.io/pypa/manylinux2010_x86_64
 
 .PHONY: linux-wheel
 linux-wheel:
-	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux1_i686   bash docker/buildwheel.sh
-	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux1_x86_64 bash docker/buildwheel.sh
+	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux2010_i686   bash docker/buildwheel.sh
+	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux2010_x86_64 bash docker/buildwheel.sh
