@@ -35,5 +35,5 @@ update-docker:
 
 .PHONY: linux-wheel
 linux-wheel:
-	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux2010_i686   bash docker/buildwheel.sh
-	docker run --rm -ti -v `pwd`:/project -w /project quay.io/pypa/manylinux2010_x86_64 bash docker/buildwheel.sh
+	docker run --rm -v `pwd`:/project -w /project quay.io/pypa/manylinux2010_i686   bash docker/buildwheel.sh
+	docker run --rm -v `pwd`:/project -w /project quay.io/pypa/manylinux2010_x86_64 bash docker/buildwheel.sh

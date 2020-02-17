@@ -7,9 +7,6 @@ on:
 jobs:
   build:
     runs-on: macos-latest
-    strategy:
-      matrix:
-        python-version: [3.6, 3.7, 3.8]
 
     steps:
       - name: Checkout
@@ -18,13 +15,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.8"
 
       - name: Cythonize
         run: |
           pip install -U pip
-          pip -V
-          pip install -r requirements.txt
+          pip install setuptools wheel -r requirements.txt
           make cython
 
       - name: build wheel
@@ -33,14 +29,45 @@ jobs:
         run: |
           python setup.py bdist_wheel
 
-      - name: Run test
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.7"
+
+      - name: Cythonize
         run: |
-          pip install dist/*.whl
-          make test
+          pip install -U pip
+          pip install setuptools wheel -r requirements.txt
+          make cython
+
+      - name: build wheel
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.10"
+        run: |
+          python setup.py bdist_wheel
+
+
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.6"
+
+      - name: Cythonize
+        run: |
+          pip install -U pip
+          pip install setuptools wheel -r requirements.txt
+          make cython
+
+      - name: build wheel
+        env:
+          MACOSX_DEPLOYMENT_TARGET: "10.10"
+        run: |
+          python setup.py bdist_wheel
+
 
       - name: Upload Wheels
         uses: actions/upload-artifact@v1
         with:
           name: macos-wheels
           path: ./dist/
-
