@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Set up Python
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
           python-version: "3.8"
@@ -29,8 +29,14 @@ jobs:
         run: |
           python setup.py bdist_wheel
 
+      - name: Run test
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/
+          pytest -v test
 
-      - name: Set up Python
+
+      - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
           python-version: "3.7"
@@ -41,8 +47,14 @@ jobs:
         run: |
           python setup.py bdist_wheel
 
+      - name: Run test
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/
+          pytest -v test
 
-      - name: Set up Python
+
+      - name: Set up Python 3.6
         uses: actions/setup-python@v1
         with:
           python-version: "3.6"
@@ -52,6 +64,12 @@ jobs:
           MACOSX_DEPLOYMENT_TARGET: "10.10"
         run: |
           python setup.py bdist_wheel
+
+      - name: Run test
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/
+          pytest -v test
 
 
       - name: Upload Wheels

@@ -11,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Set up Python
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
           python-version: 3.8
@@ -25,10 +25,40 @@ jobs:
           make cython
           #python setup.py sdist
 
-      - name: amd64
+      - name: Build wheels
         shell: bash
         run: |
           make linux-wheel
+
+      - name: Run test (3.8)
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/wheelhouse
+          pytest -v test
+
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Run test (3.7)
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/wheelhouse
+          pytest -v test
+
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.6
+
+      - name: Run test (3.6)
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/wheelhouse
+          pytest -v test
+
 
       - name: Upload Wheels
         uses: actions/upload-artifact@v1
