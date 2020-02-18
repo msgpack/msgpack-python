@@ -1,0 +1,76 @@
+name: Build macOS Wheels
+on:
+  push:
+  pull_request:
+  create:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.8"
+
+      - name: Cythonize
+        run: |
+          pip install -U pip
+          pip install -r requirements.txt
+          make cython
+
+      - name: Build wheel
+        run: |
+          pip install setuptools wheel
+          python setup.py bdist_wheel
+
+      - name: Run test
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/ --no-index
+          pytest -v test
+
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.7"
+
+      - name: Build wheel
+        run: |
+          pip install setuptools wheel
+          python setup.py bdist_wheel
+
+      - name: Run test
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/ --no-index
+          pytest -v test
+
+
+      - name: Set up Python 3.6
+        uses: actions/setup-python@v1
+        with:
+          python-version: "3.6"
+
+      - name: Build wheel
+        run: |
+          pip install setuptools wheel
+          python setup.py bdist_wheel
+
+      - name: Run test
+        run: |
+          pip install pytest
+          pip install -v msgpack --only-binary :all: -f dist/ --no-index
+          pytest -v test
+
+
+      - name: Upload Wheels
+        uses: actions/upload-artifact@v1
+        with:
+          name: macos-wheels
+          path: ./dist/
