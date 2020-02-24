@@ -16,7 +16,7 @@ This package provides CPython bindings for reading and writing MessagePack data.
 ### PyPI package name
 
 TL;DR: When upgrading from msgpack-0.4 or earlier, don't do `pip install -U msgpack-python`.
-Do `pip uninstall msgpack-python; pip install msgpack` instead.
+Do `pip uninstall msgpack-python; pip install -U msgpack` instead.
 
 Package name on PyPI was changed to msgpack from 0.5.
 I upload transitional package (msgpack-python 0.5 which depending on msgpack)
