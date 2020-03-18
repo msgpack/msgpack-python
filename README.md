@@ -47,7 +47,7 @@ See note below for detail.
 * Packer
 
   * `use_bin_type=True` by default.  bytes are encoded in bin type in msgpack.
-    **If you are still sing Python 2, you must use unicode for all string types.**
+    **If you are still using Python 2, you must use unicode for all string types.**
     You can use `use_bin_type=False` to encode into old msgpack format.
   * `encoding` option is removed.  UTF-8 is used always.
 
