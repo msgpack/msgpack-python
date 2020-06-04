@@ -484,8 +484,10 @@ cdef class Unpacker(object):
         nread = min(self.buf_tail - self.buf_head, nbytes)
         ret = PyBytes_FromStringAndSize(self.buf + self.buf_head, nread)
         self.buf_head += nread
-        if len(ret) < nbytes and self.file_like is not None:
-            ret += self.file_like.read(nbytes - len(ret))
+        if nread < nbytes and self.file_like is not None:
+            ret += self.file_like.read(nbytes - nread)
+            nread = len(ret)
+        self.stream_offset += nread
         return ret
 
     def unpack(self):
@@ -519,6 +521,10 @@ cdef class Unpacker(object):
         return self._unpack(read_map_header)
 
     def tell(self):
+        """Returns the current position of the Unpacker in bytes, i.e., the
+        number of bytes that were read from the input, also the starting
+        position of the next object.
+        """
         return self.stream_offset
 
     def __iter__(self):

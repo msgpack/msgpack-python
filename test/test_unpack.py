@@ -3,6 +3,11 @@ import sys
 from msgpack import Unpacker, packb, OutOfData, ExtType
 from pytest import raises, mark
 
+try:
+    from itertools import izip as zip
+except ImportError:
+    pass
+
 
 def test_unpack_array_header_from_file():
     f = BytesIO(packb([1, 2, 3, 4]))
@@ -64,7 +69,31 @@ def test_unpacker_ext_hook():
     assert unpacker.unpack() == {"a": ExtType(2, b"321")}
 
 
+def test_unpacker_tell():
+    objects = 1, 2, u"abc", u"def", u"ghi"
+    packed = b"\x01\x02\xa3abc\xa3def\xa3ghi"
+    positions = 1, 2, 6, 10, 14
+    unpacker = Unpacker(BytesIO(packed))
+    for obj, unp, pos in zip(objects, unpacker, positions):
+        assert obj == unp
+        assert pos == unpacker.tell()
+
+
+def test_unpacker_tell_read_bytes():
+    objects = 1, u"abc", u"ghi"
+    packed = b"\x01\x02\xa3abc\xa3def\xa3ghi"
+    raw_data = b"\x02", b"\xa3def", b""
+    lenghts = 1, 4, 999
+    positions = 1, 6, 14
+    unpacker = Unpacker(BytesIO(packed))
+    for obj, unp, pos, n, raw in zip(objects, unpacker, positions, lenghts, raw_data):
+        assert obj == unp
+        assert pos == unpacker.tell()
+        assert unpacker.read_bytes(n) == raw
+
+
 if __name__ == "__main__":
     test_unpack_array_header_from_file()
     test_unpacker_hook_refcnt()
     test_unpacker_ext_hook()
+    test_unpacker_tell()
