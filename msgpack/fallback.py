@@ -365,18 +365,19 @@ class Unpacker(object):
         return self._buffer[self._buff_i :]
 
     def read_bytes(self, n):
-        ret = self._read(n)
+        ret = self._read(n, raise_outofdata=False)
         self._consume()
         return ret
 
-    def _read(self, n):
+    def _read(self, n, raise_outofdata=True):
         # (int) -> bytearray
-        self._reserve(n)
+        self._reserve(n, raise_outofdata=raise_outofdata)
         i = self._buff_i
-        self._buff_i = i + n
-        return self._buffer[i : i + n]
+        ret = self._buffer[i : i + n]
+        self._buff_i = i + len(ret)
+        return ret
 
-    def _reserve(self, n):
+    def _reserve(self, n, raise_outofdata=True):
         remain_bytes = len(self._buffer) - self._buff_i - n
 
         # Fast path: buffer has n bytes already
@@ -404,7 +405,7 @@ class Unpacker(object):
             self._buffer += read_data
             remain_bytes -= len(read_data)
 
-        if len(self._buffer) < n + self._buff_i:
+        if len(self._buffer) < n + self._buff_i and raise_outofdata:
             self._buff_i = 0  # rollback
             raise OutOfData
 
