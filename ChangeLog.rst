@@ -6,7 +6,7 @@ Release Date: 2020-02-17
 * Remove Python 2 support from the ``msgpack/_cmsgpack``.
   ``msgpack/fallback`` still supports Python 2.
 * Remove ``encoding`` option from the Packer and Unpacker.
-* Unpacker: The default value of ``max_buffer_type`` is changed to 100MiB.
+* Unpacker: The default value of ``max_buffer_size`` is changed to 100MiB.
 * Unpacker: ``strict_map_key`` is True by default now.
 * Unpacker: String map keys are interned.
 * Drop old buffer protocol support.
