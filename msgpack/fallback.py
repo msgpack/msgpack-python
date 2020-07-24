@@ -921,7 +921,7 @@ class Packer(object):
                     len(obj), dict_iteritems(obj), nest_limit - 1
                 )
 
-            if self._datetime and check(obj, _DateTime):
+            if self._datetime and check(obj, _DateTime) and obj.tzinfo is not None:
                 obj = Timestamp.from_datetime(obj)
                 default_used = 1
                 continue
