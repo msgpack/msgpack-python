@@ -25,6 +25,7 @@ clean:
 	rm -rf build
 	rm -f msgpack/_cmsgpack.cpp
 	rm -f msgpack/_cmsgpack.*.so
+	rm -f msgpack/_cmsgpack.*.pyd
 	rm -rf msgpack/__pycache__
 	rm -rf test/__pycache__
 

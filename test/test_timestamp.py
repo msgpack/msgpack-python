@@ -100,6 +100,14 @@ def test_unpack_datetime():
 
 
 @pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
+def test_pack_unpack_before_epoch():
+    t_in = datetime.datetime(1960, 1, 1, tzinfo=_utc)
+    packed = msgpack.packb(t_in, datetime=True)
+    unpacked = msgpack.unpackb(packed, timestamp=3)
+    assert unpacked == t_in
+
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_pack_datetime():
     t = Timestamp(42, 14000)
     dt = t.to_datetime()
