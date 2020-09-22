@@ -30,6 +30,16 @@ jobs:
         run: |
           make linux-wheel
 
+      - name: Install qemu-user-static for docker
+        shell: bash
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+      - name: Build arm64 wheels
+        shell: bash
+        run: |
+          make linux-arm64-wheel
+
       - name: Run test (3.8)
         run: |
           pip install pytest
