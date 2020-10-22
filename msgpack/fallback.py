@@ -149,7 +149,7 @@ else:
     _unpack_from = struct.unpack_from
 
 
-MessagePack = namedtuple('MessagePack', ['size', 'format', 'type'])
+MessagePack = namedtuple("MessagePack", ["size", "format", "type"])
 MessagePack.__new__.__defaults__ = ("", -1)
 
 
@@ -474,10 +474,8 @@ class Unpacker(object):
                 raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
         elif b == 0xC0:
             obj = None
-        elif b == 0xC2:
-            obj = False
-        elif b == 0xC3:
-            obj = True
+        elif 0xC2 <= b <= 0xC3:
+            obj = b == 0xC3
         elif 0xC4 <= b <= 0xC6:
             message_pack = MESSAGE_PACK_DICT[b]
             typ = message_pack.type
