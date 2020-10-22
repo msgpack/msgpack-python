@@ -409,7 +409,7 @@ class Unpacker(object):
             self._buff_i = 0  # rollback
             raise OutOfData
 
-    def _read_header(self, execute=EX_CONSTRUCT):
+    def _read_header(self):
         typ = TYPE_IMMEDIATE
         n = 0
         obj = None
@@ -622,7 +622,7 @@ class Unpacker(object):
         return typ, n, obj
 
     def _unpack(self, execute=EX_CONSTRUCT):
-        typ, n, obj = self._read_header(execute)
+        typ, n, obj = self._read_header()
 
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
