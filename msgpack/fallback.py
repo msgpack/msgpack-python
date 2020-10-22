@@ -1,5 +1,5 @@
 """Fallback pure Python implementation of msgpack"""
-
+from collections import namedtuple
 from datetime import datetime as _DateTime
 import sys
 import struct
@@ -147,6 +147,42 @@ if sys.version_info < (2, 7, 6):
 
 else:
     _unpack_from = struct.unpack_from
+
+
+MessagePack = namedtuple('MessagePack', ['size', 'format', 'type'])
+MessagePack.__new__.__defaults__ = ("", -1)
+
+
+MESSAGE_PACK_DICT = {
+    0xC4: MessagePack(1, type=TYPE_BIN),
+    0xC5: MessagePack(2, ">H", TYPE_BIN),
+    0xC6: MessagePack(4, ">I", TYPE_BIN),
+    0xC7: MessagePack(2, "Bb", TYPE_EXT),
+    0xC8: MessagePack(3, ">Hb", TYPE_EXT),
+    0xC9: MessagePack(5, ">Ib", TYPE_EXT),
+    0xCA: MessagePack(4, ">f"),
+    0xCB: MessagePack(8, ">d"),
+    0xCC: MessagePack(1),
+    0xCD: MessagePack(2, ">H"),
+    0xCE: MessagePack(4, ">I"),
+    0xCF: MessagePack(8, ">Q"),
+    0xD0: MessagePack(1, "b"),
+    0xD1: MessagePack(2, ">h"),
+    0xD2: MessagePack(4, ">i"),
+    0xD3: MessagePack(8, ">q"),
+    0xD4: MessagePack(1, "b1s", TYPE_EXT),
+    0xD5: MessagePack(2, "b2s", TYPE_EXT),
+    0xD6: MessagePack(4, "b4s", TYPE_EXT),
+    0xD7: MessagePack(8, "b8s", TYPE_EXT),
+    0xD8: MessagePack(16, "b16s", TYPE_EXT),
+    0xD9: MessagePack(1, type=TYPE_RAW),
+    0xDA: MessagePack(2, ">H", TYPE_RAW),
+    0xDB: MessagePack(4, ">I", TYPE_RAW),
+    0xDC: MessagePack(2, ">H", TYPE_ARRAY),
+    0xDD: MessagePack(4, ">I", TYPE_ARRAY),
+    0xDE: MessagePack(2, ">H", TYPE_MAP),
+    0xDF: MessagePack(4, ">I", TYPE_MAP),
+}
 
 
 class Unpacker(object):
