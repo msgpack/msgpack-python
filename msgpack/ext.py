@@ -1,5 +1,6 @@
 # coding: utf-8
 from collections import namedtuple
+from functools import total_ordering
 import datetime
 import sys
 import struct
@@ -31,6 +32,7 @@ class ExtType(namedtuple("ExtType", "code data")):
         return super(ExtType, cls).__new__(cls, code, data)
 
 
+@total_ordering
 class Timestamp(object):
     """Timestamp represents the Timestamp extension type in msgpack.
 
@@ -83,6 +85,14 @@ class Timestamp(object):
     def __ne__(self, other):
         """not-equals method (see :func:`__eq__()`)"""
         return not self.__eq__(other)
+
+    def __lt__(self, other):
+        """Check for less than with another Timestamp object"""
+        if type(other) is self.__class__:
+            return (
+                (self.seconds, self.nanoseconds) < (other.seconds, other.nanoseconds)
+            )
+        return NotImplemented
 
     def __hash__(self):
         return hash((self.seconds, self.nanoseconds))
