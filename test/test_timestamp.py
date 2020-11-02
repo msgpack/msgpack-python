@@ -136,6 +136,6 @@ def test_timestamp_comparisons():
     t2 = Timestamp(42, 14001)
     assert t < t2
     t3 = Timestamp(43, 14000)
-    assert t3 > t1
+    assert t3 > t
     assert t3 >= t3
-    assert t1 <= t1
+    assert t <= t
