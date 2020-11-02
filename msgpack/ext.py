@@ -89,9 +89,7 @@ class Timestamp(object):
     def __lt__(self, other):
         """Check for less than with another Timestamp object"""
         if type(other) is self.__class__:
-            return (
-                (self.seconds, self.nanoseconds) < (other.seconds, other.nanoseconds)
-            )
+            return (self.seconds, self.nanoseconds) < (other.seconds, other.nanoseconds)
         return NotImplemented
 
     def __hash__(self):
