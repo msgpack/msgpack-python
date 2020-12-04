@@ -63,7 +63,7 @@ cdef class Packer(object):
     """
     MessagePack Packer
 
-    usage::
+    Usage::
 
         packer = Packer()
         astream.write(packer.pack(a))
@@ -93,6 +93,12 @@ cdef class Packer(object):
         Additionally tuples will not be serialized as lists.
         This is useful when trying to implement accurate serialization
         for python types.
+
+    :param bool datetime:
+        If set to true, datetime with tzinfo is packed into Timestamp type.
+        Note that the tzinfo is stripped in the timestamp.
+        You can get UTC datetime with `timestamp=3` option of the Unpacker.
+        (Python 2 is not supported).
 
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')

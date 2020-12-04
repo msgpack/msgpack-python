@@ -744,7 +744,7 @@ class Packer(object):
     """
     MessagePack Packer
 
-    Usage:
+    Usage::
 
         packer = Packer()
         astream.write(packer.pack(a))
@@ -784,6 +784,29 @@ class Packer(object):
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')
         DO NOT USE THIS!!  This option is kept for very specific usage.
+
+    Example of streaming deserialize from file-like object::
+
+        unpacker = Unpacker(file_like)
+        for o in unpacker:
+            process(o)
+
+    Example of streaming deserialize from socket::
+
+        unpacker = Unpacker()
+        while True:
+            buf = sock.recv(1024**2)
+            if not buf:
+                break
+            unpacker.feed(buf)
+            for o in unpacker:
+                process(o)
+
+    Raises ``ExtraData`` when *packed* contains extra bytes.
+    Raises ``OutOfData`` when *packed* is incomplete.
+    Raises ``FormatError`` when *packed* is not valid msgpack.
+    Raises ``StackError`` when *packed* contains too nested.
+    Other exceptions can be raised during unpacking.
     """
 
     def __init__(

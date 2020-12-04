@@ -212,65 +212,49 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
 
 
 cdef class Unpacker(object):
-    """Streaming unpacker.
+    """
+    MessagePack Packer
 
-    Arguments:
+    Usage::
 
-    :param file_like:
-        File-like object having `.read(n)` method.
-        If specified, unpacker reads serialized data from it and :meth:`feed()` is not usable.
+        packer = Packer()
+        astream.write(packer.pack(a))
+        astream.write(packer.pack(b))
 
-    :param int read_size:
-        Used as `file_like.read(read_size)`. (default: `min(1024**2, max_buffer_size)`)
+    Packer's constructor has some keyword arguments:
 
-    :param bool use_list:
-        If true, unpack msgpack array to Python list.
-        Otherwise, unpack to Python tuple. (default: True)
+    :param callable default:
+        Convert user type to builtin type that Packer supports.
+        See also simplejson's document.
 
-    :param bool raw:
-        If true, unpack msgpack raw to Python bytes.
-        Otherwise, unpack to Python str by decoding with UTF-8 encoding (default).
+    :param bool use_single_float:
+        Use single precision float type for float. (default: False)
 
-    :param bool strict_map_key:
-        If true (default), only str or bytes are accepted for map (dict) keys.
+    :param bool autoreset:
+        Reset buffer after each pack and return its content as `bytes`. (default: True).
+        If set this to false, use `bytes()` to get content and `.reset()` to clear buffer.
 
-    :param callable object_hook:
-        When specified, it should be callable.
-        Unpacker calls it with a dict argument after unpacking msgpack map.
-        (See also simplejson)
+    :param bool use_bin_type:
+        Use bin type introduced in msgpack spec 2.0 for bytes.
+        It also enables str8 type for unicode. (default: True)
 
-    :param callable object_pairs_hook:
-        When specified, it should be callable.
-        Unpacker calls it with a list of key-value pairs after unpacking msgpack map.
-        (See also simplejson)
+    :param bool strict_types:
+        If set to true, types will be checked to be exact. Derived classes
+        from serializable types will not be serialized and will be
+        treated as unsupported type and forwarded to default.
+        Additionally tuples will not be serialized as lists.
+        This is useful when trying to implement accurate serialization
+        for python types.
 
-    :param int max_buffer_size:
-        Limits size of data waiting unpacked.  0 means system's INT_MAX.
-        The default value is 100*1024*1024 (100MiB).
-        Raises `BufferFull` exception when it is insufficient.
-        You should set this parameter when unpacking data from untrusted source.
-
-    :param int max_str_len:
-        Deprecated, use *max_buffer_size* instead.
-        Limits max length of str. (default: max_buffer_size)
-
-    :param int max_bin_len:
-        Deprecated, use *max_buffer_size* instead.
-        Limits max length of bin. (default: max_buffer_size)
-
-    :param int max_array_len:
-        Limits max length of array. (default: max_buffer_size)
-
-    :param int max_map_len:
-        Limits max length of map. (default: max_buffer_size//2)
-
-    :param int max_ext_len:
-        Deprecated, use *max_buffer_size* instead.
-        Limits max size of ext type. (default: max_buffer_size)
+    :param bool datetime:
+        If set to true, datetime with tzinfo is packed into Timestamp type.
+        Note that the tzinfo is stripped in the timestamp.
+        You can get UTC datetime with `timestamp=3` option of the Unpacker.
+        (Python 2 is not supported).
 
     :param str unicode_errors:
-        Error handler used for decoding str type.  (default: `'strict'`)
-
+        The error handler for encoding unicode. (default: 'strict')
+        DO NOT USE THIS!!  This option is kept for very specific usage.
 
     Example of streaming deserialize from file-like object::
 
