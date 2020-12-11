@@ -1,3 +1,11 @@
+1.0.1
+=====
+
+* Add Python 3.9 and linux/arm64 wheels. (#439)
+* Fixed Unpacker.tell() after read_bytes() (#426)
+* Fixed unpacking datetime before epoch on Windows (#433)
+* Fixed fallback Packer didn't check DateTime.tzinfo (#434)
+
 1.0.0
 =====
 
