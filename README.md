@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/msgpack/msgpack-python.svg?branch=master)](https://travis-ci.org/msgpack/msgpack-python)
 [![Documentation Status](https://readthedocs.org/projects/msgpack-python/badge/?version=latest)](https://msgpack-python.readthedocs.io/en/latest/?badge=latest)
 
+
 ## What's this
 
 [MessagePack](https://msgpack.org/) is an efficient binary serialization format.
@@ -11,12 +12,26 @@ But it's faster and smaller.
 This package provides CPython bindings for reading and writing MessagePack data.
 
 
+## Install
+
+```sh
+pip install msgpack
+```
+
+
 ## Very important notes for existing users
 
-### PyPI package name
+TL;DR: When upgrading from msgpack-0.4 or earlier...
 
-TL;DR: When upgrading from msgpack-0.4 or earlier, don't do `pip install -U msgpack-python`.
-Do `pip uninstall msgpack-python; pip install -U msgpack` instead.
+```sh
+# do
+pip uninstall msgpack-python; pip install -U msgpack
+
+# instead of
+pip install -U msgpack-python
+```
+
+### PyPI package name
 
 Package name on PyPI was changed to msgpack from 0.5.
 I upload transitional package (msgpack-python 0.5 which depending on msgpack)
@@ -24,7 +39,6 @@ for smooth transition from msgpack-python to msgpack.
 
 Sadly, this doesn't work for upgrade install.  After `pip install -U msgpack-python`,
 msgpack is removed, and `import msgpack` fail.
-
 
 ### Compatibility with the old format
 
@@ -35,7 +49,6 @@ You can unpack old msgpack format using `raw=True` option.
 It unpacks str (raw) type in msgpack into Python bytes.
 
 See note below for detail.
-
 
 ### Major breaking changes in msgpack 1.0
 
@@ -62,11 +75,7 @@ See note below for detail.
     which type is not bytes or str.
 
 
-## Install
-
-
-   $ pip install msgpack
-
+## Implementation details
 
 ### Pure Python implementation
 
@@ -79,7 +88,6 @@ for PyPy and Python 2.
 Since the [pip](https://pip.pypa.io/) uses the pure Python implementation,
 Python 2 support will not be dropped in the foreseeable future.
 
-
 ### Windows
 
 When you can't use a binary distribution, you need to install Visual Studio
@@ -91,7 +99,6 @@ Without extension, using pure Python implementation on CPython runs slowly.
 
 NOTE: In examples below, I use `raw=False` and `use_bin_type=True` for users
 using msgpack < 1.0. These options are default from msgpack 1.0 so you can omit them.
-
 
 ### One-shot pack & unpack
 
@@ -122,7 +129,6 @@ See performance issues relating to `use_list option`_ below.
 
 Read the docstring for other options.
 
-
 ### Streaming unpacking
 
 `Unpacker` is a "streaming unpacker". It unpacks multiple objects from one
@@ -142,7 +148,6 @@ stream (or from bytes provided through its `feed` method).
    for unpacked in unpacker:
        print(unpacked)
 ```
-
 
 ### Packing/unpacking of custom data type
 
@@ -177,7 +182,6 @@ It is also possible to pack/unpack custom data types. Here is an example for
 `object_pairs_hook` callback may instead be used to receive a list of
 key-value pairs.
 
-
 ### Extended types
 
 It is also possible to pack/unpack custom data types using the **ext** type.
@@ -203,7 +207,6 @@ It is also possible to pack/unpack custom data types using the **ext** type.
     >>> data == unpacked
     True
 ```
-
 
 ### Advanced unpacking control
 
@@ -246,7 +249,6 @@ To use the **ext** type, pass `msgpack.ExtType` object to packer.
 
 You can use it with `default` and `ext_hook`. See below.
 
-
 ### Security
 
 To unpacking data received from unreliable source, msgpack provides
@@ -259,7 +261,6 @@ It is used to limit the preallocated list size too.
 While msgpack spec doesn't limit the types of the map keys,
 there is a risk of the hashdos.
 If you need to support other types for map keys, use `strict_map_key=False`.
-
 
 ### Performance tips
 
