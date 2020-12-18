@@ -342,21 +342,21 @@ static int unpack_callback_ext(unpack_user* u, const char* base, const char* pos
             py = PyObject_CallFunction(u->timestamp_t, "(Lk)", ts.tv_sec, ts.tv_nsec);
         }
         else if (u->timestamp == 3) {  // datetime
-            // Calculate datetime using epoch + delta 
+            // Calculate datetime using epoch + delta
             // due to limitations PyDateTime_FromTimestamp on Windows with negative timestamps
             PyObject *epoch = PyDateTimeAPI->DateTime_FromDateAndTime(1970, 1, 1, 0, 0, 0, 0, u->utc, PyDateTimeAPI->DateTimeType);
             if (epoch == NULL) {
                 return -1;
             }
 
-            PyObject* d = PyDelta_FromDSU(0, ts.tv_sec, ts.tv_nsec / 1000);
+            PyObject* d = PyDelta_FromDSU(ts.tv_sec/(24*3600), ts.tv_sec%(24*3600), ts.tv_nsec / 1000);
             if (d == NULL) {
                 Py_DECREF(epoch);
                 return -1;
             }
 
             py = PyNumber_Add(epoch, d);
-            
+
             Py_DECREF(epoch);
             Py_DECREF(d);
         }
