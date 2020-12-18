@@ -131,6 +131,7 @@ def test_pack_datetime():
     assert msgpack.unpackb(packed) is None
 
 
+@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_issue451():
     # https://github.com/msgpack/msgpack-python/issues/451
     dt = datetime.datetime(2100, 1, 1, 1, 1, tzinfo=_utc)
