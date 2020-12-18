@@ -25,6 +25,7 @@ _pure: &pure
 matrix:
   include:
     - name: 32bit build
+      arch: amd64
       language: python
       services:
         - docker
@@ -58,10 +59,12 @@ matrix:
       <<: *pure
 
     - name: "pypy2.7"
+      arch: amd64
       python: "pypy2.7-7.1.1"
       <<: *pure
 
     - name: "pypy3"
+      arch: amd64
       python: "pypy3.6-7.1.1"
       <<: *pure
 
