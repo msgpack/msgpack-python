@@ -129,3 +129,12 @@ def test_pack_datetime():
     assert x
     assert x[0] == dt
     assert msgpack.unpackb(packed) is None
+
+def test_issue451():
+    # https://github.com/msgpack/msgpack-python/issues/451
+    dt = datetime.datetime(2100, 1, 1, 1, 1, tzinfo=_utc)
+    packed = msgpack.packb(dt, datetime=True)
+    assert packed == b'\xd6\xff\xf4\x86eL'
+
+    unpacked = msgpack.unpackb(packed, timestamp=3)
+    assert dt == unpacked
