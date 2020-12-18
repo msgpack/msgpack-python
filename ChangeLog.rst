@@ -1,3 +1,8 @@
+1.0.2
+=====
+
+* Fix year 2038 problem regression in 1.0.1. (#451)
+
 1.0.1
 =====
 
