@@ -64,9 +64,9 @@ See note below for detail.
 
 ## Install
 
-
-   $ pip install msgpack
-
+```
+$ pip install msgpack
+```
 
 ### Pure Python implementation
 
@@ -103,18 +103,18 @@ msgpack provides `dumps` and `loads` as an alias for compatibility with
 `unpack` and `load` unpacks from a file-like object.
 
 ```pycon
-   >>> import msgpack
-   >>> msgpack.packb([1, 2, 3], use_bin_type=True)
-   '\x93\x01\x02\x03'
-   >>> msgpack.unpackb(_, raw=False)
-   [1, 2, 3]
+>>> import msgpack
+>>> msgpack.packb([1, 2, 3], use_bin_type=True)
+'\x93\x01\x02\x03'
+>>> msgpack.unpackb(_, raw=False)
+[1, 2, 3]
 ```
 
 `unpack` unpacks msgpack's array to Python's list, but can also unpack to tuple:
 
 ```pycon
-   >>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False, raw=False)
-   (1, 2, 3)
+>>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False, raw=False)
+(1, 2, 3)
 ```
 
 You should always specify the `use_list` keyword argument for backward compatibility.
@@ -129,18 +129,18 @@ Read the docstring for other options.
 stream (or from bytes provided through its `feed` method).
 
 ```py
-   import msgpack
-   from io import BytesIO
+import msgpack
+from io import BytesIO
 
-   buf = BytesIO()
-   for i in range(100):
-      buf.write(msgpack.packb(i, use_bin_type=True))
+buf = BytesIO()
+for i in range(100):
+   buf.write(msgpack.packb(i, use_bin_type=True))
 
-   buf.seek(0)
+buf.seek(0)
 
-   unpacker = msgpack.Unpacker(buf, raw=False)
-   for unpacked in unpacker:
-       print(unpacked)
+unpacker = msgpack.Unpacker(buf, raw=False)
+for unpacked in unpacker:
+    print(unpacked)
 ```
 
 
@@ -150,27 +150,27 @@ It is also possible to pack/unpack custom data types. Here is an example for
 `datetime.datetime`.
 
 ```py
-    import datetime
-    import msgpack
+import datetime
+import msgpack
 
-    useful_dict = {
-        "id": 1,
-        "created": datetime.datetime.now(),
-    }
+useful_dict = {
+    "id": 1,
+    "created": datetime.datetime.now(),
+}
 
-    def decode_datetime(obj):
-        if '__datetime__' in obj:
-            obj = datetime.datetime.strptime(obj["as_str"], "%Y%m%dT%H:%M:%S.%f")
-        return obj
+def decode_datetime(obj):
+    if '__datetime__' in obj:
+        obj = datetime.datetime.strptime(obj["as_str"], "%Y%m%dT%H:%M:%S.%f")
+    return obj
 
-    def encode_datetime(obj):
-        if isinstance(obj, datetime.datetime):
-            return {'__datetime__': True, 'as_str': obj.strftime("%Y%m%dT%H:%M:%S.%f")}
-        return obj
+def encode_datetime(obj):
+    if isinstance(obj, datetime.datetime):
+        return {'__datetime__': True, 'as_str': obj.strftime("%Y%m%dT%H:%M:%S.%f")}
+    return obj
 
 
-    packed_dict = msgpack.packb(useful_dict, default=encode_datetime, use_bin_type=True)
-    this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime, raw=False)
+packed_dict = msgpack.packb(useful_dict, default=encode_datetime, use_bin_type=True)
+this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime, raw=False)
 ```
 
 `Unpacker`'s `object_hook` callback receives a dict; the
@@ -183,25 +183,25 @@ key-value pairs.
 It is also possible to pack/unpack custom data types using the **ext** type.
 
 ```pycon
-    >>> import msgpack
-    >>> import array
-    >>> def default(obj):
-    ...     if isinstance(obj, array.array) and obj.typecode == 'd':
-    ...         return msgpack.ExtType(42, obj.tostring())
-    ...     raise TypeError("Unknown type: %r" % (obj,))
-    ...
-    >>> def ext_hook(code, data):
-    ...     if code == 42:
-    ...         a = array.array('d')
-    ...         a.fromstring(data)
-    ...         return a
-    ...     return ExtType(code, data)
-    ...
-    >>> data = array.array('d', [1.2, 3.4])
-    >>> packed = msgpack.packb(data, default=default, use_bin_type=True)
-    >>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook, raw=False)
-    >>> data == unpacked
-    True
+>>> import msgpack
+>>> import array
+>>> def default(obj):
+...     if isinstance(obj, array.array) and obj.typecode == 'd':
+...         return msgpack.ExtType(42, obj.tostring())
+...     raise TypeError("Unknown type: %r" % (obj,))
+...
+>>> def ext_hook(code, data):
+...     if code == 42:
+...         a = array.array('d')
+...         a.fromstring(data)
+...         return a
+...     return ExtType(code, data)
+...
+>>> data = array.array('d', [1.2, 3.4])
+>>> packed = msgpack.packb(data, default=default, use_bin_type=True)
+>>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook, raw=False)
+>>> data == unpacked
+True
 ```
 
 
@@ -226,11 +226,11 @@ You can pack into and unpack from this old spec using `use_bin_type=False`
 and `raw=True` options.
 
 ```pycon
-    >>> import msgpack
-    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=False), raw=True)
-    [b'spam', b'eggs']
-    >>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True), raw=False)
-    [b'spam', 'eggs']
+>>> import msgpack
+>>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=False), raw=True)
+[b'spam', b'eggs']
+>>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True), raw=False)
+[b'spam', 'eggs']
 ```
 
 ### ext type
@@ -238,10 +238,10 @@ and `raw=True` options.
 To use the **ext** type, pass `msgpack.ExtType` object to packer.
 
 ```pycon
-    >>> import msgpack
-    >>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
-    >>> msgpack.unpackb(packed)
-    ExtType(code=42, data='xyzzy')
+>>> import msgpack
+>>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
+>>> msgpack.unpackb(packed)
+ExtType(code=42, data='xyzzy')
 ```
 
 You can use it with `default` and `ext_hook`. See below.
