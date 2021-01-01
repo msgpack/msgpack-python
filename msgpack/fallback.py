@@ -469,8 +469,10 @@ class Unpacker(object):
                 raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
         elif b == 0xC0:
             obj = None
-        elif 0xC2 <= b <= 0xC3:
-            obj = b == 0xC3
+        elif b == 0xC2:
+            obj = False
+        elif b == 0xC3:
+            obj = True
         elif 0xC4 <= b <= 0xC6:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
