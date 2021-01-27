@@ -71,7 +71,7 @@ Python 2 and PyPy.
 But msgpack provides a pure Python implementation (`msgpack.fallback`)
 for PyPy and Python 2.
 
-Since the [pip](https://pip.pypa.io/) [relies on](https://github.com/pypa/pip/tree/master/src/pip/_vendor/msgpack?rgh-link-date=2021-01-26T23%3A51%3A06Z) the pure Python implementation, msgpack will support Python 2 support until pip drops Python 2 support.
+Since [pip](https://pip.pypa.io/) [relies on](https://github.com/pypa/pip/tree/master/src/pip/_vendor/msgpack?rgh-link-date=2021-01-26T23%3A51%3A06Z) the pure Python implementation, msgpack will support Python 2 support until pip drops Python 2 support.
 
 
 ### Windows
