@@ -260,7 +260,7 @@ class Unpacker(object):
 
     Example of streaming deserialize from socket::
 
-        unpacker = Unpacker(max_buffer_size)
+        unpacker = Unpacker()
         while True:
             buf = sock.recv(1024**2)
             if not buf:
