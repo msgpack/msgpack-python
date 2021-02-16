@@ -90,10 +90,3 @@ def test_unpacker_tell_read_bytes():
         assert obj == unp
         assert pos == unpacker.tell()
         assert unpacker.read_bytes(n) == raw
-
-
-if __name__ == "__main__":
-    test_unpack_array_header_from_file()
-    test_unpacker_hook_refcnt()
-    test_unpacker_ext_hook()
-    test_unpacker_tell()
