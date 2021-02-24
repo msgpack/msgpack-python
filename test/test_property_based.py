@@ -29,6 +29,7 @@ def composite_types(any_type):
     )
 any_type = st.recursive(simple_types, composite_types)
 
+
 @pytest.mark.skipif(_cmsgpack is None, reason='C extension is not available')
 @given(any_type)
 def test_extension_and_fallback_pack_identically(obj):
