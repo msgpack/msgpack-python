@@ -9,6 +9,8 @@ except ImportError:
 from msgpack import fallback
 
 # https://github.com/msgpack/msgpack/blob/master/spec.md#type-system
+# TODO: test timestamps
+# TODO: test the extension type
 simple_types = (
     st.integers(min_value=-(2**63), max_value=(2**64)-1)
     | st.none()
