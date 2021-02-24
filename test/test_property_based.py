@@ -39,6 +39,7 @@ def test_extension_and_fallback_pack_identically(obj):
     assert extension_packer.pack(obj) == fallback_packer.pack(obj)
 
 
+# TODO: also test with strict_map_key=True
 @pytest.mark.parametrize('impl', [fallback, _cmsgpack])
 @given(obj=any_type)
 def test_roudtrip(obj, impl):
