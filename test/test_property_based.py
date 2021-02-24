@@ -19,10 +19,13 @@ simple_types = (
     | st.text()
     | st.binary()
 )
+def composite_types(any_type):
+    return st.lists(any_type)
 
+any_type = st.recursive(simple_types, composite_types)
 
 @pytest.mark.skipif(_cmsgpack is None, reason='C extension is not available')
-@given(simple_types)
+@given(any_type)
 def test_extension_and_fallback_pack_identically(obj):
     extension_packer = _cmsgpack.Packer()
     fallback_packer = fallback.Packer()
