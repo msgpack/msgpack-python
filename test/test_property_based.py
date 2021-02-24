@@ -13,6 +13,7 @@ simple_types = (
     st.integers(min_value=-(2**63), max_value=(2**64)-1)
     | st.none()
     | st.booleans()
+    | st.floats()
 )
 
 
