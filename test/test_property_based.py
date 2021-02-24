@@ -18,10 +18,8 @@ simple_types = (
     | st.none()
     | st.booleans()
     | st.floats()
-    # TODO: maximum byte size of a String object is (2^32)-1
-    # the problem is that hypothesis only allows control over the max character count
     # TODO: String objects may contain invalid byte sequence
-    | st.text()
+    | st.text(max_size=HYPOTHESIS_MAX)
     | st.binary(max_size=HYPOTHESIS_MAX)
 )
 def composite_types(any_type):
