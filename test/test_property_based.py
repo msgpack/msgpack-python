@@ -20,8 +20,7 @@ simple_types = (
     | st.binary()
 )
 def composite_types(any_type):
-    return st.lists(any_type) | st.dictionaries(st.text(), any_type)
-
+    return st.lists(any_type) | st.dictionaries(simple_types, any_type)
 any_type = st.recursive(simple_types, composite_types)
 
 @pytest.mark.skipif(_cmsgpack is None, reason='C extension is not available')
