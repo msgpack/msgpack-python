@@ -18,7 +18,7 @@ simple_types = (
     | st.none()
     | st.booleans()
     | st.floats()
-    # TODO: String objects may contain invalid byte sequence
+    # TODO: The msgpack speck says that string objects may contain invalid byte sequence
     | st.text(max_size=HYPOTHESIS_MAX)
     | st.binary(max_size=HYPOTHESIS_MAX)
 )
