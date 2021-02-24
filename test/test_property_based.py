@@ -15,6 +15,7 @@ simple_types = (
     | st.booleans()
     | st.floats()
     | st.text()
+    | st.binary()
 )
 
 
