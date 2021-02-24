@@ -14,6 +14,7 @@ simple_types = (
     | st.none()
     | st.booleans()
     | st.floats()
+    | st.text()
 )
 
 
