@@ -16,11 +16,17 @@ simple_types = (
     | st.none()
     | st.booleans()
     | st.floats()
+    # TODO: maximum byte size of a String object is (2^32)-1
+    # the problem is that hypothesis only allows control over the max character count
+    # TODO: String objects may contain invalid byte sequence
     | st.text()
-    | st.binary()
+    | st.binary(max_size=2**32 - 1)
 )
 def composite_types(any_type):
-    return st.lists(any_type) | st.dictionaries(simple_types, any_type)
+    return (
+        st.lists(any_type, max_size=2**32 - 1)
+        | st.dictionaries(simple_types, any_type, max_size=2**32 - 1)
+    )
 any_type = st.recursive(simple_types, composite_types)
 
 @pytest.mark.skipif(_cmsgpack is None, reason='C extension is not available')
