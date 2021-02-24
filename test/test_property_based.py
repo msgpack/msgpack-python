@@ -8,6 +8,8 @@ except ImportError:
     _cmsgpack = None
 from msgpack import fallback
 
+HYPOTHESIS_MAX = 2**10
+
 # https://github.com/msgpack/msgpack/blob/master/spec.md#type-system
 # TODO: test timestamps
 # TODO: test the extension type
@@ -20,12 +22,12 @@ simple_types = (
     # the problem is that hypothesis only allows control over the max character count
     # TODO: String objects may contain invalid byte sequence
     | st.text()
-    | st.binary(max_size=2**32 - 1)
+    | st.binary(max_size=HYPOTHESIS_MAX)
 )
 def composite_types(any_type):
     return (
-        st.lists(any_type, max_size=2**32 - 1)
-        | st.dictionaries(simple_types, any_type, max_size=2**32 - 1)
+        st.lists(any_type, max_size=HYPOTHESIS_MAX)
+        | st.dictionaries(simple_types, any_type, max_size=HYPOTHESIS_MAX)
     )
 any_type = st.recursive(simple_types, composite_types)
 
