@@ -39,3 +39,16 @@ def test_extension_and_fallback_pack_identically(obj):
     fallback_packer = fallback.Packer()
 
     assert extension_packer.pack(obj) == fallback_packer.pack(obj)
+
+
+@pytest.mark.parametrize('impl', [fallback, _cmsgpack])
+@given(obj=any_type)
+def test_roudtrip(obj, impl):
+    if impl is None:
+        pytest.skip('C extension is not available')
+    packer = impl.Packer()
+    unpacker = impl.Unpacker(strict_map_key=False)
+    unpacker.feed(packer.pack(obj))
+    got = list(unpacker)
+    # using [obj] == got fails because NaN != NaN
+    assert repr([obj]) == repr(got)
