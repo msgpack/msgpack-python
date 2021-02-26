@@ -455,8 +455,6 @@ class Unpacker(object):
         elif b & 0b11100000 == 0b10100000:
             n = b & 0b00011111
             typ = TYPE_RAW
-            if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)" % (n, self._max_str_len))
             obj = self._read(n)
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
