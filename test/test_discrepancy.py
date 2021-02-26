@@ -97,3 +97,20 @@ def test_fixext_discrepancy(impl, use_unpack):
     else:
         with raises(StopIteration):
             next(u)
+
+
+@mark.parametrize("impl", [fallback, _cmsgpack])
+@mark.parametrize("use_unpack", [True, False])
+def test_fixstr_discrepancy(impl, use_unpack):
+    if impl is None:
+        skip("C extension not awailable")
+
+    u = impl.Unpacker(max_buffer_size=1)
+    u.feed(bytes([0b10100010]))
+
+    if use_unpack:
+        with raises(OutOfData):
+            u.unpack()
+    else:
+        with raises(StopIteration):
+            next(u)
