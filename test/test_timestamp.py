@@ -140,3 +140,14 @@ def test_issue451():
 
     unpacked = msgpack.unpackb(packed, timestamp=3)
     assert dt == unpacked
+
+@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
+def test_pack_datetime_without_tzinfo():
+    dt = datetime.datetime(1970, 1, 1, 0, 0, 42, 14)
+    with pytest.raises(ValueError, match="where tzinfo=None"):
+        packed = msgpack.packb(dt, datetime=True)
+
+    dt = datetime.datetime(1970, 1, 1, 0, 0, 42, 14, tzinfo=_utc)
+    packed = msgpack.packb(dt, datetime=True)
+    unpacked = msgpack.unpackb(packed, timestamp=3)
+    assert unpacked == dt

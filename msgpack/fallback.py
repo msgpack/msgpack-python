@@ -865,7 +865,9 @@ class Packer(object):
                     len(obj), dict_iteritems(obj), nest_limit - 1
                 )
 
-            if self._datetime and check(obj, _DateTime) and obj.tzinfo is not None:
+            if self._datetime and check(obj, _DateTime):
+                if obj.tzinfo is None:
+                    raise ValueError("Cannot serialize %r where tzinfo=None" % (obj,))
                 obj = Timestamp.from_datetime(obj)
                 default_used = 1
                 continue
