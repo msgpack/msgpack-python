@@ -56,6 +56,8 @@ def test_exceed_max_bin_len(impl, use_unpack):
     when the data is supplied via feed() leading to a discrepancy: when you
     feed() a header of a bin, str or ext that is too large and call unpack()
     the extension asks for more data but the fallback raises a ValueError
+
+    See https://github.com/msgpack/msgpack-python/pull/464#issuecomment-786506188
     """
     if impl is None:
         skip("C extension not awailable")
