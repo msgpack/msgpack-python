@@ -40,6 +40,7 @@ def test_exceed_max_buffer_size(impl, use_unpack):
     [
         b"\xc6",  # bin 32
         b"\xdb",  # str 32
+        b"\xc9",  # ext 32
     ],
 )
 @mark.parametrize("impl", [fallback, _cmsgpack])
@@ -72,7 +73,7 @@ def test_exceed_max_bin_len(type, impl, use_unpack):
     bin_len = 11
     max_buffer_size = 10
     u = impl.Unpacker(max_buffer_size=max_buffer_size)
-    u.feed(type + struct.pack(">I", bin_len))
+    u.feed(type + struct.pack(">I", bin_len) + b"\0")
     if use_unpack:
         with raises(OutOfData):
             u.unpack()
