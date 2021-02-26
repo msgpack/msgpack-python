@@ -1,4 +1,5 @@
 import io
+import struct
 from pytest import raises, mark, skip
 
 from msgpack import fallback
@@ -23,7 +24,7 @@ def test_exceed_max_buffer_size(impl, use_unpack):
 
     buffer_size = 11
     max_buffer_size = 10
-    f = io.BytesIO(b"\xc6" + buffer_size.to_bytes(4, "big") + b"z" * buffer_size)
+    f = io.BytesIO(b"\xc6" + struct.pack(">I", buffer_size) + b"z" * buffer_size)
     u = impl.Unpacker(f, max_buffer_size=max_buffer_size)
 
     with raises(ValueError):
