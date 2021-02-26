@@ -45,7 +45,7 @@ def test_exceed_max_buffer_size(impl, use_unpack):
 )
 @mark.parametrize("impl", [fallback, _cmsgpack])
 @mark.parametrize("use_unpack", [True, False])
-def test_exceed_max_bin_len(type, impl, use_unpack):
+def test_bin_str_ext_32_discrepancy(type, impl, use_unpack):
     """msgpack attempts to prevent denial of service attacks that cause the
     parser to allocate too much memory. When the input is supplied via feed()
     this protection is implemented the same in both the extension and
@@ -85,6 +85,7 @@ def test_exceed_max_bin_len(type, impl, use_unpack):
 @mark.parametrize("impl", [fallback, _cmsgpack])
 @mark.parametrize("use_unpack", [True, False])
 def test_fixext_discrepancy(impl, use_unpack):
+    """See test_bin_str_ext_32_discrepancy"""
     if impl is None:
         skip("C extension not awailable")
 
@@ -102,6 +103,7 @@ def test_fixext_discrepancy(impl, use_unpack):
 @mark.parametrize("impl", [fallback, _cmsgpack])
 @mark.parametrize("use_unpack", [True, False])
 def test_fixstr_discrepancy(impl, use_unpack):
+    """See test_bin_str_ext_32_discrepancy"""
     if impl is None:
         skip("C extension not awailable")
 
