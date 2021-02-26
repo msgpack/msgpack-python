@@ -418,7 +418,8 @@ class Unpacker(object):
         if self._feeding:
             self._buff_i = self._buf_checkpoint
             raise OutOfData
-
+        if n > self._max_buffer_size:
+            raise ValueError("Exceeded max_buffer_size of %s" % self._max_buffer_size)
         # Strip buffer before checkpoint before reading file.
         if self._buf_checkpoint > 0:
             del self._buffer[: self._buf_checkpoint]
@@ -483,8 +484,6 @@ class Unpacker(object):
             else:
                 n = self._buffer[self._buff_i]
             self._buff_i += size
-            if n > self._max_bin_len:
-                raise ValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
             obj = self._read(n)
         elif 0xC7 <= b <= 0xC9:
             size, fmt, typ = _MSGPACK_HEADERS[b]
