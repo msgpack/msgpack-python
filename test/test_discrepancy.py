@@ -35,9 +35,16 @@ def test_exceed_max_buffer_size(impl, use_unpack):
             next(u)
 
 
+@mark.parametrize(
+    "type",
+    [
+        b"\xc6",  # bin 32
+        b"\xdb",  # str 32
+    ],
+)
 @mark.parametrize("impl", [fallback, _cmsgpack])
 @mark.parametrize("use_unpack", [True, False])
-def test_exceed_max_bin_len(impl, use_unpack):
+def test_exceed_max_bin_len(type, impl, use_unpack):
     """msgpack attempts to prevent denial of service attacks that cause the
     parser to allocate too much memory. When the input is supplied via feed()
     this protection is implemented the same in both the extension and
@@ -65,7 +72,7 @@ def test_exceed_max_bin_len(impl, use_unpack):
     bin_len = 11
     max_buffer_size = 10
     u = impl.Unpacker(max_buffer_size=max_buffer_size)
-    u.feed(b"\xc6" + struct.pack(">I", bin_len))
+    u.feed(type + struct.pack(">I", bin_len))
     if use_unpack:
         with raises(OutOfData):
             u.unpack()
