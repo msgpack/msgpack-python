@@ -231,11 +231,6 @@ static inline int unpack_callback_map_end(unpack_user* u, msgpack_unpack_object*
 
 static inline int unpack_callback_raw(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
 {
-    if (l > u->max_str_len) {
-        PyErr_Format(PyExc_ValueError, "%u exceeds max_str_len(%zd)", l, u->max_str_len);
-        return -1;
-    }
-
     PyObject *py;
 
     if (u->raw) {

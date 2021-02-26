@@ -41,20 +41,6 @@ def test_map_header():
         packer.pack_array_header(2 ** 32)
 
 
-def test_max_str_len():
-    d = "x" * 3
-    packed = packb(d)
-
-    unpacker = Unpacker(max_str_len=3, raw=False)
-    unpacker.feed(packed)
-    assert unpacker.unpack() == d
-
-    unpacker = Unpacker(max_str_len=2, raw=False)
-    with pytest.raises(UnpackValueError):
-        unpacker.feed(packed)
-        unpacker.unpack()
-
-
 def test_max_array_len():
     d = [1, 2, 3]
     packed = packb(d)
