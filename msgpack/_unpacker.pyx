@@ -442,10 +442,10 @@ cdef class Unpacker(object):
         self.buf_tail = tail + _buf_len
 
     cdef read_from_file(self):
-        next_bytes = self.file_like_read(
-                min(self.read_size,
-                    self.max_buffer_size - (self.buf_tail - self.buf_head)
-                    ))
+        free_space = self.max_buffer_size - (self.buf_tail - self.buf_head)
+        if free_space <= 0:
+            raise ValueError("Exceeded max_buffer_size of %s" % self.max_buffer_size)
+        next_bytes = self.file_like_read(min(self.read_size, free_space))
         if next_bytes:
             self.append_buffer(PyBytes_AsString(next_bytes), PyBytes_Size(next_bytes))
         else:
