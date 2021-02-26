@@ -141,6 +141,7 @@ def test_issue451():
     unpacked = msgpack.unpackb(packed, timestamp=3)
     assert dt == unpacked
 
+
 @pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_pack_datetime_without_tzinfo():
     dt = datetime.datetime(1970, 1, 1, 0, 0, 42, 14)
