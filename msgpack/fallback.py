@@ -490,8 +490,6 @@ class Unpacker(object):
             self._reserve(size)
             L, n = _unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
-            if L > self._max_ext_len:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
             obj = self._read(L)
         elif 0xCA <= b <= 0xD3:
             size, fmt = _MSGPACK_HEADERS[b]

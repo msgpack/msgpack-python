@@ -83,20 +83,6 @@ def test_max_map_len():
         unpacker.unpack()
 
 
-def test_max_ext_len():
-    d = ExtType(42, b"abc")
-    packed = packb(d)
-
-    unpacker = Unpacker(max_ext_len=3)
-    unpacker.feed(packed)
-    assert unpacker.unpack() == d
-
-    unpacker = Unpacker(max_ext_len=2)
-    with pytest.raises(UnpackValueError):
-        unpacker.feed(packed)
-        unpacker.unpack()
-
-
 # PyPy fails following tests because of constant folding?
 # https://bugs.pypy.org/issue1721
 # @pytest.mark.skipif(True, reason="Requires very large memory.")
