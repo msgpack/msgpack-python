@@ -106,7 +106,7 @@ def test_fixstr_discrepancy(impl, use_unpack):
         skip("C extension not awailable")
 
     u = impl.Unpacker(max_buffer_size=1)
-    u.feed(bytes([0b10100010]))
+    u.feed(struct.pack("B", 0b10100010))
 
     if use_unpack:
         with raises(OutOfData):
