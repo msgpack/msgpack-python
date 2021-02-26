@@ -55,20 +55,6 @@ def test_max_str_len():
         unpacker.unpack()
 
 
-def test_max_bin_len():
-    d = b"x" * 3
-    packed = packb(d, use_bin_type=True)
-
-    unpacker = Unpacker(max_bin_len=3)
-    unpacker.feed(packed)
-    assert unpacker.unpack() == d
-
-    unpacker = Unpacker(max_bin_len=2)
-    with pytest.raises(UnpackValueError):
-        unpacker.feed(packed)
-        unpacker.unpack()
-
-
 def test_max_array_len():
     d = [1, 2, 3]
     packed = packb(d)

@@ -251,11 +251,6 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
 
 static inline int unpack_callback_bin(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
 {
-    if (l > u->max_bin_len) {
-        PyErr_Format(PyExc_ValueError, "%u exceeds max_bin_len(%zd)", l, u->max_bin_len);
-        return -1;
-    }
-
     PyObject *py = PyBytes_FromStringAndSize(p, l);
     if (!py)
         return -1;
