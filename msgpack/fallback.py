@@ -455,18 +455,20 @@ class Unpacker(object):
             n = b & 0b00011111
             typ = TYPE_RAW
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
+                raise ValueError("%s exceeds max_str_len(%s)" % (n, self._max_str_len))
             obj = self._read(n)
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
             typ = TYPE_ARRAY
             if n > self._max_array_len:
-                raise ValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
+                raise ValueError(
+                    "%s exceeds max_array_len(%s)" % (n, self._max_array_len)
+                )
         elif b & 0b11110000 == 0b10000000:
             n = b & 0b00001111
             typ = TYPE_MAP
             if n > self._max_map_len:
-                raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
+                raise ValueError("%s exceeds max_map_len(%s)" % (n, self._max_map_len))
         elif b == 0xC0:
             obj = None
         elif b == 0xC2:
@@ -518,7 +520,7 @@ class Unpacker(object):
                 n = self._buffer[self._buff_i]
             self._buff_i += size
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)", n, self._max_str_len)
+                raise ValueError("%s exceeds max_str_len(%s)" % (n, self._max_str_len))
             obj = self._read(n)
         elif 0xDC <= b <= 0xDD:
             size, fmt, typ = _MSGPACK_HEADERS[b]
@@ -526,14 +528,16 @@ class Unpacker(object):
             (n,) = _unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if n > self._max_array_len:
-                raise ValueError("%s exceeds max_array_len(%s)", n, self._max_array_len)
+                raise ValueError(
+                    "%s exceeds max_array_len(%s)" % (n, self._max_array_len)
+                )
         elif 0xDE <= b <= 0xDF:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
             (n,) = _unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if n > self._max_map_len:
-                raise ValueError("%s exceeds max_map_len(%s)", n, self._max_map_len)
+                raise ValueError("%s exceeds max_map_len(%s)" % (n, self._max_map_len))
         else:
             raise FormatError("Unknown header: 0x%x" % b)
         return typ, n, obj
