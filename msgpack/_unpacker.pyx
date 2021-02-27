@@ -3,7 +3,6 @@
 from cpython cimport *
 cdef extern from "Python.h":
     ctypedef struct PyObject
-    cdef int PyObject_AsReadBuffer(object o, const void** buff, Py_ssize_t* buf_len) except -1
     object PyMemoryView_GetContiguous(object obj, int buffertype, char order)
 
 from libc.stdlib cimport *
