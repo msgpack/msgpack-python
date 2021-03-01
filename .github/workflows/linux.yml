@@ -42,7 +42,7 @@ jobs:
 
       - name: Run test (3.8)
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
           pytest -v test
 
@@ -54,7 +54,7 @@ jobs:
 
       - name: Run test (3.9)
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
           pytest -v test
 
@@ -65,7 +65,7 @@ jobs:
 
       - name: Run test (3.7)
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
           pytest -v test
 
@@ -76,7 +76,7 @@ jobs:
 
       - name: Run test (3.6)
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
           pytest -v test
 

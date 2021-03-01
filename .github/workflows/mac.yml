@@ -30,7 +30,7 @@ jobs:
 
       - name: Run test
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: -f dist/ --no-index
           pytest -v test
 
@@ -47,7 +47,7 @@ jobs:
 
       - name: Run test
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: -f dist/ --no-index
           pytest -v test
 
@@ -64,7 +64,7 @@ jobs:
 
       - name: Run test
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: -f dist/ --no-index
           pytest -v test
 
@@ -81,7 +81,7 @@ jobs:
 
       - name: Run test
         run: |
-          pip install pytest
+          pip install pytest hypothesis
           pip install -v msgpack --only-binary :all: -f dist/ --no-index
           pytest -v test
 

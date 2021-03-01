@@ -1,4 +1,4 @@
-%PYTHON%\python.exe -m pip install -U pip wheel pytest
+%PYTHON%\python.exe -m pip install -U pip wheel pytest hypothesis
 %PYTHON%\python.exe setup.py build_ext -i
 %PYTHON%\python.exe setup.py install
 %PYTHON%\python.exe -c "import sys; print(hex(sys.maxsize))"
