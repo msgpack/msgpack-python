@@ -48,11 +48,10 @@ def test_roudtrip(obj, impl):
     if impl is None:
         pytest.skip("C extension is not available")
     packer = impl.Packer()
-    unpacker = impl.Unpacker(strict_map_key=False)
-    unpacker.feed(packer.pack(obj))
-    got = list(unpacker)
-    # using [obj] == got fails because NaN != NaN
-    assert repr([obj]) == repr(got)
+    buf = packer.pack(obj)
+    got = impl.unpackb(buf, strict_map_key=False)
+    # using obj == got fails because NaN != NaN
+    assert repr(obj) == repr(got)
 
 
 # TODO: also test with strict_map_key=True
