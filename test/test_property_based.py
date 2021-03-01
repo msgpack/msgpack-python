@@ -13,7 +13,7 @@ HYPOTHESIS_MAX = 50
 # TODO: test timestamps
 # TODO: test the extension type
 simple_types = (
-    st.integers(min_value=-(2**63), max_value=2**64 - 1)
+    st.integers(min_value=-(2 ** 63), max_value=2 ** 64 - 1)
     | st.none()
     | st.booleans()
     | st.floats()
@@ -21,15 +21,18 @@ simple_types = (
     | st.text(max_size=HYPOTHESIS_MAX)
     | st.binary(max_size=HYPOTHESIS_MAX)
 )
+
+
 def composite_types(any_type):
-    return (
-        st.lists(any_type, max_size=HYPOTHESIS_MAX)
-        | st.dictionaries(simple_types, any_type, max_size=HYPOTHESIS_MAX)
+    return st.lists(any_type, max_size=HYPOTHESIS_MAX) | st.dictionaries(
+        simple_types, any_type, max_size=HYPOTHESIS_MAX
     )
+
+
 any_type = st.recursive(simple_types, composite_types)
 
 
-@pytest.mark.skipif(_cmsgpack is None, reason='C extension is not available')
+@pytest.mark.skipif(_cmsgpack is None, reason="C extension is not available")
 @given(any_type)
 def test_extension_and_fallback_pack_identically(obj):
     extension_packer = _cmsgpack.Packer()
@@ -39,11 +42,11 @@ def test_extension_and_fallback_pack_identically(obj):
 
 
 # TODO: also test with strict_map_key=True
-@pytest.mark.parametrize('impl', [fallback, _cmsgpack])
+@pytest.mark.parametrize("impl", [fallback, _cmsgpack])
 @given(obj=any_type)
 def test_roudtrip(obj, impl):
     if impl is None:
-        pytest.skip('C extension is not available')
+        pytest.skip("C extension is not available")
     packer = impl.Packer()
     unpacker = impl.Unpacker(strict_map_key=False)
     unpacker.feed(packer.pack(obj))
@@ -53,7 +56,7 @@ def test_roudtrip(obj, impl):
 
 
 # TODO: also test with strict_map_key=True
-@pytest.mark.skipif(_cmsgpack is None, reason='C extension is not available')
+@pytest.mark.skipif(_cmsgpack is None, reason="C extension is not available")
 @given(st.binary(max_size=HYPOTHESIS_MAX))
 def test_extension_and_fallback_unpack_identically(buf):
     extension_packer = _cmsgpack.Unpacker(strict_map_key=False)
