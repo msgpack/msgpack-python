@@ -1,6 +1,8 @@
 import pytest
 from hypothesis import given, assume, strategies as st
 
+import msgpack
+
 try:
     from msgpack import _cmsgpack
 except ImportError:
@@ -58,26 +60,25 @@ def test_roudtrip(obj, impl):
 @pytest.mark.skipif(_cmsgpack is None, reason="C extension is not available")
 @given(st.binary(max_size=HYPOTHESIS_MAX))
 def test_extension_and_fallback_unpack_identically(buf):
-    extension_packer = _cmsgpack.Unpacker(strict_map_key=False)
-    fallback_packer = fallback.Unpacker(strict_map_key=False)
     try:
-        extension_packer.feed(buf)
-        from_extension = list(extension_packer)
-    except Exception as e:
-        # There are currently some cacese where the exception message from fallback and extension is different
-        # Until this is fixed we can only compare types
-        from_extension = type(e)
-    try:
-        fallback_packer.feed(buf)
-        from_fallback = list(fallback_packer)
-    except ValueError as e:
-        print(e)
-        # There is a known discrepancy between the extension and the fallback unpackers
+        from_extension = _cmsgpack.unpackb(buf)
+    except (msgpack.ExtraData, ValueError) as e:
+        # Ignore the exception message. This avoids:
+        #
+        # Falsifying example: buf=b'\x00\x00'
+        # Error: ExtraData(0, bytearray(b'\x00')) != ExtraData(0, b'\x00')
+        #
+        # Falsifying example: buf=b'\xa2'
+        # Error: ValueError('2 exceeds max_str_len(1)') != ValueError('Unpack failed: incomplete input')
         # See https://github.com/msgpack/msgpack-python/pull/464
-        assume(False)
+        from_extension = type(e)
     except Exception as e:
+        from_extension = e
+    try:
+        from_fallback = fallback.unpackb(buf)
+    except (msgpack.ExtraData, ValueError) as e:
         from_fallback = type(e)
-    # using from_extension == from_fallback fails because:
-    # NaN != NaN
-    # Exception('foo') != Exception('foo')
+    except Exception as e:
+        from_fallback = e
+
     assert repr(from_extension) == repr(from_fallback)
