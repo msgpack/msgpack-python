@@ -1,6 +1,5 @@
 import pytest
-from hypothesis import given
-from hypothesis import strategies as st
+from hypothesis import given, assume, strategies as st
 
 try:
     from msgpack import _cmsgpack
@@ -51,3 +50,32 @@ def test_roudtrip(obj, impl):
     got = list(unpacker)
     # using [obj] == got fails because NaN != NaN
     assert repr([obj]) == repr(got)
+
+
+# TODO: also test with strict_map_key=True
+@pytest.mark.skipif(_cmsgpack is None, reason='C extension is not available')
+@given(st.binary(max_size=HYPOTHESIS_MAX))
+def test_extension_and_fallback_unpack_identically(buf):
+    extension_packer = _cmsgpack.Unpacker(strict_map_key=False)
+    fallback_packer = fallback.Unpacker(strict_map_key=False)
+    try:
+        extension_packer.feed(buf)
+        from_extension = list(extension_packer)
+    except Exception as e:
+        # There are currently some cacese where the exception message from fallback and extension is different
+        # Until this is fixed we can only compare types
+        from_extension = type(e)
+    try:
+        fallback_packer.feed(buf)
+        from_fallback = list(fallback_packer)
+    except ValueError as e:
+        print(e)
+        # There is a known discrepancy between the extension and the fallback unpackers
+        # See https://github.com/msgpack/msgpack-python/pull/464
+        assume(False)
+    except Exception as e:
+        from_fallback = type(e)
+    # using from_extension == from_fallback fails because:
+    # NaN != NaN
+    # Exception('foo') != Exception('foo')
+    assert repr(from_extension) == repr(from_fallback)
