@@ -17,7 +17,7 @@ python:
 _pure: &pure
   install:
     - pip install -U pip
-    - pip install -U pytest pytest-cov codecov
+    - pip install -U pytest pytest-cov codecov hypothesis
     - pip install .
   script:
     - pytest --cov=msgpack -v test
@@ -70,7 +70,7 @@ matrix:
 
 install:
   - pip install -U pip
-  - pip install -U pytest pytest-cov codecov
+  - pip install -U pytest pytest-cov codecov hypothesis
   - pip install -r requirements.txt  # Cython
   - make cython
   - pip install -e .
