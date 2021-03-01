@@ -9,7 +9,7 @@ except ImportError:
     _cmsgpack = None
 from msgpack import fallback
 
-HYPOTHESIS_MAX = 50
+HYPOTHESIS_MAX = 3
 
 # https://github.com/msgpack/msgpack/blob/master/spec.md#type-system
 # TODO: test timestamps
