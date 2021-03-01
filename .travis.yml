@@ -33,6 +33,7 @@ matrix:
         - DOCKER_IMAGE=quay.io/pypa/manylinux1_i686
       install:
         - pip install -U pip
+        - pip install -U hypothesis
         - pip install -r requirements.txt
         - make cython
         - docker pull $DOCKER_IMAGE
@@ -48,6 +49,7 @@ matrix:
         - DOCKER_IMAGE=quay.io/pypa/manylinux2014_aarch64
       install:
         - pip install -U pip
+        - pip install -U hypothesis
         - pip install -r requirements.txt
         - make cython
         - docker pull $DOCKER_IMAGE
