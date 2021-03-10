@@ -148,6 +148,10 @@ def test_pack_datetime_without_tzinfo():
     with pytest.raises(ValueError, match="where tzinfo=None"):
         packed = msgpack.packb(dt, datetime=True)
 
+    dt = datetime.datetime(1970, 1, 1, 0, 0, 42, 14)
+    packed = msgpack.packb(dt, datetime=True, default=lambda x: None)
+    assert packed == msgpack.packb(None)
+
     dt = datetime.datetime(1970, 1, 1, 0, 0, 42, 14, tzinfo=_utc)
     packed = msgpack.packb(dt, datetime=True)
     unpacked = msgpack.unpackb(packed, timestamp=3)

@@ -274,9 +274,7 @@ cdef class Packer(object):
                 if ret == 0:
                     ret = msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
                 PyBuffer_Release(&view);
-            elif self.datetime and PyDateTime_CheckExact(o):
-                if datetime_tzinfo(o) is None:
-                    PyErr_Format(ValueError, b"can not serialize '%.200s' object where tzinfo=None", Py_TYPE(o).tp_name)
+            elif self.datetime and PyDateTime_CheckExact(o) and datetime_tzinfo(o) is not None:
                 delta = o - epoch
                 if not PyDelta_CheckExact(delta):
                     raise ValueError("failed to calculate delta")
@@ -287,6 +285,8 @@ cdef class Packer(object):
                 o = self._default(o)
                 default_used = 1
                 continue
+            elif self.datetime and PyDateTime_CheckExact(o):
+                PyErr_Format(ValueError, b"can not serialize '%.200s' object where tzinfo=None", Py_TYPE(o).tp_name)
             else:
                 PyErr_Format(TypeError, b"can not serialize '%.200s' object", Py_TYPE(o).tp_name)
             return ret
