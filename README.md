@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/msgpack/msgpack-python.svg?branch=master)](https://travis-ci.org/msgpack/msgpack-python)
 [![Documentation Status](https://readthedocs.org/projects/msgpack-python/badge/?version=latest)](https://msgpack-python.readthedocs.io/en/latest/?badge=latest)
 
+[API Reference](https://msgpack-python.readthedocs.io/en/latest/api.html)
+
 ## What's this
 
 [MessagePack](https://msgpack.org/) is an efficient binary serialization format.
@@ -85,6 +87,7 @@ Without extension, using pure Python implementation on CPython runs slowly.
 NOTE: In examples below, I use `raw=False` and `use_bin_type=True` for users
 using msgpack < 1.0. These options are default from msgpack 1.0 so you can omit them.
 
+For full documentation, see the [API Reference](https://msgpack-python.readthedocs.io/en/latest/api.html).
 
 ### One-shot pack & unpack
 
