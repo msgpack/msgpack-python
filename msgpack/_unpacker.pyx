@@ -8,7 +8,7 @@ cdef extern from "Python.h":
 from libc.stdlib cimport *
 from libc.string cimport *
 from libc.limits cimport *
-ctypedef unsigned long long uint64_t
+from libc.stdint cimport uint64_t
 
 from .exceptions import (
     BufferFull,
