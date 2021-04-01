@@ -5,11 +5,11 @@ from msgpack import _cmsgpack, fallback
 
 def TestOneInput(data):
     try:
-        from_extension = _cmsgpack.unpackb(buf)
+        from_extension = _cmsgpack.unpackb(data)
     except:
         return
     try:
-        from_fallback = fallback.unpackb(buf)
+        from_fallback = fallback.unpackb(data)
     except:
         return
     if from_extension != from_fallback:
