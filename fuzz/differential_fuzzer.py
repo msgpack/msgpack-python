@@ -1,4 +1,5 @@
 import sys
+import math
 
 from msgpack import _cmsgpack, fallback
 
@@ -12,7 +13,10 @@ def TestOneInput(data):
         from_fallback = fallback.unpackb(data)
     except:
         return
-    if from_extension != from_fallback:
+    good = from_extension == from_fallback or (
+        math.isnan(from_extension) and math.isnan(from_fallback)
+    )
+    if not good:
         raise RuntimeError(
             f"Decoding disagreement: input: {data}, from extension: {from_extension}, from fallback: {from_fallback}"
         )
