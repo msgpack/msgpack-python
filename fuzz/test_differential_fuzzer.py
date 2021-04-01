@@ -34,8 +34,17 @@ def TestOneInput(data):
 
 SCRIPT_DIR = os.path.dirname(__file__)
 CORPUS_DIR = os.path.join(SCRIPT_DIR, "test_differential_fuzzer_seed_corpus")
-CORPUS = [open(os.path.join(CORPUS_DIR, f), 'rb').read() for f in os.listdir(CORPUS_DIR)]
-@pytest.mark.parametrize('data', CORPUS)
+if os.path.exists(CORPUS_DIR):
+    CORPUS = [
+        open(os.path.join(CORPUS_DIR, f), "rb").read() for f in os.listdir(CORPUS_DIR)
+    ]
+else:
+    # When this file is executed as a fuzz target the dirrectory
+    # test_differential_fuzzer_seed_corpus does not exist
+    CORPUS = []
+
+
+@pytest.mark.parametrize("data", CORPUS)
 def test_try_the_seed_corpus(data):
     TestOneInput(data)
 
