@@ -1,5 +1,7 @@
 import sys
 import math
+import os
+import pytest
 
 from msgpack import _cmsgpack, fallback
 
@@ -28,6 +30,14 @@ def TestOneInput(data):
         raise RuntimeError(
             f"Decoding disagreement: input: {data}, from extension: {from_extension}, from fallback: {from_fallback}"
         )
+
+
+SCRIPT_DIR = os.path.dirname(__file__)
+CORPUS_DIR = os.path.join(SCRIPT_DIR, "test_differential_fuzzer_seed_corpus")
+CORPUS = [open(os.path.join(CORPUS_DIR, f), 'rb').read() for f in os.listdir(CORPUS_DIR)]
+@pytest.mark.parametrize('data', CORPUS)
+def test_try_the_seed_corpus(data):
+    TestOneInput(data)
 
 
 def main():
