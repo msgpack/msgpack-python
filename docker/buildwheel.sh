@@ -7,6 +7,8 @@ set -e -x
 ARCH=`uname -p`
 echo "arch=$ARCH"
 
+ls /opt/python
+
 for V in "${PYTHON_VERSIONS[@]}"; do
     PYBIN=/opt/python/$V/bin
     rm -rf build/       # Avoid lib build by narrow Python is used by wide python
