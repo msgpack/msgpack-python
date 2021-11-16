@@ -1,7 +1,6 @@
 name: Build macOS Wheels
 on:
   push:
-  pull_request:
   create:
 
 jobs:
@@ -12,10 +11,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Set up Python 3.8
+      # Python 3.9
+      - name: Set up Python 3.9
         uses: actions/setup-python@v1
         with:
-          python-version: "3.8"
+          python-version: "3.9"
 
       - name: Cythonize
         run: |
@@ -23,66 +23,53 @@ jobs:
           pip install -r requirements.txt
           make cython
 
-      - name: Build wheel
-        run: |
-          pip install setuptools wheel
-          python setup.py bdist_wheel
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.2.2
+        env:
+          CIBW_ARCHS_MACOS: x86_64 universal2
+          CIBW_SKIP: pp*
 
       - name: Run test
         run: |
+          ls wheelhouse/
           pip install pytest
-          pip install -v msgpack --only-binary :all: -f dist/ --no-index
+          pip install -v msgpack --only-binary :all: -f wheelhouse/ --no-index
           pytest -v test
 
-
+      # Python 3.10
       - name: Set up Python 3.10
         uses: actions/setup-python@v1
         with:
           python-version: "3.10"
 
-      - name: Build wheel
-        run: |
-          pip install setuptools wheel
-          python setup.py bdist_wheel
-
       - name: Run test
         run: |
           pip install pytest
-          pip install -v msgpack --only-binary :all: -f dist/ --no-index
+          pip install -v msgpack --only-binary :all: -f wheelhouse/ --no-index
           pytest -v test
 
-
-      - name: Set up Python 3.9
+      # Python 3.8
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: "3.9"
-
-      - name: Build wheel
-        run: |
-          pip install setuptools wheel
-          python setup.py bdist_wheel
+          python-version: "3.8"
 
       - name: Run test
         run: |
           pip install pytest
-          pip install -v msgpack --only-binary :all: -f dist/ --no-index
+          pip install -v msgpack --only-binary :all: -f wheelhouse/ --no-index
           pytest -v test
 
-
+      # Python 3.7
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
           python-version: "3.7"
 
-      - name: Build wheel
-        run: |
-          pip install setuptools wheel
-          python setup.py bdist_wheel
-
       - name: Run test
         run: |
           pip install pytest
-          pip install -v msgpack --only-binary :all: -f dist/ --no-index
+          pip install -v msgpack --only-binary :all: -f wheelhouse/ --no-index
           pytest -v test
 
 
@@ -90,4 +77,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: macos-wheels
-          path: ./dist/
+          path: ./wheelhouse/
