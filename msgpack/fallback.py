@@ -385,7 +385,7 @@ class Unpacker(object):
         self._buffer.extend(view)
 
     def _consume(self):
-        """ Gets rid of the used parts of the buffer. """
+        """Gets rid of the used parts of the buffer."""
         self._stream_offset += self._buff_i - self._buf_checkpoint
         self._buf_checkpoint = self._buff_i
 
