@@ -77,6 +77,20 @@ jobs:
         run: |
           ci/runtests.sh
 
+      - name: Python 3.10 (amd64)
+        env:
+          PYTHON: "py -3.10-64"
+        shell: bash
+        run: |
+          ci/runtests.sh
+
+      - name: Python 3.10 (x86)
+        env:
+          PYTHON: "py -3.10-32"
+        shell: bash
+        run: |
+          ci/runtests.sh
+
       - name: Upload Wheels
         uses: actions/upload-artifact@v1
         with:
