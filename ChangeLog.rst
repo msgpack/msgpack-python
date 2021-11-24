@@ -1,3 +1,12 @@
+1.0.3
+=====
+
+Release Date: 2021-11-24 JST
+
+* Fix Docstring (#459)
+* Fix error formatting (#463)
+* Improve error message about strict_map_key (#485)
+
 1.0.2
 =====
 
