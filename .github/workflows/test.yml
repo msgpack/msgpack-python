@@ -1,86 +1,39 @@
 name: Run tests
 on:
   push:
+    branches: [main]
   pull_request:
   create:
 
 jobs:
-  build:
-    # We want to run on external PRs, but not on our own internal PRs as they'll be run
-    # by the push to the branch.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2022, macos-10.15]
+        py: ["3.10", "3.9", "3.8", "3.7", "3.6"]
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    name: Run test with Python ${{ matrix.py }} on ${{ matrix.os }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Set up Python 3.9
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: ${{ matrix.py }}
           cache: "pip"
 
-      - name: Cythonize
+      - name: Build
         shell: bash
         run: |
           pip install -U pip
-          pip -V
-          pip install -r requirements.txt
+          pip install -r requirements.txt pytest
           make cython
-          #python setup.py sdist
+          pip install .
 
-      - name: Build wheels
+      - name: Build
         shell: bash
         run: |
-          make linux-wheel
-
-      - name: Run test (3.8)
-        run: |
-          pip install pytest
-          pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
-          pytest -v test
-
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v2
-        with:
-          python-version: "3.10"
-
-      - name: Run test (3.10)
-        run: |
-          pip install pytest
-          pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
-          pytest -v test
-
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
-      - name: Run test (3.9)
-        run: |
-          pip install pytest
-          pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
-          pytest -v test
-
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Run test (3.7)
-        run: |
-          pip install pytest
-          pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
-          pytest -v test
-
-      - name: Set up Python 3.6
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.6
-
-      - name: Run test (3.6)
-        run: |
-          pip install pytest
-          pip install -v msgpack --only-binary :all: --no-index -f dist/wheelhouse
           pytest -v test
