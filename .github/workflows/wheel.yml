@@ -33,7 +33,7 @@ jobs:
           make cython
 
       - name: Build
-        uses: pypa/cibuildwheel@v2
+        uses: pypa/cibuildwheel@v2.2.2
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
