@@ -1,6 +1,7 @@
 name: Build Wheels
 on:
   push:
+    branches: [main]
   create:
 
 jobs:
