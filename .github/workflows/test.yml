@@ -33,7 +33,13 @@ jobs:
           make cython
           pip install .
 
-      - name: Test
+      - name: Test (C extension)
         shell: bash
         run: |
           pytest -v test
+
+      - name: Test (pure Python fallback)
+        shell: bash
+        run: |
+          MSgPACK_PUREPYTHON=1 pytest -v test
+
