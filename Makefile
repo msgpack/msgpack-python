@@ -31,8 +31,9 @@ clean:
 
 .PHONY: update-docker
 update-docker:
-	docker pull quay.io/pypa/manylinux1_i686
-	docker pull quay.io/pypa/manylinux1_x86_64
+	docker pull quay.io/pypa/manylinux2014_i686
+	docker pull quay.io/pypa/manylinux2014_x86_64
+	docker pull quay.io/pypa/manylinux2014_aarch64
 
 .PHONY: linux-wheel
 linux-wheel:

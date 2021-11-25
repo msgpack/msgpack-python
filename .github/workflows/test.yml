@@ -1,0 +1,45 @@
+name: Run tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+  create:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, windows-2022, macos-10.15]
+        py: ["3.10", "3.9", "3.8", "3.7", "3.6"]
+
+    runs-on: ${{ matrix.os }}
+    name: Run test with Python ${{ matrix.py }} on ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+          cache: "pip"
+
+      - name: Build
+        shell: bash
+        run: |
+          pip install -U pip
+          pip install -r requirements.txt pytest
+          make cython
+          pip install .
+
+      - name: Test (C extension)
+        shell: bash
+        run: |
+          pytest -v test
+
+      - name: Test (pure Python fallback)
+        shell: bash
+        run: |
+          MSGPACK_PUREPYTHON=1 pytest -v test
+
