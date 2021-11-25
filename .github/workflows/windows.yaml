@@ -1,7 +1,6 @@
 name: Build and test windows wheels
 on:
   push:
-  pull_request:
   create:
 
 jobs:
