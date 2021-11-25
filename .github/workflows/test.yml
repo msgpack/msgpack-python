@@ -33,7 +33,7 @@ jobs:
           make cython
           pip install .
 
-      - name: Build
+      - name: Test
         shell: bash
         run: |
           pytest -v test
