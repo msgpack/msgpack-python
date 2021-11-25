@@ -41,5 +41,5 @@ jobs:
       - name: Test (pure Python fallback)
         shell: bash
         run: |
-          MSgPACK_PUREPYTHON=1 pytest -v test
+          MSGPACK_PUREPYTHON=1 pytest -v test
 
