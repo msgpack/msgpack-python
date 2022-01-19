@@ -79,12 +79,10 @@ class Sdist(sdist):
 
 
 libraries = []
+macros = []
+
 if sys.platform == "win32":
     libraries.append("ws2_32")
-
-if sys.byteorder == "big":
-    macros = [("__BIG_ENDIAN__", "1")]
-else:
     macros = [("__LITTLE_ENDIAN__", "1")]
 
 ext_modules = []
