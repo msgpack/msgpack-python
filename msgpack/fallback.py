@@ -11,7 +11,6 @@ if PY2:
     def dict_iteritems(d):
         return d.iteritems()
 
-
 else:
     int_types = int
     unicode = str
@@ -31,7 +30,6 @@ if sys.version_info < (3, 5):
             and isinstance(e.args[0], str)
             and e.args[0].startswith("maximum recursion depth exceeded")
         )
-
 
 else:
 
@@ -67,7 +65,6 @@ if hasattr(sys, "pypy_version_info"):
 
         def getvalue(self):
             return self.builder.build()
-
 
 else:
     USING_STRINGBUILDER = False
@@ -142,7 +139,6 @@ if sys.version_info < (2, 7, 6):
     def _unpack_from(f, b, o=0):
         """Explicit type cast for legacy struct.unpack_from"""
         return struct.unpack_from(f, bytes(b), o)
-
 
 else:
     _unpack_from = struct.unpack_from
