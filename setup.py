@@ -4,10 +4,9 @@ import io
 import os
 import sys
 from glob import glob
-from distutils.command.sdist import sdist
 from setuptools import setup, Extension
-
-from distutils.command.build_ext import build_ext
+from setuptools.command.build_ext import build_ext
+from setuptools.command.sdist import sdist
 
 
 PYPY = hasattr(sys, "pypy_version_info")
@@ -65,12 +64,6 @@ class BuildExt(build_ext):
             print(e)
 
 
-exec(open("msgpack/_version.py").read())
-
-version_str = ".".join(str(x) for x in version[:3])
-if len(version) > 3 and version[3] != "final":
-    version_str += version[3]
-
 # Cython is required for sdist
 class Sdist(sdist):
     def __init__(self, *args, **kwargs):
@@ -99,39 +92,8 @@ if not PYPY and not PY2 and not os.environ.get("MSGPACK_PUREPYTHON"):
 del libraries, macros
 
 
-desc = "MessagePack (de)serializer."
-with io.open("README.md", encoding="utf-8") as f:
-    long_desc = f.read()
-del f
-
 setup(
-    name="msgpack",
-    author="Inada Naoki",
-    author_email="songofacandy@gmail.com",
-    version=version_str,
     cmdclass={"build_ext": BuildExt, "sdist": Sdist},
     ext_modules=ext_modules,
     packages=["msgpack"],
-    description=desc,
-    long_description=long_desc,
-    long_description_content_type="text/markdown",
-    url="https://msgpack.org/",
-    project_urls={
-        "Documentation": "https://msgpack-python.readthedocs.io/",
-        "Source": "https://github.com/msgpack/msgpack-python",
-        "Tracker": "https://github.com/msgpack/msgpack-python/issues",
-    },
-    license="Apache 2.0",
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Programming Language :: Python :: Implementation :: PyPy",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: Apache Software License",
-    ],
 )
