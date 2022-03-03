@@ -53,46 +53,46 @@ def test_fixstr_from_float():
 
 
 def test_str16_from_byte():
-    _runtest("B", 2 ** 8, b"\xda", b"\x01\x00", False)
-    _runtest("B", 2 ** 16 - 1, b"\xda", b"\xff\xff", False)
+    _runtest("B", 2**8, b"\xda", b"\x01\x00", False)
+    _runtest("B", 2**16 - 1, b"\xda", b"\xff\xff", False)
 
 
 def test_str16_from_float():
-    _runtest("f", 2 ** 8, b"\xda", b"\x01\x00", False)
-    _runtest("f", 2 ** 16 - 4, b"\xda", b"\xff\xfc", False)
+    _runtest("f", 2**8, b"\xda", b"\x01\x00", False)
+    _runtest("f", 2**16 - 4, b"\xda", b"\xff\xfc", False)
 
 
 def test_str32_from_byte():
-    _runtest("B", 2 ** 16, b"\xdb", b"\x00\x01\x00\x00", False)
+    _runtest("B", 2**16, b"\xdb", b"\x00\x01\x00\x00", False)
 
 
 def test_str32_from_float():
-    _runtest("f", 2 ** 16, b"\xdb", b"\x00\x01\x00\x00", False)
+    _runtest("f", 2**16, b"\xdb", b"\x00\x01\x00\x00", False)
 
 
 def test_bin8_from_byte():
     _runtest("B", 1, b"\xc4", b"\x01", True)
-    _runtest("B", 2 ** 8 - 1, b"\xc4", b"\xff", True)
+    _runtest("B", 2**8 - 1, b"\xc4", b"\xff", True)
 
 
 def test_bin8_from_float():
     _runtest("f", 4, b"\xc4", b"\x04", True)
-    _runtest("f", 2 ** 8 - 4, b"\xc4", b"\xfc", True)
+    _runtest("f", 2**8 - 4, b"\xc4", b"\xfc", True)
 
 
 def test_bin16_from_byte():
-    _runtest("B", 2 ** 8, b"\xc5", b"\x01\x00", True)
-    _runtest("B", 2 ** 16 - 1, b"\xc5", b"\xff\xff", True)
+    _runtest("B", 2**8, b"\xc5", b"\x01\x00", True)
+    _runtest("B", 2**16 - 1, b"\xc5", b"\xff\xff", True)
 
 
 def test_bin16_from_float():
-    _runtest("f", 2 ** 8, b"\xc5", b"\x01\x00", True)
-    _runtest("f", 2 ** 16 - 4, b"\xc5", b"\xff\xfc", True)
+    _runtest("f", 2**8, b"\xc5", b"\x01\x00", True)
+    _runtest("f", 2**16 - 4, b"\xc5", b"\xff\xfc", True)
 
 
 def test_bin32_from_byte():
-    _runtest("B", 2 ** 16, b"\xc6", b"\x00\x01\x00\x00", True)
+    _runtest("B", 2**16, b"\xc6", b"\x00\x01\x00\x00", True)
 
 
 def test_bin32_from_float():
-    _runtest("f", 2 ** 16, b"\xc6", b"\x00\x01\x00\x00", True)
+    _runtest("f", 2**16, b"\xc6", b"\x00\x01\x00\x00", True)

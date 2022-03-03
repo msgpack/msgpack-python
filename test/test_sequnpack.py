@@ -118,8 +118,8 @@ def test_issue124():
 
 def test_unpack_tell():
     stream = io.BytesIO()
-    messages = [2 ** i - 1 for i in range(65)]
-    messages += [-(2 ** i) for i in range(1, 64)]
+    messages = [2**i - 1 for i in range(65)]
+    messages += [-(2**i) for i in range(1, 64)]
     messages += [
         b"hello",
         b"hello" * 1000,

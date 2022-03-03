@@ -1,2 +1,5 @@
 # Also declared in pyproject.toml, if updating here please also update there
 Cython~=0.29.13
+
+# dev only tools. no need to add pyproject
+black==22.1.0

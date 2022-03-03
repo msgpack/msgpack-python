@@ -318,7 +318,7 @@ class Unpacker(object):
         self._buf_checkpoint = 0
 
         if not max_buffer_size:
-            max_buffer_size = 2 ** 31 - 1
+            max_buffer_size = 2**31 - 1
         if max_str_len == -1:
             max_str_len = max_buffer_size
         if max_bin_len == -1:
@@ -800,20 +800,20 @@ class Packer(object):
                 raise OverflowError("Integer value out of range")
             if check(obj, (bytes, bytearray)):
                 n = len(obj)
-                if n >= 2 ** 32:
+                if n >= 2**32:
                     raise ValueError("%s is too large" % type(obj).__name__)
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
             if check(obj, unicode):
                 obj = obj.encode("utf-8", self._unicode_errors)
                 n = len(obj)
-                if n >= 2 ** 32:
+                if n >= 2**32:
                     raise ValueError("String is too large")
                 self._pack_raw_header(n)
                 return self._buffer.write(obj)
             if check(obj, memoryview):
                 n = len(obj) * obj.itemsize
-                if n >= 2 ** 32:
+                if n >= 2**32:
                     raise ValueError("Memoryview is too large")
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
@@ -895,7 +895,7 @@ class Packer(object):
             return ret
 
     def pack_array_header(self, n):
-        if n >= 2 ** 32:
+        if n >= 2**32:
             raise ValueError
         self._pack_array_header(n)
         if self._autoreset:
@@ -904,7 +904,7 @@ class Packer(object):
             return ret
 
     def pack_map_header(self, n):
-        if n >= 2 ** 32:
+        if n >= 2**32:
             raise ValueError
         self._pack_map_header(n)
         if self._autoreset:
