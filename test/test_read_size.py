@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Test Unpacker's read_array_header and read_map_header methods"""
 from msgpack import packb, Unpacker, OutOfData
 

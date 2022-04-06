@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+//
+// SPDX-License-Identifier: Apache-2.0
+
 #include "Python.h"
 
 /* cython does not support this preprocessor check => write it in raw C */

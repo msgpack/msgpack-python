@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # Also declared in pyproject.toml, if updating here please also update there
 Cython~=0.29.13
 

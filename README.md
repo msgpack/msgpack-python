@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # MessagePack for Python
 
 [![Build Status](https://travis-ci.org/msgpack/msgpack-python.svg?branch=master)](https://travis-ci.org/msgpack/msgpack-python)

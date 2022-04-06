@@ -1,4 +1,9 @@
 #!/usr/bin/env python
+
+# SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # coding: utf-8
 from __future__ import absolute_import, division, print_function, unicode_literals
 

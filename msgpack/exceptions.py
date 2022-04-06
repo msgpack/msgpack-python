@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 class UnpackException(Exception):
     """Base class for some exceptions raised while unpacking.
 

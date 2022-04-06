@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Fallback pure Python implementation of msgpack"""
 from datetime import datetime as _DateTime
 import sys

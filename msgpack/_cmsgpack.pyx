@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2008-2022 INADA Naoki <songofacandy@gmail.com> and other contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+
 # coding: utf-8
 #cython: embedsignature=True, c_string_encoding=ascii, language_level=3
 from cpython.datetime cimport import_datetime, datetime_new
