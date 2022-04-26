@@ -1,6 +1,6 @@
 from io import BytesIO
 import sys
-from msgpack import Unpacker, packb, OutOfData, ExtType
+from msgpack import Unpacker, pack, packb, OutOfData, ExtType
 from pytest import raises, mark
 
 try:
@@ -90,3 +90,20 @@ def test_unpacker_tell_read_bytes():
         assert obj == unp
         assert pos == unpacker.tell()
         assert unpacker.read_bytes(n) == raw
+
+
+def test_unpacker_raise_max_buffer_size():
+    max_buffer_size = 1024
+    small_value = b"a" * max_buffer_size
+
+    f = BytesIO()
+    pack(small_value, f)
+    f.seek(0)
+    assert list(Unpacker(f, max_buffer_size=max_buffer_size)) == [small_value]
+
+    large_value = b"a" * (max_buffer_size + 1)
+    f = BytesIO()
+    pack(large_value, f)
+    f.seek(0)
+    with raises(ValueError):
+        list(Unpacker(f, max_buffer_size=max_buffer_size))

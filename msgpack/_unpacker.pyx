@@ -441,12 +441,17 @@ cdef class Unpacker(object):
         self.buf_tail = tail + _buf_len
 
     cdef read_from_file(self):
+        current_size = self.buf_tail - self.buf_head
         next_bytes = self.file_like_read(
-                min(self.read_size,
-                    self.max_buffer_size - (self.buf_tail - self.buf_head)
-                    ))
+            min(self.read_size, self.max_buffer_size - current_size + 1)
+        )
         if next_bytes:
-            self.append_buffer(PyBytes_AsString(next_bytes), PyBytes_Size(next_bytes))
+            next_bytes_size = PyBytes_Size(next_bytes)
+            if next_bytes_size + current_size > self.max_buffer_size:
+                raise ValueError(
+                    "object exceeds max_buffer_size(%s)" % self.max_buffer_size
+                )
+            self.append_buffer(PyBytes_AsString(next_bytes), next_bytes_size)
         else:
             self.file_like = None
 
