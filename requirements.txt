@@ -2,4 +2,4 @@
 Cython~=0.29.13
 
 # dev only tools. no need to add pyproject
-black==22.1.0
+black==22.3.0

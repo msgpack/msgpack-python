@@ -21,5 +21,5 @@ jobs:
 
       - name: Black Code Formatter
         run: |
-          pip install black==22.1.0
+          pip install black==22.3.0
           black -S --diff --check msgpack/ test/ setup.py
