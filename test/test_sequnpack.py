@@ -2,7 +2,7 @@
 # coding: utf-8
 import io
 from msgpack import Unpacker, BufferFull
-from msgpack import pack
+from msgpack import pack, packb
 from msgpack.exceptions import OutOfData
 from pytest import raises
 
@@ -76,6 +76,15 @@ def test_maxbuffersize():
     assert ord("o") == next(unpacker)
     assert ord("o") == next(unpacker)
     assert ord("b") == next(unpacker)
+
+
+def test_maxbuffersize_file():
+    buff = io.BytesIO(packb(b"a"*10) + packb(b"a"*100))
+    unpacker = Unpacker(buff, read_size=1, max_buffer_size=99)
+    assert unpacker.unpack() == b"a"*10
+    #assert unpacker.unpack() == b"a"*100
+    with raises(BufferFull):
+        unpacker.unpack() == b"a"*100
 
 
 def test_readbytes():
