@@ -423,6 +423,8 @@ class Unpacker(object):
 
         # Read from file
         remain_bytes = -remain_bytes
+        if remain_bytes + len(self._buffer) > self._max_buffer_size:
+            raise BufferFull
         while remain_bytes > 0:
             to_read_bytes = max(self._read_size, remain_bytes)
             read_data = self.file_like.read(to_read_bytes)
