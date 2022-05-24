@@ -79,10 +79,10 @@ def test_maxbuffersize():
 
 
 def test_maxbuffersize_file():
-    buff = io.BytesIO(packb(b"a" * 10) + packb([b"a" * 20]*2))
+    buff = io.BytesIO(packb(b"a" * 10) + packb([b"a" * 20] * 2))
     unpacker = Unpacker(buff, read_size=1, max_buffer_size=19)
     assert unpacker.unpack() == b"a" * 10
-    #assert unpacker.unpack() == [b"a" * 20]*2
+    # assert unpacker.unpack() == [b"a" * 20]*2
     with raises(BufferFull):
         print(unpacker.unpack())
 
