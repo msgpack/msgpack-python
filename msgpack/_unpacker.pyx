@@ -455,19 +455,13 @@ cdef class Unpacker(object):
         cdef object obj
         cdef Py_ssize_t prev_head
 
-        if self.buf_head >= self.buf_tail and self.file_like is not None:
-            self.read_from_file()
-
         while 1:
             prev_head = self.buf_head
-            if prev_head >= self.buf_tail:
-                if iter:
-                    raise StopIteration("No more data to unpack.")
-                else:
-                    raise OutOfData("No more data to unpack.")
-
-            ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
-            self.stream_offset += self.buf_head - prev_head
+            if prev_head < self.buf_tail:
+                ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
+                self.stream_offset += self.buf_head - prev_head
+            else:
+                ret = 0
 
             if ret == 1:
                 obj = unpack_data(&self.ctx)
@@ -477,10 +471,11 @@ cdef class Unpacker(object):
                 if self.file_like is not None:
                     self.read_from_file()
                     continue
-                if iter:
-                    raise StopIteration("No more data to unpack.")
-                else:
-                    raise OutOfData("No more data to unpack.")
+                if prev_head == self.buf_tail:
+                    if iter:
+                        raise StopIteration("No more data to unpack.")
+                    else:
+                        raise OutOfData("No more data to unpack.")
             elif ret == -2:
                 raise FormatError
             elif ret == -3:
