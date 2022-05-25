@@ -42,3 +42,8 @@ jobs:
         run: |
           MSGPACK_PUREPYTHON=1 pytest -v test
 
+      - name: Publish Wheels to TestPyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

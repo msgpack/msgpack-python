@@ -43,9 +43,15 @@ jobs:
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_SKIP: pp*
 
-      - name: Upload Wheels
+      - name: Upload Wheels to artifact
         uses: actions/upload-artifact@v1
         with:
           name: Wheels
           path: wheelhouse
 
+      - name: Publish Wheels to TestPyPI
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages_dir: wheelhouse
+          password: ${{ secrets.PYPI_API_TOKEN }}
