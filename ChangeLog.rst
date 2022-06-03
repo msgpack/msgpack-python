@@ -1,3 +1,13 @@
+1.0.4
+=====
+
+Release Date: 2022-06-03
+
+* Support Python 3.11 (beta).
+* Don't define `__*_ENDIAN__` macro on Unix. by @methane in https://github.com/msgpack/msgpack-python/pull/495
+* Use PyFloat_Pack8() on Python 3.11a7 by @vstinner in https://github.com/msgpack/msgpack-python/pull/499
+* Fix Unpacker max_buffer_length handling by @methane in https://github.com/msgpack/msgpack-python/pull/506
+
 1.0.3
 =====
 
