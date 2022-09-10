@@ -85,13 +85,11 @@ def test_timestamp_to():
     assert t.to_unix_nano() == 42000014000
 
 
-@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_timestamp_datetime():
     t = Timestamp(42, 14)
     assert t.to_datetime() == datetime.datetime(1970, 1, 1, 0, 0, 42, 0, tzinfo=_utc)
 
 
-@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_unpack_datetime():
     t = Timestamp(42, 14)
     packed = msgpack.packb(t)
@@ -99,7 +97,6 @@ def test_unpack_datetime():
     assert unpacked == datetime.datetime(1970, 1, 1, 0, 0, 42, 0, tzinfo=_utc)
 
 
-@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_pack_unpack_before_epoch():
     t_in = datetime.datetime(1960, 1, 1, tzinfo=_utc)
     packed = msgpack.packb(t_in, datetime=True)
@@ -107,7 +104,6 @@ def test_pack_unpack_before_epoch():
     assert unpacked == t_in
 
 
-@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_pack_datetime():
     t = Timestamp(42, 14000)
     dt = t.to_datetime()
@@ -131,7 +127,6 @@ def test_pack_datetime():
     assert msgpack.unpackb(packed) is None
 
 
-@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_issue451():
     # https://github.com/msgpack/msgpack-python/issues/451
     dt = datetime.datetime(2100, 1, 1, 1, 1, tzinfo=_utc)
@@ -142,7 +137,6 @@ def test_issue451():
     assert dt == unpacked
 
 
-@pytest.mark.skipif(sys.version_info[0] == 2, reason="datetime support is PY3+ only")
 def test_pack_datetime_without_tzinfo():
     dt = datetime.datetime(1970, 1, 1, 0, 0, 42, 14)
     with pytest.raises(ValueError, match="where tzinfo=None"):

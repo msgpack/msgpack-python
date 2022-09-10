@@ -80,9 +80,6 @@ def testPackByteArrays():
         check(td)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 0), reason="Python 2 passes invalid surrogates"
-)
 def testIgnoreUnicodeErrors():
     re = unpackb(
         packb(b"abc\xeddef", use_bin_type=False), raw=False, unicode_errors="ignore"
@@ -96,9 +93,6 @@ def testStrictUnicodeUnpack():
         unpackb(packed, raw=False, use_list=1)
 
 
-@pytest.mark.skipif(
-    sys.version_info < (3, 0), reason="Python 2 passes invalid surrogates"
-)
 def testIgnoreErrorsPack():
     re = unpackb(
         packb("abc\uDC80\uDCFFdef", use_bin_type=True, unicode_errors="ignore"),
