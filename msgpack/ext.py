@@ -5,17 +5,11 @@ import sys
 import struct
 
 
-PY2 = sys.version_info[0] == 2
-
-if PY2:
-    int_types = (int, long)
-    _utc = None
-else:
-    int_types = int
-    try:
-        _utc = datetime.timezone.utc
-    except AttributeError:
-        _utc = datetime.timezone(datetime.timedelta(0))
+int_types = int
+try:
+    _utc = datetime.timezone.utc
+except AttributeError:
+    _utc = datetime.timezone(datetime.timedelta(0))
 
 
 class ExtType(namedtuple("ExtType", "code data")):

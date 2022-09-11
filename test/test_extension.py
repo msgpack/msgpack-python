@@ -55,10 +55,7 @@ def test_extension_type():
         print("ext_hook called", code, data)
         assert code == 123
         obj = array.array("d")
-        try:
-            obj.frombytes(data)
-        except AttributeError:  # PY2
-            obj.fromstring(data)
+        obj.frombytes(data)
         return obj
 
     obj = [42, b"hello", array.array("d", [1.1, 2.2, 3.3])]
@@ -67,10 +64,7 @@ def test_extension_type():
     assert obj == obj2
 
 
-import sys
-
-if sys.version > "3":
-    long = int
+long = int
 
 
 def test_overriding_hooks():

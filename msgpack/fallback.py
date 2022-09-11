@@ -4,20 +4,12 @@ import sys
 import struct
 
 
-PY2 = sys.version_info[0] == 2
-if PY2:
-    int_types = (int, long)
+int_types = int
+unicode = str
+xrange = range
 
-    def dict_iteritems(d):
-        return d.iteritems()
-
-else:
-    int_types = int
-    unicode = str
-    xrange = range
-
-    def dict_iteritems(d):
-        return d.items()
+def dict_iteritems(d):
+    return d.items()
 
 
 if sys.version_info < (3, 5):
@@ -134,14 +126,7 @@ def unpackb(packed, **kwargs):
     return ret
 
 
-if sys.version_info < (2, 7, 6):
-
-    def _unpack_from(f, b, o=0):
-        """Explicit type cast for legacy struct.unpack_from"""
-        return struct.unpack_from(f, bytes(b), o)
-
-else:
-    _unpack_from = struct.unpack_from
+_unpack_from = struct.unpack_from
 
 _NO_FORMAT_USED = ""
 _MSGPACK_HEADERS = {
@@ -585,7 +570,7 @@ class Unpacker(object):
                         raise ValueError(
                             "%s is not allowed for map key" % str(type(key))
                         )
-                    if not PY2 and type(key) is str:
+                    if type(key) is str:
                         key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
@@ -743,8 +728,6 @@ class Packer(object):
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
         self._buffer = StringIO()
-        if PY2 and datetime:
-            raise ValueError("datetime is not supported in Python 2")
         self._datetime = bool(datetime)
         self._unicode_errors = unicode_errors or "strict"
         if default is not None:
@@ -1004,7 +987,7 @@ class Packer(object):
 
     def getbuffer(self):
         """Return view of internal buffer."""
-        if USING_STRINGBUILDER or PY2:
+        if USING_STRINGBUILDER:
             return memoryview(self.bytes())
         else:
             return self._buffer.getbuffer()
