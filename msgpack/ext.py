@@ -5,7 +5,6 @@ import sys
 import struct
 
 
-int_types = int
 try:
     _utc = datetime.timezone.utc
 except AttributeError:
@@ -49,9 +48,9 @@ class Timestamp(object):
 
         Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
         """
-        if not isinstance(seconds, int_types):
+        if not isinstance(seconds, int):
             raise TypeError("seconds must be an interger")
-        if not isinstance(nanoseconds, int_types):
+        if not isinstance(nanoseconds, int):
             raise TypeError("nanoseconds must be an integer")
         if not (0 <= nanoseconds < 10**9):
             raise ValueError(

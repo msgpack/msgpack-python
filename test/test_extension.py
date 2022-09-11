@@ -64,17 +64,14 @@ def test_extension_type():
     assert obj == obj2
 
 
-long = int
-
-
 def test_overriding_hooks():
     def default(obj):
-        if isinstance(obj, long):
+        if isinstance(obj, int):
             return {"__type__": "long", "__data__": str(obj)}
         else:
             return obj
 
-    obj = {"testval": long(1823746192837461928374619)}
+    obj = {"testval": 1823746192837461928374619}
     refobj = {"testval": default(obj["testval"])}
     refout = msgpack.packb(refobj)
     assert isinstance(refout, (str, bytes))
