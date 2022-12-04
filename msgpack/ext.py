@@ -5,10 +5,7 @@ import sys
 import struct
 
 
-try:
-    _utc = datetime.timezone.utc
-except AttributeError:
-    _utc = datetime.timezone(datetime.timedelta(0))
+_utc = datetime.timezone.utc
 
 
 class ExtType(namedtuple("ExtType", "code data")):
