@@ -168,7 +168,8 @@ class Timestamp(object):
 
         :rtype: datetime.
         """
-        return datetime.datetime.fromtimestamp(0, _utc) + datetime.timedelta(
+        utc = datetime.timezone.utc
+        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
             seconds=self.to_unix()
         )
 
