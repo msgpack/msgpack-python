@@ -177,7 +177,7 @@ class Unpacker(object):
             0 - Timestamp
             1 - float  (Seconds from the EPOCH)
             2 - int  (Nanoseconds from the EPOCH)
-            3 - datetime.datetime  (UTC).  Python 2 is not supported.
+            3 - datetime.datetime  (UTC).
 
     :param bool strict_map_key:
         If true (default), only str or bytes are accepted for map (dict) keys.
@@ -673,7 +673,6 @@ class Packer(object):
         If set to true, datetime with tzinfo is packed into Timestamp type.
         Note that the tzinfo is stripped in the timestamp.
         You can get UTC datetime with `timestamp=3` option of the Unpacker.
-        (Python 2 is not supported).
 
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')

@@ -164,8 +164,6 @@ class Timestamp(object):
     def to_datetime(self):
         """Get the timestamp as a UTC datetime.
 
-        Python 2 is not supported.
-
         :rtype: datetime.
         """
         utc = datetime.timezone.utc
@@ -176,8 +174,6 @@ class Timestamp(object):
     @staticmethod
     def from_datetime(dt):
         """Create a Timestamp from datetime with tzinfo.
-
-        Python 2 is not supported.
 
         :rtype: Timestamp
         """
