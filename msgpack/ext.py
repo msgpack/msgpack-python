@@ -5,9 +5,6 @@ import sys
 import struct
 
 
-_utc = datetime.timezone.utc
-
-
 class ExtType(namedtuple("ExtType", "code data")):
     """ExtType represents ext type in msgpack."""
 
