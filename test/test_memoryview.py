@@ -7,7 +7,6 @@ from msgpack import packb, unpackb
 import sys
 
 
-
 def make_array(f, data):
     a = array(f)
     a.frombytes(data)

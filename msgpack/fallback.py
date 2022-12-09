@@ -831,9 +831,7 @@ class Packer(object):
                     self._pack(obj[i], nest_limit - 1)
                 return
             if check(obj, dict):
-                return self._pack_map_pairs(
-                    len(obj), obj.items(), nest_limit - 1
-                )
+                return self._pack_map_pairs(len(obj), obj.items(), nest_limit - 1)
 
             if self._datetime and check(obj, _DateTime) and obj.tzinfo is not None:
                 obj = Timestamp.from_datetime(obj)
