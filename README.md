@@ -220,9 +220,9 @@ and `raw=True` options.
 
 ```pycon
 >>> import msgpack
->>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=False), raw=True)
+>>> msgpack.unpackb(msgpack.packb([b'spam', 'eggs'], use_bin_type=False), raw=True)
 [b'spam', b'eggs']
->>> msgpack.unpackb(msgpack.packb([b'spam', u'eggs'], use_bin_type=True), raw=False)
+>>> msgpack.unpackb(msgpack.packb([b'spam', 'eggs'], use_bin_type=True), raw=False)
 [b'spam', 'eggs']
 ```
 
