@@ -9,8 +9,8 @@ jobs:
   test:
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2022, macos-10.15]
-        py: ["3.11-dev", "3.10", "3.9", "3.8", "3.7", "3.6"]
+        os: [ubuntu-22.04, windows-2022, macos-10.15]
+        py: ["3.11", "3.10", "3.9", "3.8", "3.7", "3.6"]
 
     runs-on: ${{ matrix.os }}
     name: Run test with Python ${{ matrix.py }} on ${{ matrix.os }}
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.py }}
           cache: "pip"
