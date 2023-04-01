@@ -41,7 +41,6 @@ jobs:
           CIBW_TEST_COMMAND: "pytest {package}/test"
           CIBW_ARCHS_LINUX: auto aarch64
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
-          CIBW_SKIP: pp*
 
       - name: Upload Wheels to artifact
         uses: actions/upload-artifact@v2
