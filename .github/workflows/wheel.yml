@@ -44,7 +44,7 @@ jobs:
           CIBW_SKIP: pp*
 
       - name: Upload Wheels to artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v2
         with:
           name: Wheels
           path: wheelhouse
