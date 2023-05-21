@@ -91,3 +91,11 @@ def test_bin32_from_byte():
 
 def test_bin32_from_float():
     _runtest("f", 2**16, b"\xc6", b"\x00\x01\x00\x00", True)
+
+
+def test_multidim_memoryview():
+    # See https://github.com/msgpack/msgpack-python/issues/526
+    view = memoryview(b"\00" * 6)
+    data = view.cast(view.format, (3, 2))
+    packed = packb(data)
+    assert packed == b'\xc4\x06\x00\x00\x00\x00\x00\x00'

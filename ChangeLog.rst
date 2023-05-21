@@ -1,3 +1,12 @@
+1.0.5
+=====
+
+Release Date: 2023-03-08
+
+* Use ``__BYTE_ORDER__`` instead of ``__BYTE_ORDER`` for portability. (#513, #514)
+* Add Python 3.11 wheels (#517)
+* fallback: Fix packing multidimensional memoryview (#527)
+
 1.0.4
 =====
 

@@ -71,7 +71,6 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
 static inline int
 msgpack_pack_unicode(msgpack_packer *pk, PyObject *o, long long limit)
 {
-#if PY_MAJOR_VERSION >= 3
     assert(PyUnicode_Check(o));
 
     Py_ssize_t len;
@@ -87,31 +86,6 @@ msgpack_pack_unicode(msgpack_packer *pk, PyObject *o, long long limit)
     if (ret) return ret;
 
     return msgpack_pack_raw_body(pk, buf, len);
-#else
-    PyObject *bytes;
-    Py_ssize_t len;
-    int ret;
-
-    // py2
-    bytes = PyUnicode_AsUTF8String(o);
-    if (bytes == NULL)
-        return -1;
-
-    len = PyString_GET_SIZE(bytes);
-    if (len > limit) {
-        Py_DECREF(bytes);
-        return -2;
-    }
-
-    ret = msgpack_pack_raw(pk, len);
-    if (ret) {
-        Py_DECREF(bytes);
-        return -1;
-    }
-    ret = msgpack_pack_raw_body(pk, PyString_AS_STRING(bytes), len);
-    Py_DECREF(bytes);
-    return ret;
-#endif
 }
 
 #ifdef __cplusplus
