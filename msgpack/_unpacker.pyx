@@ -236,7 +236,7 @@ cdef class Unpacker(object):
             0 - Timestamp
             1 - float  (Seconds from the EPOCH)
             2 - int  (Nanoseconds from the EPOCH)
-            3 - datetime.datetime  (UTC).  Python 2 is not supported.
+            3 - datetime.datetime  (UTC).
 
     :param bool strict_map_key:
         If true (default), only str or bytes are accepted for map (dict) keys.

@@ -5,19 +5,6 @@ import sys
 import struct
 
 
-PY2 = sys.version_info[0] == 2
-
-if PY2:
-    int_types = (int, long)
-    _utc = None
-else:
-    int_types = int
-    try:
-        _utc = datetime.timezone.utc
-    except AttributeError:
-        _utc = datetime.timezone(datetime.timedelta(0))
-
-
 class ExtType(namedtuple("ExtType", "code data")):
     """ExtType represents ext type in msgpack."""
 
@@ -55,9 +42,9 @@ class Timestamp(object):
 
         Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
         """
-        if not isinstance(seconds, int_types):
+        if not isinstance(seconds, int):
             raise TypeError("seconds must be an integer")
-        if not isinstance(nanoseconds, int_types):
+        if not isinstance(nanoseconds, int):
             raise TypeError("nanoseconds must be an integer")
         if not (0 <= nanoseconds < 10**9):
             raise ValueError(
@@ -174,19 +161,16 @@ class Timestamp(object):
     def to_datetime(self):
         """Get the timestamp as a UTC datetime.
 
-        Python 2 is not supported.
-
         :rtype: datetime.
         """
-        return datetime.datetime.fromtimestamp(0, _utc) + datetime.timedelta(
+        utc = datetime.timezone.utc
+        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
             seconds=self.to_unix()
         )
 
     @staticmethod
     def from_datetime(dt):
         """Create a Timestamp from datetime with tzinfo.
-
-        Python 2 is not supported.
 
         :rtype: Timestamp
         """

@@ -6,7 +6,6 @@ import pytest
 from msgpack import packb, unpackb
 
 
-@pytest.mark.skipif(sys.version_info[0] == 2, reason="Python 2 is not supported")
 def test_unpack_buffer():
     from array import array
 

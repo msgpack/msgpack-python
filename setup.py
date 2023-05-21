@@ -10,7 +10,6 @@ from setuptools.command.sdist import sdist
 
 
 PYPY = hasattr(sys, "pypy_version_info")
-PY2 = sys.version_info[0] == 2
 
 
 class NoCython(Exception):
@@ -79,7 +78,7 @@ if sys.platform == "win32":
     macros = [("__LITTLE_ENDIAN__", "1")]
 
 ext_modules = []
-if not PYPY and not PY2 and not os.environ.get("MSGPACK_PUREPYTHON"):
+if not PYPY and not os.environ.get("MSGPACK_PUREPYTHON"):
     ext_modules.append(
         Extension(
             "msgpack._cmsgpack",

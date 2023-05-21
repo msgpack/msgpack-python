@@ -70,7 +70,7 @@ def test_unpacker_ext_hook():
 
 
 def test_unpacker_tell():
-    objects = 1, 2, u"abc", u"def", u"ghi"
+    objects = 1, 2, "abc", "def", "ghi"
     packed = b"\x01\x02\xa3abc\xa3def\xa3ghi"
     positions = 1, 2, 6, 10, 14
     unpacker = Unpacker(BytesIO(packed))
@@ -80,7 +80,7 @@ def test_unpacker_tell():
 
 
 def test_unpacker_tell_read_bytes():
-    objects = 1, u"abc", u"ghi"
+    objects = 1, "abc", "ghi"
     packed = b"\x01\x02\xa3abc\xa3def\xa3ghi"
     raw_data = b"\x02", b"\xa3def", b""
     lenghts = 1, 4, 999

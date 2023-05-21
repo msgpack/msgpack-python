@@ -4,22 +4,6 @@ import sys
 import struct
 
 
-PY2 = sys.version_info[0] == 2
-if PY2:
-    int_types = (int, long)
-
-    def dict_iteritems(d):
-        return d.iteritems()
-
-else:
-    int_types = int
-    unicode = str
-    xrange = range
-
-    def dict_iteritems(d):
-        return d.items()
-
-
 if sys.version_info < (3, 5):
     # Ugly hack...
     RecursionError = RuntimeError
@@ -134,15 +118,6 @@ def unpackb(packed, **kwargs):
     return ret
 
 
-if sys.version_info < (2, 7, 6):
-
-    def _unpack_from(f, b, o=0):
-        """Explicit type cast for legacy struct.unpack_from"""
-        return struct.unpack_from(f, bytes(b), o)
-
-else:
-    _unpack_from = struct.unpack_from
-
 _NO_FORMAT_USED = ""
 _MSGPACK_HEADERS = {
     0xC4: (1, _NO_FORMAT_USED, TYPE_BIN),
@@ -202,7 +177,7 @@ class Unpacker(object):
             0 - Timestamp
             1 - float  (Seconds from the EPOCH)
             2 - int  (Nanoseconds from the EPOCH)
-            3 - datetime.datetime  (UTC).  Python 2 is not supported.
+            3 - datetime.datetime  (UTC).
 
     :param bool strict_map_key:
         If true (default), only str or bytes are accepted for map (dict) keys.
@@ -477,7 +452,7 @@ class Unpacker(object):
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
             if len(fmt) > 0:
-                n = _unpack_from(fmt, self._buffer, self._buff_i)[0]
+                n = struct.unpack_from(fmt, self._buffer, self._buff_i)[0]
             else:
                 n = self._buffer[self._buff_i]
             self._buff_i += size
@@ -487,7 +462,7 @@ class Unpacker(object):
         elif 0xC7 <= b <= 0xC9:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
-            L, n = _unpack_from(fmt, self._buffer, self._buff_i)
+            L, n = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if L > self._max_ext_len:
                 raise ValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
@@ -496,7 +471,7 @@ class Unpacker(object):
             size, fmt = _MSGPACK_HEADERS[b]
             self._reserve(size)
             if len(fmt) > 0:
-                obj = _unpack_from(fmt, self._buffer, self._buff_i)[0]
+                obj = struct.unpack_from(fmt, self._buffer, self._buff_i)[0]
             else:
                 obj = self._buffer[self._buff_i]
             self._buff_i += size
@@ -507,13 +482,13 @@ class Unpacker(object):
                     "%s exceeds max_ext_len(%s)" % (size, self._max_ext_len)
                 )
             self._reserve(size + 1)
-            n, obj = _unpack_from(fmt, self._buffer, self._buff_i)
+            n, obj = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size + 1
         elif 0xD9 <= b <= 0xDB:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
             if len(fmt) > 0:
-                (n,) = _unpack_from(fmt, self._buffer, self._buff_i)
+                (n,) = struct.unpack_from(fmt, self._buffer, self._buff_i)
             else:
                 n = self._buffer[self._buff_i]
             self._buff_i += size
@@ -523,7 +498,7 @@ class Unpacker(object):
         elif 0xDC <= b <= 0xDD:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
-            (n,) = _unpack_from(fmt, self._buffer, self._buff_i)
+            (n,) = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if n > self._max_array_len:
                 raise ValueError(
@@ -532,7 +507,7 @@ class Unpacker(object):
         elif 0xDE <= b <= 0xDF:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
-            (n,) = _unpack_from(fmt, self._buffer, self._buff_i)
+            (n,) = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if n > self._max_map_len:
                 raise ValueError("%s exceeds max_map_len(%s)" % (n, self._max_map_len))
@@ -554,12 +529,12 @@ class Unpacker(object):
         # TODO should we eliminate the recursion?
         if typ == TYPE_ARRAY:
             if execute == EX_SKIP:
-                for i in xrange(n):
+                for i in range(n):
                     # TODO check whether we need to call `list_hook`
                     self._unpack(EX_SKIP)
                 return
             ret = newlist_hint(n)
-            for i in xrange(n):
+            for i in range(n):
                 ret.append(self._unpack(EX_CONSTRUCT))
             if self._list_hook is not None:
                 ret = self._list_hook(ret)
@@ -567,7 +542,7 @@ class Unpacker(object):
             return ret if self._use_list else tuple(ret)
         if typ == TYPE_MAP:
             if execute == EX_SKIP:
-                for i in xrange(n):
+                for i in range(n):
                     # TODO check whether we need to call hooks
                     self._unpack(EX_SKIP)
                     self._unpack(EX_SKIP)
@@ -575,17 +550,17 @@ class Unpacker(object):
             if self._object_pairs_hook is not None:
                 ret = self._object_pairs_hook(
                     (self._unpack(EX_CONSTRUCT), self._unpack(EX_CONSTRUCT))
-                    for _ in xrange(n)
+                    for _ in range(n)
                 )
             else:
                 ret = {}
-                for _ in xrange(n):
+                for _ in range(n):
                     key = self._unpack(EX_CONSTRUCT)
-                    if self._strict_map_key and type(key) not in (unicode, bytes):
+                    if self._strict_map_key and type(key) not in (str, bytes):
                         raise ValueError(
                             "%s is not allowed for map key" % str(type(key))
                         )
-                    if not PY2 and type(key) is str:
+                    if type(key) is str:
                         key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
@@ -698,7 +673,6 @@ class Packer(object):
         If set to true, datetime with tzinfo is packed into Timestamp type.
         Note that the tzinfo is stripped in the timestamp.
         You can get UTC datetime with `timestamp=3` option of the Unpacker.
-        (Python 2 is not supported).
 
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')
@@ -743,8 +717,6 @@ class Packer(object):
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
         self._buffer = StringIO()
-        if PY2 and datetime:
-            raise ValueError("datetime is not supported in Python 2")
         self._datetime = bool(datetime)
         self._unicode_errors = unicode_errors or "strict"
         if default is not None:
@@ -774,7 +746,7 @@ class Packer(object):
                 if obj:
                     return self._buffer.write(b"\xc3")
                 return self._buffer.write(b"\xc2")
-            if check(obj, int_types):
+            if check(obj, int):
                 if 0 <= obj < 0x80:
                     return self._buffer.write(struct.pack("B", obj))
                 if -0x20 <= obj < 0:
@@ -806,7 +778,7 @@ class Packer(object):
                     raise ValueError("%s is too large" % type(obj).__name__)
                 self._pack_bin_header(n)
                 return self._buffer.write(obj)
-            if check(obj, unicode):
+            if check(obj, str):
                 obj = obj.encode("utf-8", self._unicode_errors)
                 n = len(obj)
                 if n >= 2**32:
@@ -855,13 +827,11 @@ class Packer(object):
             if check(obj, list_types):
                 n = len(obj)
                 self._pack_array_header(n)
-                for i in xrange(n):
+                for i in range(n):
                     self._pack(obj[i], nest_limit - 1)
                 return
             if check(obj, dict):
-                return self._pack_map_pairs(
-                    len(obj), dict_iteritems(obj), nest_limit - 1
-                )
+                return self._pack_map_pairs(len(obj), obj.items(), nest_limit - 1)
 
             if self._datetime and check(obj, _DateTime) and obj.tzinfo is not None:
                 obj = Timestamp.from_datetime(obj)
@@ -1004,7 +974,7 @@ class Packer(object):
 
     def getbuffer(self):
         """Return view of internal buffer."""
-        if USING_STRINGBUILDER or PY2:
+        if USING_STRINGBUILDER:
             return memoryview(self.bytes())
         else:
             return self._buffer.getbuffer()
