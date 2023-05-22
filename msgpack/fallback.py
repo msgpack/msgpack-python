@@ -4,23 +4,6 @@ import sys
 import struct
 
 
-if sys.version_info < (3, 5):
-    # Ugly hack...
-    RecursionError = RuntimeError
-
-    def _is_recursionerror(e):
-        return (
-            len(e.args) == 1
-            and isinstance(e.args[0], str)
-            and e.args[0].startswith("maximum recursion depth exceeded")
-        )
-
-else:
-
-    def _is_recursionerror(e):
-        return True
-
-
 if hasattr(sys, "pypy_version_info"):
     # StringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
     # StringBuilder is fastest.
@@ -32,7 +15,7 @@ if hasattr(sys, "pypy_version_info"):
         from __pypy__.builders import StringBuilder
     USING_STRINGBUILDER = True
 
-    class StringIO(object):
+    class StringIO:
         def __init__(self, s=b""):
             if s:
                 self.builder = StringBuilder(len(s))
@@ -109,10 +92,8 @@ def unpackb(packed, **kwargs):
         ret = unpacker._unpack()
     except OutOfData:
         raise ValueError("Unpack failed: incomplete input")
-    except RecursionError as e:
-        if _is_recursionerror(e):
-            raise StackError
-        raise
+    except RecursionError:
+        raise StackError
     if unpacker._got_extradata():
         raise ExtraData(ret, unpacker._get_extradata())
     return ret
@@ -151,7 +132,7 @@ _MSGPACK_HEADERS = {
 }
 
 
-class Unpacker(object):
+class Unpacker:
     """Streaming unpacker.
 
     Arguments:
@@ -426,18 +407,18 @@ class Unpacker(object):
             n = b & 0b00011111
             typ = TYPE_RAW
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)" % (n, self._max_str_len))
+                raise ValueError(f"{n} exceeds max_str_len({self._max_str_len})")
             obj = self._read(n)
         elif b & 0b11110000 == 0b10010000:
             n = b & 0b00001111
             typ = TYPE_ARRAY
             if n > self._max_array_len:
-                raise ValueError("%s exceeds max_array_len(%s)" % (n, self._max_array_len))
+                raise ValueError(f"{n} exceeds max_array_len({self._max_array_len})")
         elif b & 0b11110000 == 0b10000000:
             n = b & 0b00001111
             typ = TYPE_MAP
             if n > self._max_map_len:
-                raise ValueError("%s exceeds max_map_len(%s)" % (n, self._max_map_len))
+                raise ValueError(f"{n} exceeds max_map_len({self._max_map_len})")
         elif b == 0xC0:
             obj = None
         elif b == 0xC2:
@@ -453,7 +434,7 @@ class Unpacker(object):
                 n = self._buffer[self._buff_i]
             self._buff_i += size
             if n > self._max_bin_len:
-                raise ValueError("%s exceeds max_bin_len(%s)" % (n, self._max_bin_len))
+                raise ValueError(f"{n} exceeds max_bin_len({self._max_bin_len})")
             obj = self._read(n)
         elif 0xC7 <= b <= 0xC9:
             size, fmt, typ = _MSGPACK_HEADERS[b]
@@ -461,7 +442,7 @@ class Unpacker(object):
             L, n = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if L > self._max_ext_len:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (L, self._max_ext_len))
+                raise ValueError(f"{L} exceeds max_ext_len({self._max_ext_len})")
             obj = self._read(L)
         elif 0xCA <= b <= 0xD3:
             size, fmt = _MSGPACK_HEADERS[b]
@@ -474,7 +455,7 @@ class Unpacker(object):
         elif 0xD4 <= b <= 0xD8:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             if self._max_ext_len < size:
-                raise ValueError("%s exceeds max_ext_len(%s)" % (size, self._max_ext_len))
+                raise ValueError(f"{size} exceeds max_ext_len({self._max_ext_len})")
             self._reserve(size + 1)
             n, obj = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size + 1
@@ -487,7 +468,7 @@ class Unpacker(object):
                 n = self._buffer[self._buff_i]
             self._buff_i += size
             if n > self._max_str_len:
-                raise ValueError("%s exceeds max_str_len(%s)" % (n, self._max_str_len))
+                raise ValueError(f"{n} exceeds max_str_len({self._max_str_len})")
             obj = self._read(n)
         elif 0xDC <= b <= 0xDD:
             size, fmt, typ = _MSGPACK_HEADERS[b]
@@ -495,14 +476,14 @@ class Unpacker(object):
             (n,) = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if n > self._max_array_len:
-                raise ValueError("%s exceeds max_array_len(%s)" % (n, self._max_array_len))
+                raise ValueError(f"{n} exceeds max_array_len({self._max_array_len})")
         elif 0xDE <= b <= 0xDF:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
             (n,) = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if n > self._max_map_len:
-                raise ValueError("%s exceeds max_map_len(%s)" % (n, self._max_map_len))
+                raise ValueError(f"{n} exceeds max_map_len({self._max_map_len})")
         else:
             raise FormatError("Unknown header: 0x%x" % b)
         return typ, n, obj
@@ -623,7 +604,7 @@ class Unpacker(object):
         return self._stream_offset
 
 
-class Packer(object):
+class Packer:
     """
     MessagePack Packer
 
@@ -833,9 +814,9 @@ class Packer(object):
                 continue
 
             if self._datetime and check(obj, _DateTime):
-                raise ValueError("Cannot serialize %r where tzinfo=None" % (obj,))
+                raise ValueError(f"Cannot serialize {obj!r} where tzinfo=None")
 
-            raise TypeError("Cannot serialize %r" % (obj,))
+            raise TypeError(f"Cannot serialize {obj!r}")
 
     def pack(self, obj):
         try:

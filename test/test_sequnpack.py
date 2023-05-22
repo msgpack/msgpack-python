@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 import io
 from msgpack import Unpacker, BufferFull
 from msgpack import pack, packb

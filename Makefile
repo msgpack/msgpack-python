@@ -8,6 +8,10 @@ all: cython
 black:
 	black $(PYTHON_SOURCES)
 
+.PHONY: pyupgrade
+pyupgrade:
+	@find $(PYTHON_SOURCES) -name '*.py' -type f -exec pyupgrade --py37-plus '{}' \;
+
 .PHONY: cython
 cython:
 	cython --cplus msgpack/_cmsgpack.pyx

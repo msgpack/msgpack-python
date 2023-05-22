@@ -1,4 +1,3 @@
-from __future__ import print_function
 import array
 import msgpack
 from msgpack import ExtType
@@ -47,7 +46,7 @@ def test_extension_type():
             except AttributeError:
                 data = obj.tostring()
             return ExtType(typecode, data)
-        raise TypeError("Unknown type object %r" % (obj,))
+        raise TypeError(f"Unknown type object {obj!r}")
 
     def ext_hook(code, data):
         print("ext_hook called", code, data)

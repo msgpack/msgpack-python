@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 import io
 import os
 import sys
@@ -25,7 +24,7 @@ except ImportError:
 
 
 def cythonize(src):
-    sys.stderr.write("cythonize: %r\n" % (src,))
+    sys.stderr.write(f"cythonize: {src!r}\n")
     cython_compiler.compile([src], cplus=True)
 
 

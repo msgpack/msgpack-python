@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
-from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import OrderedDict
 from io import BytesIO
@@ -106,8 +104,8 @@ def testDecodeBinary():
 
 
 def testPackFloat():
-    assert packb(1.0, use_single_float=True) == b"\xca" + struct.pack(str(">f"), 1.0)
-    assert packb(1.0, use_single_float=False) == b"\xcb" + struct.pack(str(">d"), 1.0)
+    assert packb(1.0, use_single_float=True) == b"\xca" + struct.pack(">f", 1.0)
+    assert packb(1.0, use_single_float=False) == b"\xcb" + struct.pack(">d", 1.0)
 
 
 def testArraySize(sizes=[0, 5, 50, 1000]):
@@ -152,7 +150,7 @@ def testMapSize(sizes=[0, 5, 50, 1000]):
     bio.seek(0)
     unpacker = Unpacker(bio, strict_map_key=False)
     for size in sizes:
-        assert unpacker.unpack() == dict((i, i * 2) for i in range(size))
+        assert unpacker.unpack() == {i: i * 2 for i in range(size)}
 
 
 def test_odict():
