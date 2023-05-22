@@ -47,24 +47,18 @@ class Timestamp(object):
         if not isinstance(nanoseconds, int):
             raise TypeError("nanoseconds must be an integer")
         if not (0 <= nanoseconds < 10**9):
-            raise ValueError(
-                "nanoseconds must be a non-negative integer less than 999999999."
-            )
+            raise ValueError("nanoseconds must be a non-negative integer less than 999999999.")
         self.seconds = seconds
         self.nanoseconds = nanoseconds
 
     def __repr__(self):
         """String representation of Timestamp."""
-        return "Timestamp(seconds={0}, nanoseconds={1})".format(
-            self.seconds, self.nanoseconds
-        )
+        return "Timestamp(seconds={0}, nanoseconds={1})".format(self.seconds, self.nanoseconds)
 
     def __eq__(self, other):
         """Check for equality with another Timestamp object"""
         if type(other) is self.__class__:
-            return (
-                self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
-            )
+            return self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
         return False
 
     def __ne__(self, other):
@@ -164,9 +158,7 @@ class Timestamp(object):
         :rtype: datetime.
         """
         utc = datetime.timezone.utc
-        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
-            seconds=self.to_unix()
-        )
+        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(seconds=self.to_unix())
 
     @staticmethod
     def from_datetime(dt):

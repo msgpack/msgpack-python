@@ -36,11 +36,7 @@ def ensure_source(src):
         if not have_cython:
             raise NoCython
         cythonize(pyx)
-    elif (
-        os.path.exists(pyx)
-        and os.stat(src).st_mtime < os.stat(pyx).st_mtime
-        and have_cython
-    ):
+    elif os.path.exists(pyx) and os.stat(src).st_mtime < os.stat(pyx).st_mtime and have_cython:
         cythonize(pyx)
     return src
 

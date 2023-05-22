@@ -44,9 +44,7 @@ def test_tuple_ext():
     def default(o):
         if isinstance(o, tuple):
             # Convert to list and pack
-            payload = packb(
-                list(o), strict_types=True, use_bin_type=True, default=default
-            )
+            payload = packb(list(o), strict_types=True, use_bin_type=True, default=default)
             return ExtType(MSGPACK_EXT_TYPE_TUPLE, payload)
         raise TypeError(repr(o))
 

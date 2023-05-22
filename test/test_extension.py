@@ -17,9 +17,7 @@ def test_pack_ext_type():
     assert p(b"A" * 16) == b"\xd8\x42" + b"A" * 16  # fixext 16
     assert p(b"ABC") == b"\xc7\x03\x42ABC"  # ext 8
     assert p(b"A" * 0x0123) == b"\xc8\x01\x23\x42" + b"A" * 0x0123  # ext 16
-    assert (
-        p(b"A" * 0x00012345) == b"\xc9\x00\x01\x23\x45\x42" + b"A" * 0x00012345
-    )  # ext 32
+    assert p(b"A" * 0x00012345) == b"\xc9\x00\x01\x23\x45\x42" + b"A" * 0x00012345  # ext 32
 
 
 def test_unpack_ext_type():

@@ -334,9 +334,7 @@ class Unpacker(object):
         if object_pairs_hook is not None and not callable(object_pairs_hook):
             raise TypeError("`object_pairs_hook` is not callable")
         if object_hook is not None and object_pairs_hook is not None:
-            raise TypeError(
-                "object_pairs_hook and object_hook are mutually " "exclusive"
-            )
+            raise TypeError("object_pairs_hook and object_hook are mutually " "exclusive")
         if not callable(ext_hook):
             raise TypeError("`ext_hook` is not callable")
 
@@ -434,9 +432,7 @@ class Unpacker(object):
             n = b & 0b00001111
             typ = TYPE_ARRAY
             if n > self._max_array_len:
-                raise ValueError(
-                    "%s exceeds max_array_len(%s)" % (n, self._max_array_len)
-                )
+                raise ValueError("%s exceeds max_array_len(%s)" % (n, self._max_array_len))
         elif b & 0b11110000 == 0b10000000:
             n = b & 0b00001111
             typ = TYPE_MAP
@@ -478,9 +474,7 @@ class Unpacker(object):
         elif 0xD4 <= b <= 0xD8:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             if self._max_ext_len < size:
-                raise ValueError(
-                    "%s exceeds max_ext_len(%s)" % (size, self._max_ext_len)
-                )
+                raise ValueError("%s exceeds max_ext_len(%s)" % (size, self._max_ext_len))
             self._reserve(size + 1)
             n, obj = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size + 1
@@ -501,9 +495,7 @@ class Unpacker(object):
             (n,) = struct.unpack_from(fmt, self._buffer, self._buff_i)
             self._buff_i += size
             if n > self._max_array_len:
-                raise ValueError(
-                    "%s exceeds max_array_len(%s)" % (n, self._max_array_len)
-                )
+                raise ValueError("%s exceeds max_array_len(%s)" % (n, self._max_array_len))
         elif 0xDE <= b <= 0xDF:
             size, fmt, typ = _MSGPACK_HEADERS[b]
             self._reserve(size)
@@ -549,17 +541,14 @@ class Unpacker(object):
                 return
             if self._object_pairs_hook is not None:
                 ret = self._object_pairs_hook(
-                    (self._unpack(EX_CONSTRUCT), self._unpack(EX_CONSTRUCT))
-                    for _ in range(n)
+                    (self._unpack(EX_CONSTRUCT), self._unpack(EX_CONSTRUCT)) for _ in range(n)
                 )
             else:
                 ret = {}
                 for _ in range(n):
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (str, bytes):
-                        raise ValueError(
-                            "%s is not allowed for map key" % str(type(key))
-                        )
+                        raise ValueError("%s is not allowed for map key" % str(type(key)))
                     if type(key) is str:
                         key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
@@ -933,7 +922,7 @@ class Packer(object):
 
     def _pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
         self._pack_map_header(n)
-        for (k, v) in pairs:
+        for k, v in pairs:
             self._pack(k, nest_limit - 1)
             self._pack(v, nest_limit - 1)
 

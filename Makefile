@@ -1,10 +1,12 @@
+PYTHON_SOURCES = msgpack test setup.py
+
 .PHONY: all
 all: cython
 	python setup.py build_ext -i -f
 
 .PHONY: black
 black:
-	black -S msgpack/ test/ setup.py
+	black $(PYTHON_SOURCES)
 
 .PHONY: cython
 cython:
