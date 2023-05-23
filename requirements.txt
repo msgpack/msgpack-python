@@ -4,4 +4,4 @@ Cython~=0.29.30
 # Tools required only for development. No need to add it to pyproject.toml file.
 black==23.3.0
 pytest==7.3.1
-pyupgrade==3.4.0
+pyupgrade==3.3.2
