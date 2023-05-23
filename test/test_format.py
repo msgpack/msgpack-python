@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 from msgpack import unpackb
 
@@ -25,9 +24,7 @@ def testFixRaw():
 
 
 def testFixMap():
-    check(
-        b"\x82\xc2\x81\xc0\xc0\xc3\x81\xc0\x80", {False: {None: None}, True: {None: {}}}
-    )
+    check(b"\x82\xc2\x81\xc0\xc0\xc3\x81\xc0\x80", {False: {None: None}, True: {None: {}}})
 
 
 def testUnsignedInt():

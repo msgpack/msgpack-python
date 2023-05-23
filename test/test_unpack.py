@@ -52,7 +52,7 @@ def test_unpacker_hook_refcnt():
 def test_unpacker_ext_hook():
     class MyUnpacker(Unpacker):
         def __init__(self):
-            super(MyUnpacker, self).__init__(ext_hook=self._hook, raw=False)
+            super().__init__(ext_hook=self._hook, raw=False)
 
         def _hook(self, code, data):
             if code == 1:

@@ -1,10 +1,16 @@
+PYTHON_SOURCES = msgpack test setup.py
+
 .PHONY: all
 all: cython
 	python setup.py build_ext -i -f
 
 .PHONY: black
 black:
-	black -S msgpack/ test/ setup.py
+	black $(PYTHON_SOURCES)
+
+.PHONY: pyupgrade
+pyupgrade:
+	@find $(PYTHON_SOURCES) -name '*.py' -type f -exec pyupgrade --py37-plus '{}' \;
 
 .PHONY: cython
 cython:

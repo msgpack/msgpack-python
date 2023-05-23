@@ -6,3 +6,8 @@ requires = [
     "setuptools >= 35.0.2",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 100
+target-version = ["py37"]
+skip_string_normalization = true

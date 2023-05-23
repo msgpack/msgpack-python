@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 
 from msgpack import packb, unpackb
 from collections import namedtuple

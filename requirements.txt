@@ -1,5 +1,7 @@
-# Also declared in pyproject.toml, if updating here please also update there
+# Also declared in pyproject.toml, if updating here please also update there.
 Cython~=0.29.30
 
-# dev only tools. no need to add pyproject
-black==22.3.0
+# Tools required only for development. No need to add it to pyproject.toml file.
+black==23.3.0
+pytest==7.3.1
+pyupgrade==3.3.2

@@ -1,11 +1,10 @@
 #!/usr/bin/env python
-# coding: utf-8
 from msgpack import packb, unpackb
 
 
 def check(length, obj, use_bin_type=True):
     v = packb(obj, use_bin_type=use_bin_type)
-    assert len(v) == length, "%r length should be %r but get %r" % (obj, length, len(v))
+    assert len(v) == length, f"{obj!r} length should be {length!r} but get {len(v)!r}"
     assert unpackb(v, use_list=0, raw=not use_bin_type) == obj
 
 
@@ -120,11 +119,11 @@ def test_match():
         ),
         ({}, b"\x80"),
         (
-            dict([(x, x) for x in range(15)]),
+            {x: x for x in range(15)},
             b"\x8f\x00\x00\x01\x01\x02\x02\x03\x03\x04\x04\x05\x05\x06\x06\x07\x07\x08\x08\t\t\n\n\x0b\x0b\x0c\x0c\r\r\x0e\x0e",
         ),
         (
-            dict([(x, x) for x in range(16)]),
+            {x: x for x in range(16)},
             b"\xde\x00\x10\x00\x00\x01\x01\x02\x02\x03\x03\x04\x04\x05\x05\x06\x06\x07\x07\x08\x08\t\t\n\n\x0b\x0b\x0c\x0c\r\r\x0e\x0e\x0f\x0f",
         ),
     ]

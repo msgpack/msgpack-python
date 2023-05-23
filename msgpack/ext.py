@@ -1,4 +1,3 @@
-# coding: utf-8
 from collections import namedtuple
 import datetime
 import sys
@@ -15,10 +14,10 @@ class ExtType(namedtuple("ExtType", "code data")):
             raise TypeError("data must be bytes")
         if not 0 <= code <= 127:
             raise ValueError("code must be 0~127")
-        return super(ExtType, cls).__new__(cls, code, data)
+        return super().__new__(cls, code, data)
 
 
-class Timestamp(object):
+class Timestamp:
     """Timestamp represents the Timestamp extension type in msgpack.
 
     When built with Cython, msgpack uses C methods to pack and unpack `Timestamp`. When using pure-Python
@@ -47,24 +46,18 @@ class Timestamp(object):
         if not isinstance(nanoseconds, int):
             raise TypeError("nanoseconds must be an integer")
         if not (0 <= nanoseconds < 10**9):
-            raise ValueError(
-                "nanoseconds must be a non-negative integer less than 999999999."
-            )
+            raise ValueError("nanoseconds must be a non-negative integer less than 999999999.")
         self.seconds = seconds
         self.nanoseconds = nanoseconds
 
     def __repr__(self):
         """String representation of Timestamp."""
-        return "Timestamp(seconds={0}, nanoseconds={1})".format(
-            self.seconds, self.nanoseconds
-        )
+        return f"Timestamp(seconds={self.seconds}, nanoseconds={self.nanoseconds})"
 
     def __eq__(self, other):
         """Check for equality with another Timestamp object"""
         if type(other) is self.__class__:
-            return (
-                self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
-            )
+            return self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
         return False
 
     def __ne__(self, other):
@@ -164,9 +157,7 @@ class Timestamp(object):
         :rtype: datetime.
         """
         utc = datetime.timezone.utc
-        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
-            seconds=self.to_unix()
-        )
+        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(seconds=self.to_unix())
 
     @staticmethod
     def from_datetime(dt):

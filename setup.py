@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
 import io
 import os
 import sys
@@ -25,7 +24,7 @@ except ImportError:
 
 
 def cythonize(src):
-    sys.stderr.write("cythonize: %r\n" % (src,))
+    sys.stderr.write(f"cythonize: {src!r}\n")
     cython_compiler.compile([src], cplus=True)
 
 
@@ -36,11 +35,7 @@ def ensure_source(src):
         if not have_cython:
             raise NoCython
         cythonize(pyx)
-    elif (
-        os.path.exists(pyx)
-        and os.stat(src).st_mtime < os.stat(pyx).st_mtime
-        and have_cython
-    ):
+    elif os.path.exists(pyx) and os.stat(src).st_mtime < os.stat(pyx).st_mtime and have_cython:
         cythonize(pyx)
     return src
 
