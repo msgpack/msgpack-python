@@ -315,7 +315,7 @@ class Unpacker:
         if object_pairs_hook is not None and not callable(object_pairs_hook):
             raise TypeError("`object_pairs_hook` is not callable")
         if object_hook is not None and object_pairs_hook is not None:
-            raise TypeError("object_pairs_hook and object_hook are mutually " "exclusive")
+            raise TypeError("object_pairs_hook and object_hook are mutually exclusive")
         if not callable(ext_hook):
             raise TypeError("`ext_hook` is not callable")
 
