@@ -102,6 +102,11 @@ cdef class Packer(object):
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')
         DO NOT USE THIS!!  This option is kept for very specific usage.
+
+    :param int buf_size:
+        The size of the internal buffer. (default: 1024 * 1024)
+        Useful if serialisation size can be correctly estimated,
+        avoid unnecessary reallocations.
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -112,8 +117,7 @@ cdef class Packer(object):
     cdef bint autoreset
     cdef bint datetime
 
-    def __cinit__(self):
-        cdef int buf_size = 1024*1024
+    def __cinit__(self, buf_size=1024*1024, **_kwargs):
         self.pk.buf = <char*> PyMem_Malloc(buf_size)
         if self.pk.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
@@ -122,7 +126,7 @@ cdef class Packer(object):
 
     def __init__(self, *, default=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=True,
-                 bint strict_types=False, bint datetime=False, unicode_errors=None):
+                 bint strict_types=False, bint datetime=False, unicode_errors=None, buf_size=1024*1024):
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
