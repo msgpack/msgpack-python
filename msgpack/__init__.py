@@ -6,7 +6,7 @@ import sys
 
 
 version = (1, 0, 5)
-__version__ = "1.0.5"
+__version__ = "1.0.6dev1"
 
 
 if os.environ.get("MSGPACK_PUREPYTHON"):
