@@ -181,7 +181,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-    ("index", "msgpack.tex", "msgpack Documentation", "Author", "manual"),
+    ("index", "msgpack-sorted.tex", "msgpack-sorted Documentation", "Author", "manual"),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -209,7 +209,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "msgpack", "msgpack Documentation", ["Author"], 1)]
+man_pages = [("index", "msgpack-sorted", "msgpack-sorted Documentation", ["Author"], 1)]
 
 # If true, show URL addresses after external links.
 # man_show_urls = False
@@ -223,10 +223,10 @@ man_pages = [("index", "msgpack", "msgpack Documentation", ["Author"], 1)]
 texinfo_documents = [
     (
         "index",
-        "msgpack",
-        "msgpack Documentation",
+        "msgpack-sorted",
+        "msgpack-sorted Documentation",
         "Author",
-        "msgpack",
+        "msgpack-sorted",
         "One line description of project.",
         "Miscellaneous",
     ),
@@ -245,7 +245,7 @@ texinfo_documents = [
 # -- Options for Epub output ---------------------------------------------------
 
 # Bibliographic Dublin Core info.
-epub_title = "msgpack"
+epub_title = "msgpack-sorted"
 epub_author = "Author"
 epub_publisher = "Author"
 epub_copyright = "2013, Author"
