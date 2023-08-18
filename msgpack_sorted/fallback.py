@@ -806,7 +806,7 @@ class Packer:
                     self._pack(obj[i], nest_limit - 1)
                 return
             if check(obj, dict):
-                _items = sorted(obj.items()) if self._sort_keys  else obj.items()
+                _items = sorted(obj.items()) if self._sort_keys else obj.items()
                 return self._pack_map_pairs(len(obj), _items, nest_limit - 1)
 
             if self._datetime and check(obj, _DateTime) and obj.tzinfo is not None:
