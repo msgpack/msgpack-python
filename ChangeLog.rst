@@ -1,3 +1,15 @@
+1.0.5 -- msgpack-sorted
+=======================
+
+Release Date: 2023-08-18
+
+* This package is based on msgpack v1.0.5
+* Add `sort_keys` option to packing APIs.
+
+***********************************************************
+* All version numbers below refer to the package msgpack. *
+***********************************************************
+
 1.0.5
 =====
 
