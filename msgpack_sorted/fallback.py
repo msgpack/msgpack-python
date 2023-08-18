@@ -648,6 +648,9 @@ class Packer:
         The error handler for encoding unicode. (default: 'strict')
         DO NOT USE THIS!!  This option is kept for very specific usage.
 
+    :param bool sort_keys:
+        Sort output dictionaries by key. (default: False)
+
     Example of streaming deserialize from file-like object::
 
         unpacker = Unpacker(file_like)
@@ -681,6 +684,7 @@ class Packer:
         strict_types=False,
         datetime=False,
         unicode_errors=None,
+        sort_keys=False,
     ):
         self._strict_types = strict_types
         self._use_float = use_single_float
@@ -689,6 +693,7 @@ class Packer:
         self._buffer = StringIO()
         self._datetime = bool(datetime)
         self._unicode_errors = unicode_errors or "strict"
+        self._sort_keys = sort_keys
         if default is not None:
             if not callable(default):
                 raise TypeError("default must be callable")
@@ -801,7 +806,8 @@ class Packer:
                     self._pack(obj[i], nest_limit - 1)
                 return
             if check(obj, dict):
-                return self._pack_map_pairs(len(obj), obj.items(), nest_limit - 1)
+                _items = sorted(obj.items()) if self._sort_keys  else obj.items()
+                return self._pack_map_pairs(len(obj), _items, nest_limit - 1)
 
             if self._datetime and check(obj, _DateTime) and obj.tzinfo is not None:
                 obj = Timestamp.from_datetime(obj)

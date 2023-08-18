@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from msgpack import packb, unpackb
+from msgpack_sorted import packb, unpackb
 from collections import namedtuple
 
 

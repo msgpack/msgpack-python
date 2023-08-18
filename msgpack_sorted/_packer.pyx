@@ -102,6 +102,9 @@ cdef class Packer(object):
     :param str unicode_errors:
         The error handler for encoding unicode. (default: 'strict')
         DO NOT USE THIS!!  This option is kept for very specific usage.
+
+    :param bool sort_keys:
+        Sort output dictionaries by key. (default: False)
     """
     cdef msgpack_packer pk
     cdef object _default
@@ -111,6 +114,7 @@ cdef class Packer(object):
     cdef bint use_float
     cdef bint autoreset
     cdef bint datetime
+    cdef bool sort_keys
 
     def __cinit__(self):
         cdef int buf_size = 1024*1024
@@ -122,7 +126,8 @@ cdef class Packer(object):
 
     def __init__(self, *, default=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=True,
-                 bint strict_types=False, bint datetime=False, unicode_errors=None):
+                 bint strict_types=False, bint datetime=False, unicode_errors=None,
+                 bool sort_keys=False):
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
@@ -138,6 +143,8 @@ cdef class Packer(object):
             self.unicode_errors = NULL
         else:
             self.unicode_errors = self._berrors
+
+        self.sort_keys = sort_keys
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
@@ -224,7 +231,8 @@ cdef class Packer(object):
                     raise ValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
-                    for k, v in d.items():
+                    _items = sorted(d.items()) if self.sort_keys else d.items()
+                    for k, v in _items:
                         ret = self._pack(k, nest_limit-1)
                         if ret != 0: break
                         ret = self._pack(v, nest_limit-1)
@@ -235,7 +243,8 @@ cdef class Packer(object):
                     raise ValueError("dict is too large")
                 ret = msgpack_pack_map(&self.pk, L)
                 if ret == 0:
-                    for k, v in o.items():
+                    _items = sorted(o.items()) if self.sort_keys else o.items()
+                    for k, v in _items:
                         ret = self._pack(k, nest_limit-1)
                         if ret != 0: break
                         ret = self._pack(v, nest_limit-1)

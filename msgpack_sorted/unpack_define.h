@@ -18,7 +18,7 @@
 #ifndef MSGPACK_UNPACK_DEFINE_H__
 #define MSGPACK_UNPACK_DEFINE_H__
 
-#include "msgpack/sysdep.h"
+#include "msgpack_sorted/sysdep.h"
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -92,4 +92,4 @@ typedef enum {
 }
 #endif
 
-#endif /* msgpack/unpack_define.h */
+#endif /* msgpack_sorted/unpack_define.h */

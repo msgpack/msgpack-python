@@ -47,21 +47,21 @@ class BuildExt(build_ext):
         except NoCython:
             print("WARNING")
             print("Cython is required for building extension from checkout.")
-            print("Install Cython >= 0.16 or install msgpack from PyPI.")
+            print("Install Cython >= 0.16 or install msgpack_sorted from PyPI.")
             print("Falling back to pure Python implementation.")
             return
         try:
             return build_ext.build_extension(self, ext)
         except Exception as e:
             print("WARNING: Failed to compile extension modules.")
-            print("msgpack uses fallback pure python implementation.")
+            print("msgpack_sorted uses fallback pure python implementation.")
             print(e)
 
 
 # Cython is required for sdist
 class Sdist(sdist):
     def __init__(self, *args, **kwargs):
-        cythonize("msgpack/_cmsgpack.pyx")
+        cythonize("msgpack_sorted/_cmsgpack.pyx")
         sdist.__init__(self, *args, **kwargs)
 
 
@@ -76,8 +76,8 @@ ext_modules = []
 if not PYPY and not os.environ.get("MSGPACK_PUREPYTHON"):
     ext_modules.append(
         Extension(
-            "msgpack._cmsgpack",
-            sources=["msgpack/_cmsgpack.cpp"],
+            "msgpack_sorted._cmsgpack",
+            sources=["msgpack_sorted/_cmsgpack.cpp"],
             libraries=libraries,
             include_dirs=["."],
             define_macros=macros,
@@ -89,5 +89,6 @@ del libraries, macros
 setup(
     cmdclass={"build_ext": BuildExt, "sdist": Sdist},
     ext_modules=ext_modules,
-    packages=["msgpack"],
+    setup_requires=['Cython'],
+    packages=["msgpack_sorted"],
 )

@@ -1,8 +1,8 @@
 import pytest
 import sys
 import datetime
-import msgpack
-from msgpack.ext import Timestamp
+import msgpack_sorted as msgpack
+from msgpack_sorted.ext import Timestamp
 
 
 def test_timestamp():

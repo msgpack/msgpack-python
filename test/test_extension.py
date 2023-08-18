@@ -1,6 +1,6 @@
 import array
-import msgpack
-from msgpack import ExtType
+import msgpack_sorted as msgpack
+from msgpack_sorted import ExtType
 
 
 def test_pack_ext_type():

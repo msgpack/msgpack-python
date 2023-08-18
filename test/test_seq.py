@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import io
-import msgpack
+import msgpack_sorted as msgpack
 
 
 binarydata = bytes(bytearray(range(256)))

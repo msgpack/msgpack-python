@@ -2,7 +2,7 @@
 
 import pytest
 from array import array
-from msgpack import packb, unpackb
+from msgpack_sorted import packb, unpackb
 import sys
 
 

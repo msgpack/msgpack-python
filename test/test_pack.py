@@ -8,7 +8,7 @@ import sys
 import pytest
 from pytest import raises, xfail
 
-from msgpack import packb, unpackb, Unpacker, Packer, pack
+from msgpack_sorted import packb, unpackb, Unpacker, Packer, pack
 
 
 def check(data, use_list=False):
@@ -181,3 +181,11 @@ def test_get_buffer():
 
     expected = packb([1, 2], use_bin_type=True)
     assert written == expected
+
+def test_sort_keys(sizes=[3, 31, 127, 1023]):
+    for size in sizes:
+        keys = range(1, 1000000000, 1000000000 // size)
+        map1 = {k: k for k in keys}
+        map2 = {k: k for k in reversed(keys)}
+        assert packb(map1, sort_keys=False) != packb(map2, sort_keys=False)
+        assert packb(map1, sort_keys=True)  == packb(map2, sort_keys=True)

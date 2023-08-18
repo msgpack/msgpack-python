@@ -6,9 +6,10 @@ dist/*
 *.pyo
 *.so
 *~
-msgpack/__version__.py
-msgpack/*.cpp
+msgpack_sorted/__version__.py
+msgpack_sorted/*.cpp
 *.egg-info
+.eggs/
 /venv
 /tags
 /docs/_build

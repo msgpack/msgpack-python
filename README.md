@@ -1,4 +1,21 @@
-# MessagePack for Python
+# MessagePack with key-sorted dictionaries for Python
+
+This package `msgpack_sorted` is a fork of the `msgpack` python package.
+It adds only one option `sort_keys` (default: False) and its implementation: Sort
+dictionary keys with the python `sorted` function when serializing data.
+
+The serialized data format is identical to the msgpack standard, `msgpack_sorted` and
+`msgpack` can correctly parse each others output.
+
+This forked package is not intended to replace the official `msgpack` package --
+but to coexist with it.  For that purpose its name is change to `msgpack_sorted`.
+you can install it with `pip install msgpack-sorted` and import it with
+`import msgpack_sorted as msgpack`.
+
+Plase refer to the official documentation of `msgpack` for all features (except the
+option `sort_keys` explained above).
+
+Most of the documentation below is retained from the `msgpack` package.
 
 [![Build Status](https://github.com/msgpack/msgpack-python/actions/workflows/wheel.yml/badge.svg)](https://github.com/msgpack/msgpack-python/actions/workflows/wheel.yml)
 [![Documentation Status](https://readthedocs.org/projects/msgpack-python/badge/?version=latest)](https://msgpack-python.readthedocs.io/en/latest/?badge=latest)
@@ -60,15 +77,15 @@ See note below for detail.
 ## Install
 
 ```
-$ pip install msgpack
+$ pip install msgpack-sorted
 ```
 
 ### Pure Python implementation
 
-The extension module in msgpack (`msgpack._cmsgpack`) does not support
+The extension module in msgpack_sorted (`msgpack_sorted._cmsgpack`) does not support
 Python 2 and PyPy.
 
-But msgpack provides a pure Python implementation (`msgpack.fallback`)
+But msgpack_sorted provides a pure Python implementation (`msgpack_sorted.fallback`)
 for PyPy and Python 2.
 
 
@@ -82,31 +99,31 @@ Without extension, using pure Python implementation on CPython runs slowly.
 
 ## How to use
 
-NOTE: In examples below, I use `raw=False` and `use_bin_type=True` for users
-using msgpack < 1.0. These options are default from msgpack 1.0 so you can omit them.
+NOTE: For msgpack_sorted, `raw=False` and `use_bin_type=True` are defaults --- just
+as in msgpack >= 1.0.
 
 
 ### One-shot pack & unpack
 
 Use `packb` for packing and `unpackb` for unpacking.
-msgpack provides `dumps` and `loads` as an alias for compatibility with
+msgpack_sorted provides `dumps` and `loads` as an alias for compatibility with
 `json` and `pickle`.
 
 `pack` and `dump` packs to a file-like object.
 `unpack` and `load` unpacks from a file-like object.
 
 ```pycon
->>> import msgpack
->>> msgpack.packb([1, 2, 3], use_bin_type=True)
+>>> import msgpack_sorted as msgpack
+>>> msgpack.packb([1, 2, 3])
 '\x93\x01\x02\x03'
->>> msgpack.unpackb(_, raw=False)
+>>> msgpack.unpackb(_)
 [1, 2, 3]
 ```
 
 `unpack` unpacks msgpack's array to Python's list, but can also unpack to tuple:
 
 ```pycon
->>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False, raw=False)
+>>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
 (1, 2, 3)
 ```
 
@@ -122,16 +139,16 @@ Read the docstring for other options.
 stream (or from bytes provided through its `feed` method).
 
 ```py
-import msgpack
+import msgpack_sorted as msgpack
 from io import BytesIO
 
 buf = BytesIO()
 for i in range(100):
-   buf.write(msgpack.packb(i, use_bin_type=True))
+   buf.write(msgpack.packb(i))
 
 buf.seek(0)
 
-unpacker = msgpack.Unpacker(buf, raw=False)
+unpacker = msgpack.Unpacker(buf)
 for unpacked in unpacker:
     print(unpacked)
 ```
@@ -144,7 +161,7 @@ It is also possible to pack/unpack custom data types. Here is an example for
 
 ```py
 import datetime
-import msgpack
+import msgpack_sorted as msgpack
 
 useful_dict = {
     "id": 1,
@@ -162,8 +179,8 @@ def encode_datetime(obj):
     return obj
 
 
-packed_dict = msgpack.packb(useful_dict, default=encode_datetime, use_bin_type=True)
-this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime, raw=False)
+packed_dict = msgpack.packb(useful_dict, default=encode_datetime)
+this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime)
 ```
 
 `Unpacker`'s `object_hook` callback receives a dict; the
@@ -176,7 +193,7 @@ key-value pairs.
 It is also possible to pack/unpack custom data types using the **ext** type.
 
 ```pycon
->>> import msgpack
+>>> import msgpack_sorted as msgpack
 >>> import array
 >>> def default(obj):
 ...     if isinstance(obj, array.array) and obj.typecode == 'd':
@@ -191,8 +208,8 @@ It is also possible to pack/unpack custom data types using the **ext** type.
 ...     return ExtType(code, data)
 ...
 >>> data = array.array('d', [1.2, 3.4])
->>> packed = msgpack.packb(data, default=default, use_bin_type=True)
->>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook, raw=False)
+>>> packed = msgpack.packb(data, default=default)
+>>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook)
 >>> data == unpacked
 True
 ```
@@ -219,10 +236,10 @@ You can pack into and unpack from this old spec using `use_bin_type=False`
 and `raw=True` options.
 
 ```pycon
->>> import msgpack
+>>> import msgpack_sorted as msgpack
 >>> msgpack.unpackb(msgpack.packb([b'spam', 'eggs'], use_bin_type=False), raw=True)
 [b'spam', b'eggs']
->>> msgpack.unpackb(msgpack.packb([b'spam', 'eggs'], use_bin_type=True), raw=False)
+>>> msgpack.unpackb(msgpack.packb([b'spam', 'eggs']))
 [b'spam', 'eggs']
 ```
 
@@ -231,7 +248,7 @@ and `raw=True` options.
 To use the **ext** type, pass `msgpack.ExtType` object to packer.
 
 ```pycon
->>> import msgpack
+>>> import msgpack_sorted as msgpack
 >>> packed = msgpack.packb(msgpack.ExtType(42, b'xyzzy'))
 >>> msgpack.unpackb(packed)
 ExtType(code=42, data='xyzzy')
@@ -242,7 +259,7 @@ You can use it with `default` and `ext_hook`. See below.
 
 ### Security
 
-To unpacking data received from unreliable source, msgpack provides
+To unpacking data received from unreliable source, msgpack_sorted provides
 two security options.
 
 `max_buffer_size` (default: `100*1024*1024`) limits the internal buffer size.

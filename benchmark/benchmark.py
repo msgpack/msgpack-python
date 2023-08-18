@@ -1,7 +1,7 @@
-from msgpack import fallback
+from msgpack_sorted import fallback
 
 try:
-    from msgpack import _cmsgpack
+    from msgpack_sorted import _cmsgpack
 
     has_ext = True
 except ImportError:
