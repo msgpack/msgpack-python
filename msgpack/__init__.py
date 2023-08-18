@@ -3,13 +3,14 @@ from .ext import ExtType, Timestamp
 
 import os
 import sys
+from typing import TYPE_CHECKING
 
 
 version = (1, 0, 5)
 __version__ = "1.0.6dev1"
 
 
-if os.environ.get("MSGPACK_PUREPYTHON"):
+if os.environ.get("MSGPACK_PUREPYTHON") or TYPE_CHECKING:
     from .fallback import Packer, unpackb, Unpacker
 else:
     try:
