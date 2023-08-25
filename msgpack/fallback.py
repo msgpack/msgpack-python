@@ -163,12 +163,12 @@ class Unpacker:
     :param bool strict_map_key:
         If true (default), only str or bytes are accepted for map (dict) keys.
 
-    :param callable object_hook:
+    :param object_hook:
         When specified, it should be callable.
         Unpacker calls it with a dict argument after unpacking msgpack map.
         (See also simplejson)
 
-    :param callable object_pairs_hook:
+    :param object_pairs_hook:
         When specified, it should be callable.
         Unpacker calls it with a list of key-value pairs after unpacking msgpack map.
         (See also simplejson)
@@ -616,7 +616,8 @@ class Packer:
 
     Packer's constructor has some keyword arguments:
 
-    :param callable default:
+    :param default:
+        When specified, it should be callable.
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
 
