@@ -120,7 +120,7 @@ class Timestamp:
         """Create a Timestamp from posix timestamp in seconds.
 
         :param unix_float: Posix timestamp in seconds.
-        :type unix_float: int or float.
+        :type unix_float: int or float
         """
         seconds = int(unix_sec // 1)
         nanoseconds = int((unix_sec % 1) * 10**9)
@@ -154,7 +154,7 @@ class Timestamp:
     def to_datetime(self):
         """Get the timestamp as a UTC datetime.
 
-        :rtype: datetime.
+        :rtype: `datetime.datetime`
         """
         utc = datetime.timezone.utc
         return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(seconds=self.to_unix())
