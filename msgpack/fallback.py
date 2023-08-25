@@ -139,7 +139,7 @@ class Unpacker:
 
     :param file_like:
         File-like object having `.read(n)` method.
-        If specified, unpacker reads serialized data from it and :meth:`feed()` is not usable.
+        If specified, unpacker reads serialized data from it and `.feed()` is not usable.
 
     :param int read_size:
         Used as `file_like.read(read_size)`. (default: `min(16*1024, max_buffer_size)`)
