@@ -1,0 +1,32 @@
+name: docs
+
+on: ["push", "pull_request"]
+
+jobs:
+  docs:
+    # We want to run on external PRs, but not on our own internal PRs as they'll be run
+    # by the push to the branch.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Build
+        shell: bash
+        run: |
+          pip install -r requirements.txt
+          make cython
+          pip install .
+
+      - name: Sphinx Documentation Generator
+        run: |
+          pip install tox
+          tox -e sphinx
