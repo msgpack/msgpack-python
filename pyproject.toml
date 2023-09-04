@@ -46,3 +46,13 @@ version = {attr = "msgpack.__version__"}
 line-length = 100
 target-version = ["py37"]
 skip_string_normalization = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+ignore = []
+
+[tool.ruff.per-file-ignores]
+"msgpack/__init__.py" = ["F401", "F403"]
+"msgpack/fallback.py" = ["E731"]
+"test/test_seq.py" = ["E501"]

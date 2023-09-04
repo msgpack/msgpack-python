@@ -1,5 +1,4 @@
 import pytest
-import sys
 import datetime
 import msgpack
 from msgpack.ext import Timestamp

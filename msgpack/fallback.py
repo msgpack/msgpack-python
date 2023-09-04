@@ -530,7 +530,7 @@ class Unpacker:
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (str, bytes):
                         raise ValueError("%s is not allowed for map key" % str(type(key)))
-                    if type(key) is str:
+                    if isinstance(key, str):
                         key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:

@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-import pytest
 from array import array
 from msgpack import packb, unpackb
-import sys
 
 
 def make_array(f, data):

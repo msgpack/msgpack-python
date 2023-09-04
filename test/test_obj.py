@@ -33,7 +33,7 @@ def test_decode_pairs_hook():
     prod_sum = 1 * 2 + 3 * 4
     unpacked = unpackb(
         packed,
-        object_pairs_hook=lambda l: sum(k * v for k, v in l),
+        object_pairs_hook=lambda lst: sum(k * v for k, v in lst),
         use_list=1,
         strict_map_key=False,
     )
@@ -48,7 +48,7 @@ def test_only_one_obj_hook():
 def test_bad_hook():
     with raises(TypeError):
         packed = packb([3, 1 + 2j], default=lambda o: o)
-        unpacked = unpackb(packed, use_list=1)
+        unpackb(packed, use_list=1)
 
 
 def _arr_to_str(arr):

@@ -3,12 +3,10 @@
 from collections import OrderedDict
 from io import BytesIO
 import struct
-import sys
 
 import pytest
-from pytest import raises, xfail
 
-from msgpack import packb, unpackb, Unpacker, Packer, pack
+from msgpack import packb, unpackb, Unpacker, Packer
 
 
 def check(data, use_list=False):
