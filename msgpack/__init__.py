@@ -2,7 +2,6 @@ from .exceptions import *
 from .ext import ExtType, Timestamp
 
 import os
-import sys
 
 
 version = (1, 0, 5)

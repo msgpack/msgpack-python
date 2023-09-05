@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-import io
 import os
 import sys
-from glob import glob
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.sdist import sdist
