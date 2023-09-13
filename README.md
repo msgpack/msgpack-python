@@ -211,9 +211,9 @@ But tuple is lighter than list.
 You can use `use_list=False` while unpacking when performance is important.
 
 
-## Very important notes for old version users
+## Major breaking changes in the history
 
-### PyPI package name
+### msgpack 0.5
 
 Package name on PyPI was changed from `msgpack-python` to `msgpack` from 0.5.
 
@@ -221,37 +221,29 @@ When upgrading from msgpack-0.4 or earlier, do `pip uninstall msgpack-python` be
 `pip install -U msgpack`.
 
 
-### Compatibility with the old format
+### msgpack 1.0
 
-You can use `use_bin_type=False` option to pack `bytes`
-object into raw type in the old msgpack spec, instead of bin type in new msgpack spec.
-
-You can unpack old msgpack format using `raw=True` option.
-It unpacks str (raw) type in msgpack into Python bytes.
-
-See [string and binary type in old msgpack spec](#string-and-binary-type-in-old-msgpack-spec) for detail.
-
-
-### Major breaking changes in msgpack 1.0
-
-* Python 2
+* Python 2 support
 
   * The extension module does not support Python 2 anymore.
     The pure Python implementation (`msgpack.fallback`) is used for Python 2.
+  
+  * msgpack 1.0.6 drops official support of Python 2.7, as pip and
+    GitHub Action (setup-python) no longer support Python 2.7.
 
 * Packer
 
-  * `use_bin_type=True` by default.  bytes are encoded in bin type in msgpack.
-    **If you are still using Python 2, you must use unicode for all string types.**
-    You can use `use_bin_type=False` to encode into old msgpack format.
-  * `encoding` option is removed.  UTF-8 is used always.
+  * Packer uses `use_bin_type=True` by default.
+    Bytes are encoded in bin type in msgpack.
+  * The `encoding` option is removed.  UTF-8 is used always.
 
 * Unpacker
 
-  * `raw=False` by default.  It assumes str types are valid UTF-8 string
+  * Unpacker uses `raw=False` by default.  It assumes str types are valid UTF-8 string
     and decode them to Python str (unicode) object.
-  * `encoding` option is removed.  You can use `raw=True` to support old format.
-  * Default value of `max_buffer_size` is changed from 0 to 100 MiB.
+  * `encoding` option is removed.  You can use `raw=True` to support old format (e.g. unpack into bytes, not str).
+  * Default value of `max_buffer_size` is changed from 0 to 100 MiB to avoid DoS attack.
+    You need to pass `max_buffer_size=0` if you have large but safe data.
   * Default value of `strict_map_key` is changed to True to avoid hashdos.
     You need to pass `strict_map_key=False` if you have data which contain map keys
     which type is not bytes or str.
