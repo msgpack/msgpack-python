@@ -14,12 +14,12 @@ license = {text="Apache 2.0"}
 authors = [{name="Inada Naoki", email="songofacandy@gmail.com"}]
 description = "MessagePack serializer"
 readme = "README.md"
-#keywords = ["python", "msgpack", "messagepack", "serializer", "serialization", "binary"]
-#requires-python = ">=3.8"
+keywords = ["msgpack", "messagepack", "serializer", "serialization", "binary"]
+requires-python = ">=3.8"
 classifiers = [
-#    "Development Status :: 5 - Production/Stable",
-#    "Operating System :: OS Independent",
-#    "Programming Language :: Python",
+    "Development Status :: 5 - Production/Stable",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -37,7 +37,7 @@ Homepage = "https://msgpack.org/"
 Documentation = "https://msgpack-python.readthedocs.io/"
 Repository = "https://github.com/msgpack/msgpack-python/"
 Tracker = "https://github.com/msgpack/msgpack-python/issues"
-#Changelog = "https://github.com/msgpack/msgpack-python/blob/main/ChangeLog.rst"
+Changelog = "https://github.com/msgpack/msgpack-python/blob/main/ChangeLog.rst"
 
 [tool.setuptools.dynamic]
 version = {attr = "msgpack.__version__"}
