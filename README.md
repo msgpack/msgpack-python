@@ -156,7 +156,7 @@ in a map, can be unpacked or skipped individually.
 
 ## Notes
 
-### string and binary type
+### string and binary type in old msgpack spec
 
 Early versions of msgpack didn't distinguish string and binary types.
 The type for representing both string and binary types was named **raw**.
@@ -229,7 +229,7 @@ object into raw type in the old msgpack spec, instead of bin type in new msgpack
 You can unpack old msgpack format using `raw=True` option.
 It unpacks str (raw) type in msgpack into Python bytes.
 
-See note below for detail.
+See [string and binary type in old msgpack spec](#string-and-binary-type-in-old-msgpack-spec) for detail.
 
 
 ### Major breaking changes in msgpack 1.0
