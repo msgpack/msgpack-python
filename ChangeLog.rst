@@ -1,3 +1,12 @@
+1.0.6rc1
+========
+
+Release Date: 2023-09-13
+
+* Add Python 3.12 wheels (#517)
+* Remove Python 2.7, 3.6, and 3.7 support
+
+
 1.0.5
 =====
 
