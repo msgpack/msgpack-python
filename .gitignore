@@ -2,6 +2,7 @@ MANIFEST
 build/*
 dist/*
 .tox
+.python-version
 *.pyc
 *.pyo
 *.so
