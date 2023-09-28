@@ -22,6 +22,8 @@ except ImportError:
 
 
 def cythonize(src):
+    if not have_cython:
+        raise Exception("Cython is required for building from checkout")
     sys.stderr.write(f"cythonize: {src!r}\n")
     cython_compiler.compile([src], cplus=True)
 
@@ -29,31 +31,15 @@ def cythonize(src):
 def ensure_source(src):
     pyx = os.path.splitext(src)[0] + ".pyx"
 
-    if not os.path.exists(src):
-        if not have_cython:
-            raise NoCython
+    if not os.path.exists(src) or have_cython and os.stat(src).st_mtime < os.stat(pyx).st_mtime:
         cythonize(pyx)
-    elif os.path.exists(pyx) and os.stat(src).st_mtime < os.stat(pyx).st_mtime and have_cython:
-        cythonize(pyx)
-    return src
 
 
 class BuildExt(build_ext):
     def build_extension(self, ext):
-        try:
-            ext.sources = list(map(ensure_source, ext.sources))
-        except NoCython:
-            print("WARNING")
-            print("Cython is required for building extension from checkout.")
-            print("Install Cython >= 0.16 or install msgpack from PyPI.")
-            print("Falling back to pure Python implementation.")
-            return
-        try:
-            return build_ext.build_extension(self, ext)
-        except Exception as e:
-            print("WARNING: Failed to compile extension modules.")
-            print("msgpack uses fallback pure python implementation.")
-            print(e)
+        for src in ext.sources:
+            ensure_source(src)
+        return build_ext.build_extension(self, ext)
 
 
 # Cython is required for sdist
