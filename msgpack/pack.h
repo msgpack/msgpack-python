@@ -26,10 +26,6 @@
 extern "C" {
 #endif
 
-#ifdef _MSC_VER
-#define inline __inline
-#endif
-
 typedef struct msgpack_packer {
     char *buf;
     size_t length;
