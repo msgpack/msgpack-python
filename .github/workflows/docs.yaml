@@ -24,7 +24,6 @@ jobs:
         run: |
           pip install -r requirements.txt
           make cython
-          pip install . -r docs/requirements.txt
 
       - name: Sphinx Documentation Generator
         run: |
