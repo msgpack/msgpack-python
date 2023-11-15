@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # msgpack documentation build configuration file, created by
 # sphinx-quickstart on Sun Feb 24 14:20:50 2013.
 #
@@ -91,7 +89,7 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinxdoc"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
