@@ -39,6 +39,10 @@ Repository = "https://github.com/msgpack/msgpack-python/"
 Tracker = "https://github.com/msgpack/msgpack-python/issues"
 Changelog = "https://github.com/msgpack/msgpack-python/blob/main/ChangeLog.rst"
 
+[tool.setuptools]
+# Do not install C/C++/Cython source files
+include-package-data = false
+
 [tool.setuptools.dynamic]
 version = {attr = "msgpack.__version__"}
 
