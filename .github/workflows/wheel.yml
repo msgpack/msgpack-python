@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
   create:
+  workflow_dispatch:
 
 jobs:
   build_wheels:
@@ -23,7 +24,7 @@ jobs:
           platforms: arm64
 
       - name: Set up Python 3.x
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.x"
           cache: "pip"
@@ -42,6 +43,13 @@ jobs:
           CIBW_ARCHS_LINUX: auto aarch64
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_SKIP: pp*
+
+      - name: Build pure Python wheel
+        env:
+          MSGPACK_PUREPYTHON: "1"
+        run: |
+          pip install build
+          python -m build -w -o wheelhouse
 
       - name: Upload Wheels to artifact
         uses: actions/upload-artifact@v1
