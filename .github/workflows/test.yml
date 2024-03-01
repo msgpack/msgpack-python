@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
@@ -42,3 +42,15 @@ jobs:
         shell: bash
         run: |
           MSGPACK_PUREPYTHON=1 pytest -v test
+
+      - name: build packages
+        shell: bash
+        run: |
+          pip install build
+          python -m build
+
+      - name: upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
