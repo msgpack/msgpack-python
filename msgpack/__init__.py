@@ -4,8 +4,8 @@ from .ext import ExtType, Timestamp
 import os
 
 
-version = (1, 0, 7)
-__version__ = "1.0.7"
+version = (1, 0, 8)
+__version__ = "1.0.8"
 
 
 if os.environ.get("MSGPACK_PUREPYTHON"):

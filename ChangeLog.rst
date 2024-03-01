@@ -1,3 +1,13 @@
+1.0.8
+=====
+
+Release Date: 2024-03-01
+
+* Update Cython to 3.0.8. This fixes memory leak when iterating
+  ``Unpacker`` object on Python 3.12.
+* Do not include C/Cython files in binary wheels.
+
+
 1.0.7
 =====
 
