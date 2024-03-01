@@ -36,7 +36,7 @@ jobs:
           make cython
 
       - name: Build
-        uses: pypa/cibuildwheel@v2.15.0
+        uses: pypa/cibuildwheel@v2.16.5
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
@@ -52,7 +52,7 @@ jobs:
           python -m build -w -o wheelhouse
 
       - name: Upload Wheels to artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
-          name: Wheels
+          name: wheels-${{ matrix.os }}
           path: wheelhouse
