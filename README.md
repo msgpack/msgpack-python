@@ -10,53 +10,6 @@ It lets you exchange data among multiple languages like JSON.
 But it's faster and smaller.
 This package provides CPython bindings for reading and writing MessagePack data.
 
-
-## Very important notes for existing users
-
-### PyPI package name
-
-Package name on PyPI was changed from `msgpack-python` to `msgpack` from 0.5.
-
-When upgrading from msgpack-0.4 or earlier, do `pip uninstall msgpack-python` before
-`pip install -U msgpack`.
-
-
-### Compatibility with the old format
-
-You can use `use_bin_type=False` option to pack `bytes`
-object into raw type in the old msgpack spec, instead of bin type in new msgpack spec.
-
-You can unpack old msgpack format using `raw=True` option.
-It unpacks str (raw) type in msgpack into Python bytes.
-
-See note below for detail.
-
-
-### Major breaking changes in msgpack 1.0
-
-* Python 2
-
-  * The extension module does not support Python 2 anymore.
-    The pure Python implementation (`msgpack.fallback`) is used for Python 2.
-
-* Packer
-
-  * `use_bin_type=True` by default.  bytes are encoded in bin type in msgpack.
-    **If you are still using Python 2, you must use unicode for all string types.**
-    You can use `use_bin_type=False` to encode into old msgpack format.
-  * `encoding` option is removed.  UTF-8 is used always.
-
-* Unpacker
-
-  * `raw=False` by default.  It assumes str types are valid UTF-8 string
-    and decode them to Python str (unicode) object.
-  * `encoding` option is removed.  You can use `raw=True` to support old format.
-  * Default value of `max_buffer_size` is changed from 0 to 100 MiB.
-  * Default value of `strict_map_key` is changed to True to avoid hashdos.
-    You need to pass `strict_map_key=False` if you have data which contain map keys
-    which type is not bytes or str.
-
-
 ## Install
 
 ```
@@ -65,12 +18,9 @@ $ pip install msgpack
 
 ### Pure Python implementation
 
-The extension module in msgpack (`msgpack._cmsgpack`) does not support
-Python 2 and PyPy.
+The extension module in msgpack (`msgpack._cmsgpack`) does not support PyPy.
 
-But msgpack provides a pure Python implementation (`msgpack.fallback`)
-for PyPy and Python 2.
-
+But msgpack provides a pure Python implementation (`msgpack.fallback`) for PyPy.
 
 
 ### Windows
@@ -81,10 +31,6 @@ Without extension, using pure Python implementation on CPython runs slowly.
 
 
 ## How to use
-
-NOTE: In examples below, I use `raw=False` and `use_bin_type=True` for users
-using msgpack < 1.0. These options are default from msgpack 1.0 so you can omit them.
-
 
 ### One-shot pack & unpack
 
@@ -97,16 +43,16 @@ msgpack provides `dumps` and `loads` as an alias for compatibility with
 
 ```pycon
 >>> import msgpack
->>> msgpack.packb([1, 2, 3], use_bin_type=True)
+>>> msgpack.packb([1, 2, 3])
 '\x93\x01\x02\x03'
->>> msgpack.unpackb(_, raw=False)
+>>> msgpack.unpackb(_)
 [1, 2, 3]
 ```
 
 `unpack` unpacks msgpack's array to Python's list, but can also unpack to tuple:
 
 ```pycon
->>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False, raw=False)
+>>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
 (1, 2, 3)
 ```
 
@@ -127,11 +73,11 @@ from io import BytesIO
 
 buf = BytesIO()
 for i in range(100):
-   buf.write(msgpack.packb(i, use_bin_type=True))
+   buf.write(msgpack.packb(i))
 
 buf.seek(0)
 
-unpacker = msgpack.Unpacker(buf, raw=False)
+unpacker = msgpack.Unpacker(buf)
 for unpacked in unpacker:
     print(unpacked)
 ```
@@ -162,8 +108,8 @@ def encode_datetime(obj):
     return obj
 
 
-packed_dict = msgpack.packb(useful_dict, default=encode_datetime, use_bin_type=True)
-this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime, raw=False)
+packed_dict = msgpack.packb(useful_dict, default=encode_datetime)
+this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime)
 ```
 
 `Unpacker`'s `object_hook` callback receives a dict; the
@@ -191,8 +137,8 @@ It is also possible to pack/unpack custom data types using the **ext** type.
 ...     return ExtType(code, data)
 ...
 >>> data = array.array('d', [1.2, 3.4])
->>> packed = msgpack.packb(data, default=default, use_bin_type=True)
->>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook, raw=False)
+>>> packed = msgpack.packb(data, default=default)
+>>> unpacked = msgpack.unpackb(packed, ext_hook=ext_hook)
 >>> data == unpacked
 True
 ```
@@ -210,7 +156,7 @@ in a map, can be unpacked or skipped individually.
 
 ## Notes
 
-### string and binary type
+### string and binary type in old msgpack spec
 
 Early versions of msgpack didn't distinguish string and binary types.
 The type for representing both string and binary types was named **raw**.
@@ -263,3 +209,41 @@ You can use `gc.disable()` when unpacking large message.
 List is the default sequence type of Python.
 But tuple is lighter than list.
 You can use `use_list=False` while unpacking when performance is important.
+
+
+## Major breaking changes in the history
+
+### msgpack 0.5
+
+Package name on PyPI was changed from `msgpack-python` to `msgpack` from 0.5.
+
+When upgrading from msgpack-0.4 or earlier, do `pip uninstall msgpack-python` before
+`pip install -U msgpack`.
+
+
+### msgpack 1.0
+
+* Python 2 support
+
+  * The extension module does not support Python 2 anymore.
+    The pure Python implementation (`msgpack.fallback`) is used for Python 2.
+  
+  * msgpack 1.0.6 drops official support of Python 2.7, as pip and
+    GitHub Action (setup-python) no longer support Python 2.7.
+
+* Packer
+
+  * Packer uses `use_bin_type=True` by default.
+    Bytes are encoded in bin type in msgpack.
+  * The `encoding` option is removed.  UTF-8 is used always.
+
+* Unpacker
+
+  * Unpacker uses `raw=False` by default.  It assumes str types are valid UTF-8 string
+    and decode them to Python str (unicode) object.
+  * `encoding` option is removed.  You can use `raw=True` to support old format (e.g. unpack into bytes, not str).
+  * Default value of `max_buffer_size` is changed from 0 to 100 MiB to avoid DoS attack.
+    You need to pass `max_buffer_size=0` if you have large but safe data.
+  * Default value of `strict_map_key` is changed to True to avoid hashdos.
+    You need to pass `strict_map_key=False` if you have data which contain map keys
+    which type is not bytes or str.
