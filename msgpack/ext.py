@@ -157,7 +157,9 @@ class Timestamp:
         :rtype: `datetime.datetime`
         """
         utc = datetime.timezone.utc
-        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(seconds=self.to_unix())
+        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
+            seconds=self.seconds, microseconds=round(self.nanoseconds / 1e3)
+        )
 
     @staticmethod
     def from_datetime(dt):
@@ -165,4 +167,4 @@ class Timestamp:
 
         :rtype: Timestamp
         """
-        return Timestamp.from_unix(dt.timestamp())
+        return Timestamp(seconds=int(dt.timestamp() // 1), nanoseconds=dt.microsecond * 10**3)
