@@ -89,12 +89,14 @@ def test_timestamp_datetime():
     ts = datetime.datetime(2024, 4, 16, 8, 43, 9, 420317, tzinfo=utc)
     ts2 = datetime.datetime(2024, 4, 16, 8, 43, 9, 420318, tzinfo=utc)
 
-    assert Timestamp.from_datetime(ts2).nanoseconds - Timestamp.from_datetime(ts).nanoseconds == 1e3
+    assert (
+        Timestamp.from_datetime(ts2).nanoseconds - Timestamp.from_datetime(ts).nanoseconds == 1000
+    )
 
     ts3 = datetime.datetime(2024, 4, 16, 8, 43, 9, 4256)
     ts4 = datetime.datetime(2024, 4, 16, 8, 43, 9, 4257)
     assert (
-        Timestamp.from_datetime(ts4).nanoseconds - Timestamp.from_datetime(ts3).nanoseconds == 1e3
+        Timestamp.from_datetime(ts4).nanoseconds - Timestamp.from_datetime(ts3).nanoseconds == 1000
     )
 
     assert Timestamp.from_datetime(ts).to_datetime() == ts
