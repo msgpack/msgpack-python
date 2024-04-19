@@ -158,7 +158,7 @@ class Timestamp:
         """
         utc = datetime.timezone.utc
         return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
-            seconds=self.seconds, microseconds=round(self.nanoseconds / 1e3)
+            seconds=self.seconds, microseconds=self.nanoseconds // 1e3
         )
 
     @staticmethod

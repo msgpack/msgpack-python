@@ -99,11 +99,6 @@ def test_timestamp_datetime():
 
     assert Timestamp.from_datetime(ts).to_datetime() == ts
 
-    t2 = Timestamp(1713256989, 420318123)
-    t3 = Timestamp(1713256989, 420318499)
-    t4 = Timestamp(1713256989, 420318501)
-    assert t2.to_datetime() == t3.to_datetime() != t4.to_datetime()
-
 
 def test_unpack_datetime():
     t = Timestamp(42, 14)
