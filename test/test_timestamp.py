@@ -86,6 +86,21 @@ def test_timestamp_datetime():
     utc = datetime.timezone.utc
     assert t.to_datetime() == datetime.datetime(1970, 1, 1, 0, 0, 42, 0, tzinfo=utc)
 
+    ts = datetime.datetime(2024, 4, 16, 8, 43, 9, 420317, tzinfo=utc)
+    ts2 = datetime.datetime(2024, 4, 16, 8, 43, 9, 420318, tzinfo=utc)
+
+    assert (
+        Timestamp.from_datetime(ts2).nanoseconds - Timestamp.from_datetime(ts).nanoseconds == 1000
+    )
+
+    ts3 = datetime.datetime(2024, 4, 16, 8, 43, 9, 4256)
+    ts4 = datetime.datetime(2024, 4, 16, 8, 43, 9, 4257)
+    assert (
+        Timestamp.from_datetime(ts4).nanoseconds - Timestamp.from_datetime(ts3).nanoseconds == 1000
+    )
+
+    assert Timestamp.from_datetime(ts).to_datetime() == ts
+
 
 def test_unpack_datetime():
     t = Timestamp(42, 14)
