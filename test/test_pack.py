@@ -89,7 +89,7 @@ def testStrictUnicodeUnpack():
 
 def testIgnoreErrorsPack():
     re = unpackb(
-        packb("abc\uDC80\uDCFFdef", use_bin_type=True, unicode_errors="ignore"),
+        packb("abc\udc80\udcffdef", use_bin_type=True, unicode_errors="ignore"),
         raw=False,
         use_list=1,
     )

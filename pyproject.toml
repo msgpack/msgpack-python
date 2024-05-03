@@ -54,9 +54,9 @@ skip_string_normalization = true
 [tool.ruff]
 line-length = 100
 target-version = "py38"
-ignore = []
+lint.ignore = []
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "msgpack/__init__.py" = ["F401", "F403"]
 "msgpack/fallback.py" = ["E731"]
 "test/test_seq.py" = ["E501"]

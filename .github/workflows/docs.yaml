@@ -10,22 +10,25 @@ jobs:
 
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-          architecture: 'x64'
-
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+          architecture: 'x64'
+          cache: "pip"
+          cache-dependency-path: |
+            requirements.txt
+            docs/requirements.txt
+
       - name: Build
-        shell: bash
         run: |
           pip install -r requirements.txt
           make cython
 
       - name: Sphinx Documentation Generator
         run: |
-          pip install tox
-          tox -e sphinx
+          pip install -r docs/requirements.txt
+          make docs
