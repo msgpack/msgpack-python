@@ -95,4 +95,4 @@ def test_multidim_memoryview():
     view = memoryview(b"\00" * 6)
     data = view.cast(view.format, (3, 2))
     packed = packb(data)
-    assert packed == b'\xc4\x06\x00\x00\x00\x00\x00\x00'
+    assert packed == b"\xc4\x06\x00\x00\x00\x00\x00\x00"

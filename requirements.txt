@@ -1,7 +1,2 @@
 # Also declared in pyproject.toml, if updating here please also update there.
-Cython~=3.0.8
-
-# Tools required only for development. No need to add it to pyproject.toml file.
-black==23.3.0
-pytest==7.3.1
-pyupgrade==3.3.2
+Cython~=3.0.10
