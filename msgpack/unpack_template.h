@@ -75,8 +75,7 @@ static inline void unpack_clear(unpack_context *ctx)
     Py_CLEAR(ctx->stack[0].obj);
 }
 
-template <bool construct>
-static inline int unpack_execute(unpack_context* ctx, const char* data, Py_ssize_t len, Py_ssize_t* off)
+static inline int unpack_execute(bool construct, unpack_context* ctx, const char* data, Py_ssize_t len, Py_ssize_t* off)
 {
     assert(len >= *off);
 
@@ -386,6 +385,7 @@ _end:
 #undef construct_cb
 }
 
+#undef NEXT_CS
 #undef SWITCH_RANGE_BEGIN
 #undef SWITCH_RANGE
 #undef SWITCH_RANGE_DEFAULT
@@ -397,68 +397,27 @@ _end:
 #undef again_fixed_trail_if_zero
 #undef start_container
 
-template <unsigned int fixed_offset, unsigned int var_offset>
-static inline int unpack_container_header(unpack_context* ctx, const char* data, Py_ssize_t len, Py_ssize_t* off)
-{
-    assert(len >= *off);
-    uint32_t size;
-    const unsigned char *const p = (unsigned char*)data + *off;
-
-#define inc_offset(inc) \
-    if (len - *off < inc) \
-        return 0; \
-    *off += inc;
-
-    switch (*p) {
-    case var_offset:
-        inc_offset(3);
-        size = _msgpack_load16(uint16_t, p + 1);
-        break;
-    case var_offset + 1:
-        inc_offset(5);
-        size = _msgpack_load32(uint32_t, p + 1);
-        break;
-#ifdef USE_CASE_RANGE
-    case fixed_offset + 0x0 ... fixed_offset + 0xf:
-#else
-    case fixed_offset + 0x0:
-    case fixed_offset + 0x1:
-    case fixed_offset + 0x2:
-    case fixed_offset + 0x3:
-    case fixed_offset + 0x4:
-    case fixed_offset + 0x5:
-    case fixed_offset + 0x6:
-    case fixed_offset + 0x7:
-    case fixed_offset + 0x8:
-    case fixed_offset + 0x9:
-    case fixed_offset + 0xa:
-    case fixed_offset + 0xb:
-    case fixed_offset + 0xc:
-    case fixed_offset + 0xd:
-    case fixed_offset + 0xe:
-    case fixed_offset + 0xf:
-#endif
-        ++*off;
-        size = ((unsigned int)*p) & 0x0f;
-        break;
-    default:
-        PyErr_SetString(PyExc_ValueError, "Unexpected type header on stream");
-        return -1;
-    }
-    unpack_callback_uint32(&ctx->user, size, &ctx->stack[0].obj);
-    return 1;
+static int unpack_construct(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
+    return unpack_execute(true, ctx, data, len, off);
+}
+static int unpack_skip(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
+    return unpack_execute(false, ctx, data, len, off);
 }
 
-#undef SWITCH_RANGE_BEGIN
-#undef SWITCH_RANGE
-#undef SWITCH_RANGE_DEFAULT
-#undef SWITCH_RANGE_END
+#define unpack_container_header read_array_header
+#define fixed_offset 0x90
+#define var_offset 0xdc
+#include "unpack_container_header.h"
+#undef unpack_container_header
+#undef fixed_offset
+#undef var_offset
 
-static const execute_fn unpack_construct = &unpack_execute<true>;
-static const execute_fn unpack_skip = &unpack_execute<false>;
-static const execute_fn read_array_header = &unpack_container_header<0x90, 0xdc>;
-static const execute_fn read_map_header = &unpack_container_header<0x80, 0xde>;
-
-#undef NEXT_CS
+#define unpack_container_header read_map_header
+#define fixed_offset 0x80
+#define var_offset 0xde
+#include "unpack_container_header.h"
+#undef unpack_container_header
+#undef fixed_offset
+#undef var_offset
 
 /* vim: set ts=4 sw=4 sts=4 expandtab  */

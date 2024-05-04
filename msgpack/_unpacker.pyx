@@ -35,7 +35,7 @@ cdef extern from "unpack.h":
         PyObject* timestamp_t
         PyObject *giga;
         PyObject *utc;
-        char *unicode_errors
+        const char *unicode_errors
         Py_ssize_t max_str_len
         Py_ssize_t max_bin_len
         Py_ssize_t max_array_len

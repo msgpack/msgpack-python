@@ -22,7 +22,7 @@ pyupgrade:
 
 .PHONY: cython
 cython:
-	cython --cplus msgpack/_cmsgpack.pyx
+	cython msgpack/_cmsgpack.pyx
 
 .PHONY: test
 test: cython

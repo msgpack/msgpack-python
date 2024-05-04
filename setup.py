@@ -1,23 +1,6 @@
 #!/usr/bin/env python
 import os
 import sys
-
-
-libraries = []
-macros = []
-
-if sys.platform == "win32":
-    libraries.append("ws2_32")
-    macros = [("__LITTLE_ENDIAN__", "1")]
-    cflags = os.environ.get("CXXFLAGS")
-    cxx20flag = "/std:c++20"
-    if cflags is None:
-        cflags = cxx20flag
-    elif cxx20flag not in cflags:
-        cflags += " " + cxx20flag
-    os.environ["CXXFLAGS"] = cflags
-
-
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.sdist import sdist
@@ -42,7 +25,7 @@ def cythonize(src):
     if not have_cython:
         raise Exception("Cython is required for building from checkout")
     sys.stderr.write(f"cythonize: {src!r}\n")
-    cython_compiler.compile([src], cplus=True)
+    cython_compiler.compile([src])
 
 
 def ensure_source(src):
@@ -66,12 +49,19 @@ class Sdist(sdist):
         sdist.__init__(self, *args, **kwargs)
 
 
+libraries = []
+macros = []
 ext_modules = []
+
+if sys.platform == "win32":
+    libraries.append("ws2_32")
+    macros = [("__LITTLE_ENDIAN__", "1")]
+
 if not PYPY and not os.environ.get("MSGPACK_PUREPYTHON"):
     ext_modules.append(
         Extension(
             "msgpack._cmsgpack",
-            sources=["msgpack/_cmsgpack.cpp"],
+            sources=["msgpack/_cmsgpack.c"],
             libraries=libraries,
             include_dirs=["."],
             define_macros=macros,
