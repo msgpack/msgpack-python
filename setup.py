@@ -51,10 +51,12 @@ class Sdist(sdist):
 
 libraries = []
 macros = []
+extra_compile_args = []
 
 if sys.platform == "win32":
     libraries.append("ws2_32")
     macros = [("__LITTLE_ENDIAN__", "1")]
+    extra_compile_args = ["/std:c++20"]
 
 ext_modules = []
 if not PYPY and not os.environ.get("MSGPACK_PUREPYTHON"):
@@ -65,6 +67,7 @@ if not PYPY and not os.environ.get("MSGPACK_PUREPYTHON"):
             libraries=libraries,
             include_dirs=["."],
             define_macros=macros,
+            extra_compile_args=extra_compile_args,
         )
     )
 del libraries, macros
