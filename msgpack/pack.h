@@ -24,6 +24,8 @@
 
 #ifdef __cplusplus
 extern "C" {
+#else
+#define bool char
 #endif
 
 typedef struct msgpack_packer {

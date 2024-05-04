@@ -25,7 +25,7 @@ def cythonize(src):
     if not have_cython:
         raise Exception("Cython is required for building from checkout")
     sys.stderr.write(f"cythonize: {src!r}\n")
-    cython_compiler.compile([src], cplus=True)
+    cython_compiler.compile([src])
 
 
 def ensure_source(src):
@@ -51,17 +51,17 @@ class Sdist(sdist):
 
 libraries = []
 macros = []
+ext_modules = []
 
 if sys.platform == "win32":
     libraries.append("ws2_32")
     macros = [("__LITTLE_ENDIAN__", "1")]
 
-ext_modules = []
 if not PYPY and not os.environ.get("MSGPACK_PUREPYTHON"):
     ext_modules.append(
         Extension(
             "msgpack._cmsgpack",
-            sources=["msgpack/_cmsgpack.cpp"],
+            sources=["msgpack/_cmsgpack.c"],
             libraries=libraries,
             include_dirs=["."],
             define_macros=macros,
