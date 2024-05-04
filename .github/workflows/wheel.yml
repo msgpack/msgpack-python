@@ -14,29 +14,25 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Set up QEMU
         if: runner.os == 'Linux'
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: arm64
+          platforms: all
 
-      - name: Set up Python 3.x
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.x"
           cache: "pip"
-
-      - name: Prepare
+      - name: Cythonize
         shell: bash
         run: |
           pip install -r requirements.txt
           make cython
 
       - name: Build
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v2.17.0
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
@@ -45,6 +41,7 @@ jobs:
           CIBW_SKIP: pp*
 
       - name: Build pure Python wheel
+        if: runner.os == 'Linux'
         env:
           MSGPACK_PUREPYTHON: "1"
         run: |
