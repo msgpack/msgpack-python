@@ -9,13 +9,13 @@ macros = []
 if sys.platform == "win32":
     libraries.append("ws2_32")
     macros = [("__LITTLE_ENDIAN__", "1")]
-    cflags = os.environ.get("CFLAGS")
+    cflags = os.environ.get("CXXFLAGS")
     cxx20flag = "/std:c++20"
     if cflags is None:
         cflags = cxx20flag
     elif cxx20flag not in cflags:
         cflags += " " + cxx20flag
-    os.environ["CFLAGS"] = cflags
+    os.environ["CXXFLAGS"] = cflags
 
 
 from setuptools import setup, Extension
