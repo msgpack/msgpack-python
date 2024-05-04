@@ -398,10 +398,10 @@ _end:
 #undef start_container
 
 static int unpack_construct(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
-    return unpack_execute(true, ctx, data, len, off);
+    return unpack_execute(1, ctx, data, len, off);
 }
 static int unpack_skip(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
-    return unpack_execute(false, ctx, data, len, off);
+    return unpack_execute(0, ctx, data, len, off);
 }
 
 #define unpack_container_header read_array_header
