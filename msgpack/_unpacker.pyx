@@ -210,7 +210,7 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
     raise ValueError("Unpack failed: error = %d" % (ret,))
 
 
-cdef class Unpacker(object):
+cdef class Unpacker:
     """Streaming unpacker.
 
     Arguments:
