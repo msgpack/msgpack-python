@@ -64,27 +64,6 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
 
 #include "pack_template.h"
 
-// return -2 when o is too long
-static inline int
-msgpack_pack_unicode(msgpack_packer *pk, PyObject *o, long long limit)
-{
-    assert(PyUnicode_Check(o));
-
-    Py_ssize_t len;
-    const char* buf = PyUnicode_AsUTF8AndSize(o, &len);
-    if (buf == NULL)
-        return -1;
-
-    if (len > limit) {
-        return -2;
-    }
-
-    int ret = msgpack_pack_raw(pk, len);
-    if (ret) return ret;
-
-    return msgpack_pack_raw_body(pk, buf, len);
-}
-
 #ifdef __cplusplus
 }
 #endif
