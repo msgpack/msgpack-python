@@ -1,6 +1,5 @@
 from collections import namedtuple
 import datetime
-import sys
 import struct
 
 
@@ -20,8 +19,9 @@ class ExtType(namedtuple("ExtType", "code data")):
 class Timestamp:
     """Timestamp represents the Timestamp extension type in msgpack.
 
-    When built with Cython, msgpack uses C methods to pack and unpack `Timestamp`. When using pure-Python
-    msgpack, :func:`to_bytes` and :func:`from_bytes` are used to pack and unpack `Timestamp`.
+    When built with Cython, msgpack uses C methods to pack and unpack `Timestamp`.
+    When using pure-Python msgpack, :func:`to_bytes` and :func:`from_bytes` are used to pack and
+    unpack `Timestamp`.
 
     This class is immutable: Do not override seconds and nanoseconds.
     """
@@ -39,7 +39,7 @@ class Timestamp:
             Number of nanoseconds to add to `seconds` to get fractional time.
             Maximum is 999_999_999.  Default is 0.
 
-        Note: Negative times (before the UNIX epoch) are represented as negative seconds + positive ns.
+        Note: Negative times (before the UNIX epoch) are represented as neg. seconds + pos. ns.
         """
         if not isinstance(seconds, int):
             raise TypeError("seconds must be an integer")
@@ -120,7 +120,7 @@ class Timestamp:
         """Create a Timestamp from posix timestamp in seconds.
 
         :param unix_float: Posix timestamp in seconds.
-        :type unix_float: int or float.
+        :type unix_float: int or float
         """
         seconds = int(unix_sec // 1)
         nanoseconds = int((unix_sec % 1) * 10**9)
@@ -154,10 +154,12 @@ class Timestamp:
     def to_datetime(self):
         """Get the timestamp as a UTC datetime.
 
-        :rtype: datetime.
+        :rtype: `datetime.datetime`
         """
         utc = datetime.timezone.utc
-        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(seconds=self.to_unix())
+        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
+            seconds=self.seconds, microseconds=self.nanoseconds // 1000
+        )
 
     @staticmethod
     def from_datetime(dt):
@@ -165,4 +167,4 @@ class Timestamp:
 
         :rtype: Timestamp
         """
-        return Timestamp.from_unix(dt.timestamp())
+        return Timestamp(seconds=int(dt.timestamp()), nanoseconds=dt.microsecond * 1000)

@@ -1,3 +1,35 @@
+1.0.8
+=====
+
+Release Date: 2024-03-01
+
+* Update Cython to 3.0.8. This fixes memory leak when iterating
+  ``Unpacker`` object on Python 3.12.
+* Do not include C/Cython files in binary wheels.
+
+
+1.0.7
+=====
+
+Release Date: 2023-09-28
+
+* Fix build error of extension module on Windows. (#567)
+* ``setup.py`` doesn't skip build error of extension module. (#568)
+
+
+1.0.6
+=====
+
+Release Date: 2023-09-21
+
+.. note::
+   v1.0.6 Wheels for Windows don't contain extension module.
+   Please upgrade to v1.0.7 or newer.
+
+* Add Python 3.12 wheels (#517)
+* Remove Python 2.7, 3.6, and 3.7 support
+
+
 1.0.5
 =====
 

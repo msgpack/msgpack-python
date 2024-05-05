@@ -1,25 +1,22 @@
-name: Black
+name: lint
 
 on: ["push", "pull_request"]
 
 jobs:
-  black:
+  lint:
     # We want to run on external PRs, but not on our own internal PRs as they'll be run
     # by the push to the branch.
     if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
 
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-          architecture: 'x64'
-
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Black Code Formatter
+      - name: ruff check
         run: |
-          pip install black==22.3.0
-          black -S --diff --check msgpack/ test/ setup.py
+          pipx run ruff check --diff msgpack/ test/ setup.py
+
+      - name: ruff format
+        run: |
+          pipx run ruff format --diff msgpack/ test/ setup.py

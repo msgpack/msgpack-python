@@ -1,4 +1,5 @@
 """Fallback pure Python implementation of msgpack"""
+
 from datetime import datetime as _DateTime
 import sys
 import struct
@@ -139,7 +140,7 @@ class Unpacker:
 
     :param file_like:
         File-like object having `.read(n)` method.
-        If specified, unpacker reads serialized data from it and :meth:`feed()` is not usable.
+        If specified, unpacker reads serialized data from it and `.feed()` is not usable.
 
     :param int read_size:
         Used as `file_like.read(read_size)`. (default: `min(16*1024, max_buffer_size)`)
@@ -163,12 +164,12 @@ class Unpacker:
     :param bool strict_map_key:
         If true (default), only str or bytes are accepted for map (dict) keys.
 
-    :param callable object_hook:
+    :param object_hook:
         When specified, it should be callable.
         Unpacker calls it with a dict argument after unpacking msgpack map.
         (See also simplejson)
 
-    :param callable object_pairs_hook:
+    :param object_pairs_hook:
         When specified, it should be callable.
         Unpacker calls it with a list of key-value pairs after unpacking msgpack map.
         (See also simplejson)
@@ -530,7 +531,7 @@ class Unpacker:
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (str, bytes):
                         raise ValueError("%s is not allowed for map key" % str(type(key)))
-                    if type(key) is str:
+                    if isinstance(key, str):
                         key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
@@ -616,7 +617,8 @@ class Packer:
 
     Packer's constructor has some keyword arguments:
 
-    :param callable default:
+    :param default:
+        When specified, it should be callable.
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
 

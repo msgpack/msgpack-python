@@ -71,7 +71,8 @@ cdef class Packer(object):
 
     Packer's constructor has some keyword arguments:
 
-    :param callable default:
+    :param default:
+        When specified, it should be callable.
         Convert user type to builtin type that Packer supports.
         See also simplejson's document.
 

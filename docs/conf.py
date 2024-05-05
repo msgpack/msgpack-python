@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # msgpack documentation build configuration file, created by
 # sphinx-quickstart on Sun Feb 24 14:20:50 2013.
 #
@@ -11,12 +9,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# sys.path.insert(0, os.path.abspath('.'))
+#import os
+#import sys
+#sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -91,7 +89,7 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "sphinxdoc"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

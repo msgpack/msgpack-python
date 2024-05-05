@@ -5,19 +5,19 @@ API reference
 
 .. autofunction:: pack
 
-:func:`dump` is alias for :func:`pack`
+``dump()`` is an alias for :func:`pack`
 
 .. autofunction:: packb
 
-:func:`dumps` is alias for :func:`packb`
+``dumps()`` is an alias for :func:`packb`
 
 .. autofunction:: unpack
 
-:func:`load` is alias for :func:`unpack`
+``load()`` is an alias for :func:`unpack`
 
 .. autofunction:: unpackb
 
-:func:`loads` is alias for :func:`unpackb`
+``loads()`` is an alias for :func:`unpackb`
 
 .. autoclass:: Packer
     :members:

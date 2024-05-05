@@ -4,9 +4,17 @@ PYTHON_SOURCES = msgpack test setup.py
 all: cython
 	python setup.py build_ext -i -f
 
-.PHONY: black
-black:
-	black $(PYTHON_SOURCES)
+.PHONY: format
+format:
+	pipx run ruff format $(PYTHON_SOURCES)
+
+.PHONY: lint
+lint:
+	pipx run ruff check $(PYTHON_SOURCES)
+
+.PHONY: doc
+doc:
+	cd docs && sphinx-build -n -v -W --keep-going -b html -d doctrees . html
 
 .PHONY: pyupgrade
 pyupgrade:
@@ -14,7 +22,7 @@ pyupgrade:
 
 .PHONY: cython
 cython:
-	cython --cplus msgpack/_cmsgpack.pyx
+	cython msgpack/_cmsgpack.pyx
 
 .PHONY: test
 test: cython

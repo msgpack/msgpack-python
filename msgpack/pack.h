@@ -24,10 +24,8 @@
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifdef _MSC_VER
-#define inline __inline
+#else
+#define bool char
 #endif
 
 typedef struct msgpack_packer {

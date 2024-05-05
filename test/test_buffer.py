@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import sys
-import pytest
 from msgpack import packb, unpackb
 
 

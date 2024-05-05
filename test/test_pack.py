@@ -3,12 +3,10 @@
 from collections import OrderedDict
 from io import BytesIO
 import struct
-import sys
 
 import pytest
-from pytest import raises, xfail
 
-from msgpack import packb, unpackb, Unpacker, Packer, pack
+from msgpack import packb, unpackb, Unpacker, Packer
 
 
 def check(data, use_list=False):
@@ -91,7 +89,7 @@ def testStrictUnicodeUnpack():
 
 def testIgnoreErrorsPack():
     re = unpackb(
-        packb("abc\uDC80\uDCFFdef", use_bin_type=True, unicode_errors="ignore"),
+        packb("abc\udc80\udcffdef", use_bin_type=True, unicode_errors="ignore"),
         raw=False,
         use_list=1,
     )
