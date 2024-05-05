@@ -1,3 +1,20 @@
+1.1.0rc1
+========
+
+Release Date: 2024-05-07
+
+* Update Cython to 3.0.10 to reduce C warnings and future support for Python 3.13.
+* Stop using C++ mode in Cython to reduce compile error on some compilers.
+* ``Packer()`` has ``buf_size`` option to specify initial size of
+  internal buffer to reduce reallocation.
+* The default internal buffer size of ``Packer()`` is reduced from
+  1MiB to 256KiB to optimize for common use cases. Use ``buf_size``
+  if you are packing large data.
+* ``Timestamp.to_datetime()`` and ``Timestamp.from_datetime()`` become
+  more acculate by avoiding floating point calculations. (#591)
+* The Cython code for ``Unpacker`` has been slightly rewritten for maintainability.
+
+
 1.0.8
 =====
 
