@@ -232,6 +232,7 @@ class Unpacker:
     def __init__(
         self,
         file_like=None,
+        *,
         read_size=0,
         use_list=True,
         raw=False,
@@ -650,32 +651,13 @@ class Packer:
         The error handler for encoding unicode. (default: 'strict')
         DO NOT USE THIS!!  This option is kept for very specific usage.
 
-    Example of streaming deserialize from file-like object::
-
-        unpacker = Unpacker(file_like)
-        for o in unpacker:
-            process(o)
-
-    Example of streaming deserialize from socket::
-
-        unpacker = Unpacker()
-        while True:
-            buf = sock.recv(1024**2)
-            if not buf:
-                break
-            unpacker.feed(buf)
-            for o in unpacker:
-                process(o)
-
-    Raises ``ExtraData`` when *packed* contains extra bytes.
-    Raises ``OutOfData`` when *packed* is incomplete.
-    Raises ``FormatError`` when *packed* is not valid msgpack.
-    Raises ``StackError`` when *packed* contains too nested.
-    Other exceptions can be raised during unpacking.
+    :param int buf_size:
+        Internal buffer size. This option is used only for C implementation.
     """
 
     def __init__(
         self,
+        *,
         default=None,
         use_single_float=False,
         autoreset=True,
@@ -683,6 +665,7 @@ class Packer:
         strict_types=False,
         datetime=False,
         unicode_errors=None,
+        buf_size=None,
     ):
         self._strict_types = strict_types
         self._use_float = use_single_float

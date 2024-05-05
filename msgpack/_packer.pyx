@@ -53,7 +53,7 @@ cdef inline int PyBytesLike_CheckExact(object o):
     return PyBytes_CheckExact(o) or PyByteArray_CheckExact(o)
 
 
-cdef class Packer(object):
+cdef class Packer:
     """
     MessagePack Packer
 
