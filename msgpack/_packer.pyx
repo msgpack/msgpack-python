@@ -16,8 +16,6 @@ from .ext import ExtType, Timestamp
 cdef extern from "Python.h":
 
     int PyMemoryView_Check(object obj)
-    char* PyUnicode_AsUTF8AndSize(object obj, Py_ssize_t *l) except NULL
-
 
 cdef extern from "pack.h":
     struct msgpack_packer:
@@ -26,11 +24,9 @@ cdef extern from "pack.h":
         size_t buf_size
         bint use_bin_type
 
-    int msgpack_pack_int(msgpack_packer* pk, int d)
     int msgpack_pack_nil(msgpack_packer* pk)
     int msgpack_pack_true(msgpack_packer* pk)
     int msgpack_pack_false(msgpack_packer* pk)
-    int msgpack_pack_long(msgpack_packer* pk, long d)
     int msgpack_pack_long_long(msgpack_packer* pk, long long d)
     int msgpack_pack_unsigned_long_long(msgpack_packer* pk, unsigned long long d)
     int msgpack_pack_float(msgpack_packer* pk, float d)
@@ -186,9 +182,6 @@ cdef class Packer(object):
                         continue
                     else:
                         raise OverflowError("Integer value out of range")
-            elif PyInt_CheckExact(o) if strict_types else PyInt_Check(o):
-                longval = o
-                ret = msgpack_pack_long(&self.pk, longval)
             elif PyFloat_CheckExact(o) if strict_types else PyFloat_Check(o):
                 if self.use_float:
                    fval = o
