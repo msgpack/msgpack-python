@@ -8,6 +8,7 @@ dist/*
 *.so
 *~
 msgpack/__version__.py
+msgpack/*.c
 msgpack/*.cpp
 *.egg-info
 /venv
