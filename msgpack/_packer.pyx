@@ -118,6 +118,10 @@ cdef class Packer:
         self.pk.buf_size = buf_size
         self.pk.length = 0
 
+    def __dealloc__(self):
+        PyMem_Free(self.pk.buf)
+        self.pk.buf = NULL
+
     def __init__(self, *, default=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=True,
                  bint strict_types=False, bint datetime=False, unicode_errors=None,
@@ -138,17 +142,11 @@ cdef class Packer:
         else:
             self.unicode_errors = self._berrors
 
-    def __dealloc__(self):
-        PyMem_Free(self.pk.buf)
-        self.pk.buf = NULL
-
+    # returns -2 when default should(o) be called
     cdef int _pack_inner(self, object o, bint will_default, int nest_limit) except -1:
         cdef long long llval
         cdef unsigned long long ullval
         cdef unsigned long ulval
-        cdef long longval
-        cdef float fval
-        cdef double dval
         cdef const char* rawval
         cdef Py_ssize_t L
         cdef bool strict_types = self.strict_types
@@ -175,16 +173,13 @@ cdef class Packer:
                     raise OverflowError("Integer value out of range")
         elif PyFloat_CheckExact(o) if strict_types else PyFloat_Check(o):
             if self.use_float:
-                fval = o
-                msgpack_pack_float(&self.pk, fval)
+                msgpack_pack_float(&self.pk, <float>o)
             else:
-                dval = o
-                msgpack_pack_double(&self.pk, dval)
+                msgpack_pack_double(&self.pk, <double>o)
         elif PyBytesLike_CheckExact(o) if strict_types else PyBytesLike_Check(o):
             L = Py_SIZE(o)
             if L > ITEM_LIMIT:
                 PyErr_Format(ValueError, b"%.200s object is too large", Py_TYPE(o).tp_name)
-                return -1
             rawval = o
             msgpack_pack_bin(&self.pk, L)
             msgpack_pack_raw_body(&self.pk, rawval, L)
@@ -211,12 +206,11 @@ cdef class Packer:
                 self._pack(v, nest_limit)
         elif type(o) is ExtType if strict_types else isinstance(o, ExtType):
             # This should be before Tuple because ExtType is namedtuple.
-            longval = o.code
             rawval = o.data
             L = len(o.data)
             if L > ITEM_LIMIT:
                 raise ValueError("EXT data is too large")
-            msgpack_pack_ext(&self.pk, longval, L)
+            msgpack_pack_ext(&self.pk, <long>o.code, L)
             msgpack_pack_raw_body(&self.pk, rawval, L)
         elif type(o) is Timestamp:
             llval = o.seconds
@@ -252,10 +246,8 @@ cdef class Packer:
         elif self.datetime and PyDateTime_CheckExact(o):
             # this should be later than will_default
             PyErr_Format(ValueError, b"can not serialize '%.200s' object where tzinfo=None", Py_TYPE(o).tp_name)
-            return -1
         else:
             PyErr_Format(TypeError, b"can not serialize '%.200s' object", Py_TYPE(o).tp_name)
-            return -1
 
     cdef int _pack(self, object o, int nest_limit=DEFAULT_RECURSE_LIMIT) except -1:
         cdef int ret
@@ -270,7 +262,7 @@ cdef class Packer:
                 return ret
         return self._pack_inner(o, 0, nest_limit)
 
-    cpdef pack(self, object obj):
+    def pack(self, object obj):
         cdef int ret
         try:
             ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
@@ -291,11 +283,7 @@ cdef class Packer:
     def pack_array_header(self, long long size):
         if size > ITEM_LIMIT:
             raise ValueError
-        cdef int ret = msgpack_pack_array(&self.pk, size)
-        if ret == -1:
-            raise MemoryError
-        elif ret:  # should not happen
-            raise TypeError
+        msgpack_pack_array(&self.pk, size)
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
@@ -304,11 +292,7 @@ cdef class Packer:
     def pack_map_header(self, long long size):
         if size > ITEM_LIMIT:
             raise ValueError
-        cdef int ret = msgpack_pack_map(&self.pk, size)
-        if ret == -1:
-            raise MemoryError
-        elif ret:  # should not happen
-            raise TypeError
+        msgpack_pack_map(&self.pk, size)
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
@@ -321,17 +305,10 @@ cdef class Packer:
         *pairs* should be a sequence of pairs.
         (`len(pairs)` and `for k, v in pairs:` should be supported.)
         """
-        cdef int ret = msgpack_pack_map(&self.pk, len(pairs))
-        if ret == 0:
-            for k, v in pairs:
-                ret = self._pack(k)
-                if ret != 0: break
-                ret = self._pack(v)
-                if ret != 0: break
-        if ret == -1:
-            raise MemoryError
-        elif ret:  # should not happen
-            raise TypeError
+        msgpack_pack_map(&self.pk, len(pairs))
+        for k, v in pairs:
+            self._pack(k)
+            self._pack(v)
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
