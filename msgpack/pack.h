@@ -21,11 +21,10 @@
 #include "sysdep.h"
 #include <limits.h>
 #include <string.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
-#else
-#define bool char
 #endif
 
 typedef struct msgpack_packer {

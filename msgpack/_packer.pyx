@@ -16,8 +16,6 @@ from .ext import ExtType, Timestamp
 cdef extern from "Python.h":
 
     int PyMemoryView_Check(object obj)
-    char* PyUnicode_AsUTF8AndSize(object obj, Py_ssize_t *l) except NULL
-
 
 cdef extern from "pack.h":
     struct msgpack_packer:
@@ -26,11 +24,9 @@ cdef extern from "pack.h":
         size_t buf_size
         bint use_bin_type
 
-    int msgpack_pack_int(msgpack_packer* pk, int d)
     int msgpack_pack_nil(msgpack_packer* pk)
     int msgpack_pack_true(msgpack_packer* pk)
     int msgpack_pack_false(msgpack_packer* pk)
-    int msgpack_pack_long(msgpack_packer* pk, long d)
     int msgpack_pack_long_long(msgpack_packer* pk, long long d)
     int msgpack_pack_unsigned_long_long(msgpack_packer* pk, unsigned long long d)
     int msgpack_pack_float(msgpack_packer* pk, float d)
@@ -44,8 +40,6 @@ cdef extern from "pack.h":
     int msgpack_pack_timestamp(msgpack_packer* x, long long seconds, unsigned long nanoseconds);
     int msgpack_pack_unicode(msgpack_packer* pk, object o, long long limit)
 
-cdef extern from "buff_converter.h":
-    object buff_to_buff(char *, Py_ssize_t)
 
 cdef int DEFAULT_RECURSE_LIMIT=511
 cdef long long ITEM_LIMIT = (2**32)-1
@@ -191,9 +185,6 @@ cdef class Packer(object):
                         continue
                     else:
                         raise OverflowError("Integer value out of range")
-            elif PyInt_CheckExact(o) if strict_types else PyInt_Check(o):
-                longval = o
-                ret = msgpack_pack_long(&self.pk, longval)
             elif PyFloat_CheckExact(o) if strict_types else PyFloat_Check(o):
                 if self.use_float:
                    fval = o
@@ -376,4 +367,10 @@ cdef class Packer(object):
 
     def getbuffer(self):
         """Return view of internal buffer."""
-        return buff_to_buff(self.pk.buf, self.pk.length)
+        return memoryview(self)
+
+    def __getbuffer__(self, Py_buffer *buffer, int flags):
+        PyBuffer_FillInfo(buffer, self, self.pk.buf, self.pk.length, 1, flags)
+
+    def __releasebuffer__(self, Py_buffer *buffer):
+        pass
