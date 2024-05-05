@@ -37,18 +37,6 @@
  * Integer
  */
 
-#define msgpack_pack_real_uint8(x, d) \
-do { \
-    if(d < (1<<7)) { \
-        /* fixnum */ \
-        msgpack_pack_append_buffer(x, &TAKE8_8(d), 1); \
-    } else { \
-        /* unsigned 8 */ \
-        unsigned char buf[2] = {0xcc, TAKE8_8(d)}; \
-        msgpack_pack_append_buffer(x, buf, 2); \
-    } \
-} while(0)
-
 #define msgpack_pack_real_uint16(x, d) \
 do { \
     if(d < (1<<7)) { \
@@ -120,18 +108,6 @@ do { \
             buf[0] = 0xcf; _msgpack_store64(&buf[1], d); \
             msgpack_pack_append_buffer(x, buf, 9); \
         } \
-    } \
-} while(0)
-
-#define msgpack_pack_real_int8(x, d) \
-do { \
-    if(d < -(1<<5)) { \
-        /* signed 8 */ \
-        unsigned char buf[2] = {0xd0, TAKE8_8(d)}; \
-        msgpack_pack_append_buffer(x, buf, 2); \
-    } else { \
-        /* fixnum */ \
-        msgpack_pack_append_buffer(x, &TAKE8_8(d), 1); \
     } \
 } while(0)
 
@@ -264,49 +240,6 @@ do { \
 } while(0)
 
 
-static inline int msgpack_pack_uint8(msgpack_packer* x, uint8_t d)
-{
-    msgpack_pack_real_uint8(x, d);
-}
-
-static inline int msgpack_pack_uint16(msgpack_packer* x, uint16_t d)
-{
-    msgpack_pack_real_uint16(x, d);
-}
-
-static inline int msgpack_pack_uint32(msgpack_packer* x, uint32_t d)
-{
-    msgpack_pack_real_uint32(x, d);
-}
-
-static inline int msgpack_pack_uint64(msgpack_packer* x, uint64_t d)
-{
-    msgpack_pack_real_uint64(x, d);
-}
-
-static inline int msgpack_pack_int8(msgpack_packer* x, int8_t d)
-{
-    msgpack_pack_real_int8(x, d);
-}
-
-static inline int msgpack_pack_int16(msgpack_packer* x, int16_t d)
-{
-    msgpack_pack_real_int16(x, d);
-}
-
-static inline int msgpack_pack_int32(msgpack_packer* x, int32_t d)
-{
-    msgpack_pack_real_int32(x, d);
-}
-
-static inline int msgpack_pack_int64(msgpack_packer* x, int64_t d)
-{
-    msgpack_pack_real_int64(x, d);
-}
-
-
-//#ifdef msgpack_pack_inline_func_cint
-
 static inline int msgpack_pack_short(msgpack_packer* x, short d)
 {
 #if defined(SIZEOF_SHORT)
@@ -372,192 +305,37 @@ if(sizeof(int) == 2) {
 static inline int msgpack_pack_long(msgpack_packer* x, long d)
 {
 #if defined(SIZEOF_LONG)
-#if SIZEOF_LONG == 2
-    msgpack_pack_real_int16(x, d);
-#elif SIZEOF_LONG == 4
+#if SIZEOF_LONG == 4
     msgpack_pack_real_int32(x, d);
 #else
     msgpack_pack_real_int64(x, d);
 #endif
 
 #elif defined(LONG_MAX)
-#if LONG_MAX == 0x7fffL
-    msgpack_pack_real_int16(x, d);
-#elif LONG_MAX == 0x7fffffffL
+#if LONG_MAX == 0x7fffffffL
     msgpack_pack_real_int32(x, d);
 #else
     msgpack_pack_real_int64(x, d);
 #endif
 
 #else
-if(sizeof(long) == 2) {
-    msgpack_pack_real_int16(x, d);
-} else if(sizeof(long) == 4) {
-    msgpack_pack_real_int32(x, d);
-} else {
-    msgpack_pack_real_int64(x, d);
-}
+    if (sizeof(long) == 4) {
+        msgpack_pack_real_int32(x, d);
+    } else {
+        msgpack_pack_real_int64(x, d);
+    }
 #endif
 }
 
 static inline int msgpack_pack_long_long(msgpack_packer* x, long long d)
 {
-#if defined(SIZEOF_LONG_LONG)
-#if SIZEOF_LONG_LONG == 2
-    msgpack_pack_real_int16(x, d);
-#elif SIZEOF_LONG_LONG == 4
-    msgpack_pack_real_int32(x, d);
-#else
     msgpack_pack_real_int64(x, d);
-#endif
-
-#elif defined(LLONG_MAX)
-#if LLONG_MAX == 0x7fffL
-    msgpack_pack_real_int16(x, d);
-#elif LLONG_MAX == 0x7fffffffL
-    msgpack_pack_real_int32(x, d);
-#else
-    msgpack_pack_real_int64(x, d);
-#endif
-
-#else
-if(sizeof(long long) == 2) {
-    msgpack_pack_real_int16(x, d);
-} else if(sizeof(long long) == 4) {
-    msgpack_pack_real_int32(x, d);
-} else {
-    msgpack_pack_real_int64(x, d);
-}
-#endif
-}
-
-static inline int msgpack_pack_unsigned_short(msgpack_packer* x, unsigned short d)
-{
-#if defined(SIZEOF_SHORT)
-#if SIZEOF_SHORT == 2
-    msgpack_pack_real_uint16(x, d);
-#elif SIZEOF_SHORT == 4
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#elif defined(USHRT_MAX)
-#if USHRT_MAX == 0xffffU
-    msgpack_pack_real_uint16(x, d);
-#elif USHRT_MAX == 0xffffffffU
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#else
-if(sizeof(unsigned short) == 2) {
-    msgpack_pack_real_uint16(x, d);
-} else if(sizeof(unsigned short) == 4) {
-    msgpack_pack_real_uint32(x, d);
-} else {
-    msgpack_pack_real_uint64(x, d);
-}
-#endif
-}
-
-static inline int msgpack_pack_unsigned_int(msgpack_packer* x, unsigned int d)
-{
-#if defined(SIZEOF_INT)
-#if SIZEOF_INT == 2
-    msgpack_pack_real_uint16(x, d);
-#elif SIZEOF_INT == 4
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#elif defined(UINT_MAX)
-#if UINT_MAX == 0xffffU
-    msgpack_pack_real_uint16(x, d);
-#elif UINT_MAX == 0xffffffffU
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#else
-if(sizeof(unsigned int) == 2) {
-    msgpack_pack_real_uint16(x, d);
-} else if(sizeof(unsigned int) == 4) {
-    msgpack_pack_real_uint32(x, d);
-} else {
-    msgpack_pack_real_uint64(x, d);
-}
-#endif
-}
-
-static inline int msgpack_pack_unsigned_long(msgpack_packer* x, unsigned long d)
-{
-#if defined(SIZEOF_LONG)
-#if SIZEOF_LONG == 2
-    msgpack_pack_real_uint16(x, d);
-#elif SIZEOF_LONG == 4
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#elif defined(ULONG_MAX)
-#if ULONG_MAX == 0xffffUL
-    msgpack_pack_real_uint16(x, d);
-#elif ULONG_MAX == 0xffffffffUL
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#else
-if(sizeof(unsigned long) == 2) {
-    msgpack_pack_real_uint16(x, d);
-} else if(sizeof(unsigned long) == 4) {
-    msgpack_pack_real_uint32(x, d);
-} else {
-    msgpack_pack_real_uint64(x, d);
-}
-#endif
 }
 
 static inline int msgpack_pack_unsigned_long_long(msgpack_packer* x, unsigned long long d)
 {
-#if defined(SIZEOF_LONG_LONG)
-#if SIZEOF_LONG_LONG == 2
-    msgpack_pack_real_uint16(x, d);
-#elif SIZEOF_LONG_LONG == 4
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#elif defined(ULLONG_MAX)
-#if ULLONG_MAX == 0xffffUL
-    msgpack_pack_real_uint16(x, d);
-#elif ULLONG_MAX == 0xffffffffUL
-    msgpack_pack_real_uint32(x, d);
-#else
-    msgpack_pack_real_uint64(x, d);
-#endif
-
-#else
-if(sizeof(unsigned long long) == 2) {
-    msgpack_pack_real_uint16(x, d);
-} else if(sizeof(unsigned long long) == 4) {
-    msgpack_pack_real_uint32(x, d);
-} else {
     msgpack_pack_real_uint64(x, d);
 }
-#endif
-}
-
-//#undef msgpack_pack_inline_func_cint
-//#endif
-
 
 
 /*
@@ -810,11 +588,9 @@ static inline int msgpack_pack_timestamp(msgpack_packer* x, int64_t seconds, uin
 #undef TAKE8_32
 #undef TAKE8_64
 
-#undef msgpack_pack_real_uint8
 #undef msgpack_pack_real_uint16
 #undef msgpack_pack_real_uint32
 #undef msgpack_pack_real_uint64
-#undef msgpack_pack_real_int8
 #undef msgpack_pack_real_int16
 #undef msgpack_pack_real_int32
 #undef msgpack_pack_real_int64
