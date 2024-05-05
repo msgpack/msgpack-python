@@ -49,17 +49,7 @@ msgpack provides `dumps` and `loads` as an alias for compatibility with
 [1, 2, 3]
 ```
 
-`unpack` unpacks msgpack's array to Python's list, but can also unpack to tuple:
-
-```pycon
->>> msgpack.unpackb(b'\x93\x01\x02\x03', use_list=False)
-(1, 2, 3)
-```
-
-You should always specify the `use_list` keyword argument for backward compatibility.
-See performance issues relating to `use_list option`_ below.
-
-Read the docstring for other options.
+Read the docstring for options.
 
 
 ### Streaming unpacking
@@ -115,6 +105,9 @@ this_dict_again = msgpack.unpackb(packed_dict, object_hook=decode_datetime)
 `Unpacker`'s `object_hook` callback receives a dict; the
 `object_pairs_hook` callback may instead be used to receive a list of
 key-value pairs.
+
+NOTE: msgpack can encode datetime with tzinfo into standard ext type for now.
+See `datetime` option in `Packer` docstring.
 
 
 ### Extended types
