@@ -1,6 +1,6 @@
-#!/usr/bin/env python
+from pytest import raises
 
-from msgpack import packb, unpackb
+from msgpack import packb, unpackb, Packer
 
 
 def test_unpack_buffer():
@@ -27,3 +27,21 @@ def test_unpack_memoryview():
     assert [b"foo", b"bar"] == obj
     expected_type = bytes
     assert all(type(s) == expected_type for s in obj)
+
+
+def test_packer_getbuffer():
+    packer = Packer(autoreset=False)
+    packer.pack_array_header(2)
+    packer.pack(42)
+    packer.pack("hello")
+    assert bytes(packer) == b"\x92*\xa5hello"
+    buffer = packer.getbuffer()
+    assert isinstance(buffer, memoryview)
+    assert bytes(buffer) == b"\x92*\xa5hello"
+
+    if Packer.__module__ == "msgpack._cmsgpack":  # only for Cython
+        with raises(BufferError):
+            packer.pack(42)
+        buffer.release()
+        packer.pack(42)
+        assert bytes(packer) == b"\x92*\xa5hello*"
