@@ -105,7 +105,7 @@ cdef class Packer(object):
         DO NOT USE THIS!!  This option is kept for very specific usage.
 
     :param int buf_size:
-        The size of the internal buffer. (default: 1024 * 1024)
+        The size of the internal buffer. (default: 256*1024)
         Useful if serialisation size can be correctly estimated,
         avoid unnecessary reallocations.
     """
@@ -118,7 +118,7 @@ cdef class Packer(object):
     cdef bint autoreset
     cdef bint datetime
 
-    def __cinit__(self, buf_size=1024*1024, **_kwargs):
+    def __cinit__(self, buf_size=256*1024, **_kwargs):
         self.pk.buf = <char*> PyMem_Malloc(buf_size)
         if self.pk.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
@@ -127,7 +127,8 @@ cdef class Packer(object):
 
     def __init__(self, *, default=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=True,
-                 bint strict_types=False, bint datetime=False, unicode_errors=None, buf_size=1024*1024):
+                 bint strict_types=False, bint datetime=False, unicode_errors=None,
+                 buf_size=256*1024):
         self.use_float = use_single_float
         self.strict_types = strict_types
         self.autoreset = autoreset
