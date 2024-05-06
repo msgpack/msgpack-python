@@ -45,11 +45,6 @@ include-package-data = false
 [tool.setuptools.dynamic]
 version = {attr = "msgpack.__version__"}
 
-[tool.black]
-line-length = 100
-target-version = ["py37"]
-skip_string_normalization = true
-
 [tool.ruff]
 line-length = 100
 target-version = "py38"

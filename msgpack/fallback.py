@@ -6,23 +6,18 @@ import struct
 
 
 if hasattr(sys, "pypy_version_info"):
-    # StringIO is slow on PyPy, StringIO is faster.  However: PyPy's own
-    # StringBuilder is fastest.
     from __pypy__ import newlist_hint
+    from __pypy__.builders import BytesBuilder
 
-    try:
-        from __pypy__.builders import BytesBuilder as StringBuilder
-    except ImportError:
-        from __pypy__.builders import StringBuilder
-    USING_STRINGBUILDER = True
+    _USING_STRINGBUILDER = True
 
-    class StringIO:
+    class BytesIO:
         def __init__(self, s=b""):
             if s:
-                self.builder = StringBuilder(len(s))
+                self.builder = BytesBuilder(len(s))
                 self.builder.append(s)
             else:
-                self.builder = StringBuilder()
+                self.builder = BytesBuilder()
 
         def write(self, s):
             if isinstance(s, memoryview):
@@ -35,14 +30,13 @@ if hasattr(sys, "pypy_version_info"):
             return self.builder.build()
 
 else:
-    USING_STRINGBUILDER = False
-    from io import BytesIO as StringIO
+    from io import BytesIO
 
     newlist_hint = lambda size: []
+    _USING_STRINGBUILDER = False
 
 
 from .exceptions import BufferFull, OutOfData, ExtraData, FormatError, StackError
-
 from .ext import ExtType, Timestamp
 
 
@@ -335,6 +329,7 @@ class Unpacker:
 
         # Use extend here: INPLACE_ADD += doesn't reliably typecast memoryview in jython
         self._buffer.extend(view)
+        view.release()
 
     def _consume(self):
         """Gets rid of the used parts of the buffer."""
@@ -671,7 +666,7 @@ class Packer:
         self._use_float = use_single_float
         self._autoreset = autoreset
         self._use_bin_type = use_bin_type
-        self._buffer = StringIO()
+        self._buffer = BytesIO()
         self._datetime = bool(datetime)
         self._unicode_errors = unicode_errors or "strict"
         if default is not None:
@@ -807,18 +802,18 @@ class Packer:
         try:
             self._pack(obj)
         except:
-            self._buffer = StringIO()  # force reset
+            self._buffer = BytesIO()  # force reset
             raise
         if self._autoreset:
             ret = self._buffer.getvalue()
-            self._buffer = StringIO()
+            self._buffer = BytesIO()
             return ret
 
     def pack_map_pairs(self, pairs):
         self._pack_map_pairs(len(pairs), pairs)
         if self._autoreset:
             ret = self._buffer.getvalue()
-            self._buffer = StringIO()
+            self._buffer = BytesIO()
             return ret
 
     def pack_array_header(self, n):
@@ -827,7 +822,7 @@ class Packer:
         self._pack_array_header(n)
         if self._autoreset:
             ret = self._buffer.getvalue()
-            self._buffer = StringIO()
+            self._buffer = BytesIO()
             return ret
 
     def pack_map_header(self, n):
@@ -836,7 +831,7 @@ class Packer:
         self._pack_map_header(n)
         if self._autoreset:
             ret = self._buffer.getvalue()
-            self._buffer = StringIO()
+            self._buffer = BytesIO()
             return ret
 
     def pack_ext_type(self, typecode, data):
@@ -925,11 +920,11 @@ class Packer:
 
         This method is useful only when autoreset=False.
         """
-        self._buffer = StringIO()
+        self._buffer = BytesIO()
 
     def getbuffer(self):
         """Return view of internal buffer."""
-        if USING_STRINGBUILDER:
+        if _USING_STRINGBUILDER:
             return memoryview(self.bytes())
         else:
             return self._buffer.getbuffer()
