@@ -1,6 +1,6 @@
 from pytest import raises
 
-from msgpack import packb, unpackb, Packer
+from msgpack import Packer, packb, unpackb
 
 
 def test_unpack_buffer():

@@ -1,5 +1,6 @@
 from collections import namedtuple
-from msgpack import packb, unpackb, ExtType
+
+from msgpack import ExtType, packb, unpackb
 
 
 def test_namedtuple():

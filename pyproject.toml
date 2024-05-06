@@ -45,17 +45,12 @@ include-package-data = false
 [tool.setuptools.dynamic]
 version = {attr = "msgpack.__version__"}
 
-[tool.black]
-line-length = 100
-target-version = ["py37"]
-skip_string_normalization = true
-
 [tool.ruff]
 line-length = 100
 target-version = "py38"
-lint.ignore = []
-
-[tool.ruff.lint.per-file-ignores]
-"msgpack/__init__.py" = ["F401", "F403"]
-"msgpack/fallback.py" = ["E731"]
-"test/test_seq.py" = ["E501"]
+lint.select = [
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "I", # isort
+    #"UP", pyupgrade
+]

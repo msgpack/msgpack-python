@@ -6,11 +6,11 @@ all: cython
 
 .PHONY: format
 format:
-	pipx run ruff format $(PYTHON_SOURCES)
+	ruff format $(PYTHON_SOURCES)
 
 .PHONY: lint
 lint:
-	pipx run ruff check $(PYTHON_SOURCES)
+	ruff check $(PYTHON_SOURCES)
 
 .PHONY: doc
 doc:

@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from pytest import raises
-from msgpack import packb, unpackb, Unpacker, FormatError, StackError, OutOfData
-
 import datetime
+
+from pytest import raises
+
+from msgpack import FormatError, OutOfData, StackError, Unpacker, packb, unpackb
 
 
 class DummyException(Exception):

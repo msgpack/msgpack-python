@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 import io
-from msgpack import Unpacker, BufferFull
-from msgpack import pack, packb
-from msgpack.exceptions import OutOfData
+
 from pytest import raises
+
+from msgpack import BufferFull, Unpacker, pack, packb
+from msgpack.exceptions import OutOfData
 
 
 def test_partialdata():
