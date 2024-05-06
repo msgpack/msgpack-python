@@ -1,5 +1,7 @@
-import pytest
 import datetime
+
+import pytest
+
 import msgpack
 from msgpack.ext import Timestamp
 

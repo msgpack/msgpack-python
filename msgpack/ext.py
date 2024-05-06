@@ -1,6 +1,6 @@
-from collections import namedtuple
 import datetime
 import struct
+from collections import namedtuple
 
 
 class ExtType(namedtuple("ExtType", "code data")):

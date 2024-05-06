@@ -1,12 +1,9 @@
-from io import BytesIO
 import sys
-from msgpack import Unpacker, packb, OutOfData, ExtType
-from pytest import raises, mark
+from io import BytesIO
 
-try:
-    from itertools import izip as zip
-except ImportError:
-    pass
+from pytest import mark, raises
+
+from msgpack import ExtType, OutOfData, Unpacker, packb
 
 
 def test_unpack_array_header_from_file():

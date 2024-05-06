@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-from msgpack import packb
 from collections import namedtuple
+
+from msgpack import packb
 
 
 class MyList(list):

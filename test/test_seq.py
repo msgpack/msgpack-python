@@ -1,8 +1,8 @@
-#!/usr/bin/env python
-
+# ruff: noqa: E501
+# ignore line length limit for long comments
 import io
-import msgpack
 
+import msgpack
 
 binarydata = bytes(bytearray(range(256)))
 

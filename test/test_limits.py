@@ -2,14 +2,14 @@
 import pytest
 
 from msgpack import (
-    packb,
-    unpackb,
-    Packer,
-    Unpacker,
     ExtType,
+    Packer,
     PackOverflowError,
     PackValueError,
+    Unpacker,
     UnpackValueError,
+    packb,
+    unpackb,
 )
 
 

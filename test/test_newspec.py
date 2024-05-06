@@ -1,4 +1,4 @@
-from msgpack import packb, unpackb, ExtType
+from msgpack import ExtType, packb, unpackb
 
 
 def test_str8():

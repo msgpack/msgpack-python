@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
+import struct
 from collections import OrderedDict
 from io import BytesIO
-import struct
 
 import pytest
 
-from msgpack import packb, unpackb, Unpacker, Packer
+from msgpack import Packer, Unpacker, packb, unpackb
 
 
 def check(data, use_list=False):

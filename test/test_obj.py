@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 from pytest import raises
+
 from msgpack import packb, unpackb
 
 

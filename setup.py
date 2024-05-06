@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import os
 import sys
-from setuptools import setup, Extension
+
+from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 from setuptools.command.sdist import sdist
-
 
 PYPY = hasattr(sys, "pypy_version_info")
 

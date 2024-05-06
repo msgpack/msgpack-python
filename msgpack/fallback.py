@@ -1,9 +1,8 @@
 """Fallback pure Python implementation of msgpack"""
 
-from datetime import datetime as _DateTime
-import sys
 import struct
-
+import sys
+from datetime import datetime as _DateTime
 
 if hasattr(sys, "pypy_version_info"):
     from __pypy__ import newlist_hint
@@ -32,13 +31,14 @@ if hasattr(sys, "pypy_version_info"):
 else:
     from io import BytesIO
 
-    newlist_hint = lambda size: []
     _USING_STRINGBUILDER = False
 
+    def newlist_hint(size):
+        return []
 
-from .exceptions import BufferFull, OutOfData, ExtraData, FormatError, StackError
+
+from .exceptions import BufferFull, ExtraData, FormatError, OutOfData, StackError
 from .ext import ExtType, Timestamp
-
 
 EX_SKIP = 0
 EX_CONSTRUCT = 1
@@ -669,9 +669,8 @@ class Packer:
         self._buffer = BytesIO()
         self._datetime = bool(datetime)
         self._unicode_errors = unicode_errors or "strict"
-        if default is not None:
-            if not callable(default):
-                raise TypeError("default must be callable")
+        if not callable(default):
+            raise TypeError("default must be callable")
         self._default = default
 
     def _pack(
