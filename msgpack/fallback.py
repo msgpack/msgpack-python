@@ -669,7 +669,7 @@ class Packer:
         self._buffer = BytesIO()
         self._datetime = bool(datetime)
         self._unicode_errors = unicode_errors or "strict"
-        if not callable(default):
+        if default is not None and not callable(default):
             raise TypeError("default must be callable")
         self._default = default
 
