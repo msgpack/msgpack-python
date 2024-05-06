@@ -11,7 +11,7 @@ Release Date: 2024-05-07
   1MiB to 256KiB to optimize for common use cases. Use ``buf_size``
   if you are packing large data.
 * ``Timestamp.to_datetime()`` and ``Timestamp.from_datetime()`` become
-  more acculate by avoiding floating point calculations. (#591)
+  more accurate by avoiding floating point calculations. (#591)
 * The Cython code for ``Unpacker`` has been slightly rewritten for maintainability.
 
 
@@ -147,7 +147,7 @@ Important changes
 * unpacker: Default value of input limits are smaller than before to avoid DoS attack.
   If you need to handle large data, you need to specify limits manually. (#319)
 
-* Unpacker doesn't wrap underlaying ``ValueError`` (including ``UnicodeError``) into
+* Unpacker doesn't wrap underlying ``ValueError`` (including ``UnicodeError``) into
   ``UnpackValueError``.  If you want to catch all exception during unpack, you need
   to use ``try ... except Exception`` with minimum try code block. (#323, #233)
 
