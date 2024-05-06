@@ -13,7 +13,8 @@ Release Date: 2024-05-07
 * ``Timestamp.to_datetime()`` and ``Timestamp.from_datetime()`` become
   more accurate by avoiding floating point calculations. (#591)
 * The Cython code for ``Unpacker`` has been slightly rewritten for maintainability.
-
+* The fallback implementation of ``Packer()`` and ``Unpacker()`` now uses keyword-only
+  arguments to improve compatibility with the Cython implementation.
 
 1.0.8
 =====
