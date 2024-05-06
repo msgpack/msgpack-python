@@ -48,17 +48,9 @@ version = {attr = "msgpack.__version__"}
 [tool.ruff]
 line-length = 100
 target-version = "py38"
-lint.ignore = []
 lint.select = [
-    # pycodestyle
-    "E",
-    # Pyflakes
-    "F",
-    # isort
-    "I",
-    # pyupgrade
-    #"UP",
+    "E", # pycodestyle
+    "F", # Pyflakes
+    "I", # isort
+    #"UP", pyupgrade
 ]
-
-[tool.ruff.lint.per-file-ignores]
-#"msgpack/__init__.py" = ["F401", "F403"]
