@@ -1,9 +1,5 @@
 [build-system]
-requires = [
-    # Also declared in requirements.txt, if updating here please also update there
-    "Cython~=3.0.10",
-    "setuptools >= 69.5.1",
-]
+requires = ["setuptools >= 69.5.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
