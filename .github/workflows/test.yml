@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        py: ["3.13-dev", "3.12", "3.11", "3.10", "3.9", "3.8"]
+        py: ["3.14-dev", "3.13-dev", "3.12", "3.11", "3.10", "3.9", "3.8"]
 
     runs-on: ${{ matrix.os }}
     name: Run test with Python ${{ matrix.py }} on ${{ matrix.os }}
@@ -25,6 +25,12 @@ jobs:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
           cache: "pip"
+      - name: Set up no-GIL Python
+        uses: deadsnakes/action@v3.1.0
+        if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.py, '3.14')
+          with:
+            python-version: ${{ matrix.py }}
+            nogil: true
 
       - name: Build
         shell: bash
