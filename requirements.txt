@@ -1,2 +1,4 @@
 # Also declared in pyproject.toml, if updating here please also update there.
-Cython~=3.0.10
+Cython~=3.0.10; python_version <= '3.12'
+# TODO: bump Cython version when wheels for >=3.13 and no-GIL come out
+Cython @ git+https://github.com/cython/cython; python_version > '3.12'
