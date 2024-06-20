@@ -21,6 +21,7 @@ jobs:
 
       - name: Set up Python
         uses: actions/setup-python@v5
+        if: "!startsWith(matrix.py, '3.14')"
         with:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
