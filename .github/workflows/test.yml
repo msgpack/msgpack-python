@@ -28,9 +28,9 @@ jobs:
       - name: Set up no-GIL Python
         uses: deadsnakes/action@v3.1.0
         if: startsWith(matrix.os, 'ubuntu') && startsWith(matrix.py, '3.14')
-          with:
-            python-version: ${{ matrix.py }}
-            nogil: true
+        with:
+          python-version: ${{ matrix.py }}
+          nogil: true
 
       - name: Build
         shell: bash
