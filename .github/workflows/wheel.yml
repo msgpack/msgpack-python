@@ -36,11 +36,13 @@ jobs:
           make cython
 
       - name: Build
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.19.1
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
+          CIBW_PRERELEASE_PYTHONS: true
           CIBW_ARCHS_LINUX: auto aarch64
+          CIBW_FREE_THREADED_SUPPORT: true
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_SKIP: pp*
 
