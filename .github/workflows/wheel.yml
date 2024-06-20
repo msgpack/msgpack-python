@@ -25,6 +25,8 @@ jobs:
         with:
           python-version: "3.x"
           cache: "pip"
+          allow-prereleases: true
+          check-latest: true
       - name: Cythonize
         shell: bash
         run: |
