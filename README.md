@@ -2,6 +2,7 @@
 
 [![Build Status](https://github.com/msgpack/msgpack-python/actions/workflows/wheel.yml/badge.svg)](https://github.com/msgpack/msgpack-python/actions/workflows/wheel.yml)
 [![Documentation Status](https://readthedocs.org/projects/msgpack-python/badge/?version=latest)](https://msgpack-python.readthedocs.io/en/latest/?badge=latest)
+[![msgpack Downloads Last Month](https://assets.piptrends.com/get-last-month-downloads-badge/msgpack.svg 'msgpack Downloads Last Month by pip Trends')](https://piptrends.com/package/msgpack)
 
 ## What's this
 
