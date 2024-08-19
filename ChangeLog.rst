@@ -1,3 +1,11 @@
+1.1.0rc2
+========
+
+Release Date: 2024-08-19
+
+* Update Cython to 3.0.11 for better Python 3.13 support.
+* Update cibuildwheel to 2.20.0 to build Python 3.13 wheels.
+
 1.1.0rc1
 ========
 
