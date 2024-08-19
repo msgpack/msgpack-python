@@ -38,7 +38,7 @@ jobs:
           CIBW_TEST_COMMAND: "pytest {package}/test"
           CIBW_ARCHS_LINUX: auto aarch64
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
-          CIBW_SKIP: pp*
+          CIBW_SKIP: "pp* cp38-macosx_*"
 
       - name: Build sdist
         if: runner.os == 'Linux'
