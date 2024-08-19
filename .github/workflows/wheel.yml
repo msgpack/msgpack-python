@@ -32,7 +32,7 @@ jobs:
           make cython
 
       - name: Build
-        uses: pypa/cibuildwheel@v2.17.0
+        uses: pypa/cibuildwheel@v2.20.0
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
@@ -40,13 +40,11 @@ jobs:
           CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_SKIP: pp*
 
-      - name: Build pure Python wheel
+      - name: Build sdist
         if: runner.os == 'Linux'
-        env:
-          MSGPACK_PUREPYTHON: "1"
         run: |
           pip install build
-          python -m build -w -o wheelhouse
+          python -m build -s -o wheelhouse
 
       - name: Upload Wheels to artifact
         uses: actions/upload-artifact@v4
