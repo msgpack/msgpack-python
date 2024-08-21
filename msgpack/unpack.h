@@ -47,7 +47,7 @@ static inline msgpack_unpack_object unpack_callback_root(unpack_user* u)
 
 static inline int unpack_callback_uint16(unpack_user* u, uint16_t d, msgpack_unpack_object* o)
 {
-    PyObject *p = PyInt_FromLong((long)d);
+    PyObject *p = PyLong_FromLong((long)d);
     if (!p)
         return -1;
     *o = p;
@@ -61,7 +61,7 @@ static inline int unpack_callback_uint8(unpack_user* u, uint8_t d, msgpack_unpac
 
 static inline int unpack_callback_uint32(unpack_user* u, uint32_t d, msgpack_unpack_object* o)
 {
-    PyObject *p = PyInt_FromSize_t((size_t)d);
+    PyObject *p = PyLong_FromSize_t((size_t)d);
     if (!p)
         return -1;
     *o = p;
@@ -74,7 +74,7 @@ static inline int unpack_callback_uint64(unpack_user* u, uint64_t d, msgpack_unp
     if (d > LONG_MAX) {
         p = PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG)d);
     } else {
-        p = PyInt_FromLong((long)d);
+        p = PyLong_FromLong((long)d);
     }
     if (!p)
         return -1;
@@ -84,7 +84,7 @@ static inline int unpack_callback_uint64(unpack_user* u, uint64_t d, msgpack_unp
 
 static inline int unpack_callback_int32(unpack_user* u, int32_t d, msgpack_unpack_object* o)
 {
-    PyObject *p = PyInt_FromLong(d);
+    PyObject *p = PyLong_FromLong(d);
     if (!p)
         return -1;
     *o = p;
@@ -107,7 +107,7 @@ static inline int unpack_callback_int64(unpack_user* u, int64_t d, msgpack_unpac
     if (d > LONG_MAX || d < LONG_MIN) {
         p = PyLong_FromLongLong((PY_LONG_LONG)d);
     } else {
-        p = PyInt_FromLong((long)d);
+        p = PyLong_FromLong((long)d);
     }
     *o = p;
     return 0;
