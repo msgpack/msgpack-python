@@ -1,3 +1,11 @@
+1.1.0
+=====
+
+Release Date: 2024-09-10
+
+* use ``PyLong_*`` instead of ``PyInt_*`` for compatibility with
+  future Cython. (#620)
+
 1.1.0rc2
 ========
 
