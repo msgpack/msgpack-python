@@ -134,3 +134,6 @@ def test_match():
 
 def test_unicode():
     assert unpackb(packb("foobar"), use_list=1) == "foobar"
+
+def test_dict_tuple_key():
+    unpackb(packb({(1, 2): 3}), strict_map_key=False)

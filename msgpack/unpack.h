@@ -199,6 +199,25 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
     if (PyUnicode_CheckExact(k)) {
         PyUnicode_InternInPlace(&k);
     }
+    if (PyList_CheckExact(k)) {
+        Py_ssize_t list_size = PyList_Size(k);
+        PyObject* tuple = PyTuple_New(list_size);
+
+        if (tuple == NULL) {
+            return -1;
+        }
+
+        for (Py_ssize_t i = 0; i < list_size; i++) {
+            PyObject* item = PyList_GetItem(k, i);
+            Py_INCREF(item);
+            if (PyTuple_SetItem(tuple, i, item) != 0) {
+                Py_DECREF(tuple);
+                return -1;
+            }
+        }
+        Py_DECREF(k);
+        k = tuple;
+    }
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);
         if (!item)
