@@ -529,7 +529,7 @@ class Unpacker:
                         raise ValueError("%s is not allowed for map key" % str(type(key)))
                     if isinstance(key, str):
                         key = sys.intern(key)
-                    elif isinstance(key, list):
+                    elif type(key) is list:
                         key = tuple(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
