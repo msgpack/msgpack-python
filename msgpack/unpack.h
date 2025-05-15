@@ -198,8 +198,7 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
     }
     if (PyUnicode_CheckExact(k)) {
         PyUnicode_InternInPlace(&k);
-    }
-    if (PyList_CheckExact(k)) {
+    } else if (PyList_CheckExact(k)) {
         Py_ssize_t list_size = PyList_Size(k);
         PyObject* tuple = PyTuple_New(list_size);
 
