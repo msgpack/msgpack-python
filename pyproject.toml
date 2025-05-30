@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools >= 69.5.1"]
+requires = ["setuptools >= 80.9.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "msgpack"
 dynamic = ["version"]
-license = {text="Apache 2.0"}
+license = "Apache-2.0"
 authors = [{name="Inada Naoki", email="songofacandy@gmail.com"}]
 description = "MessagePack serializer"
 readme = "README.md"
@@ -22,10 +22,10 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
 ]
 
 [project.urls]
