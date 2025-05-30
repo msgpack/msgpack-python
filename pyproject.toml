@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools >= 80.9.0"]
+# 75.3.0 is the latest version supporting Python 3.8
+requires = ["setuptools >= 75.3.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
