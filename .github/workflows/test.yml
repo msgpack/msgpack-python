@@ -26,10 +26,15 @@ jobs:
           allow-prereleases: true
           cache: "pip"
 
+      - name: Prepare
+        shell: bash
+        run: |
+          pip install -U pip
+          pip install -r requirements.txt pytest
+
       - name: Build
         shell: bash
         run: |
-          pip install -r requirements.txt pytest
           make cython
           pip install .
 
