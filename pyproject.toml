@@ -1,21 +1,25 @@
 [build-system]
-requires = ["setuptools >= v80.9.0"]
+# 75.3.0 is the latest version supporting Python 3.8
+requires = ["setuptools >= 75.3.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "msgpack"
 dynamic = ["version"]
-license = "Apache-2.0"
+# `license = "Apache-2.0"` is preferred. But keep old syntax for Python 3.8 compatibility.
+# https://github.com/msgpack/msgpack-python/pull/637
+license = {text="Apache 2.0"}
 authors = [{name="Inada Naoki", email="songofacandy@gmail.com"}]
 description = "MessagePack serializer"
 readme = "README.md"
 keywords = ["msgpack", "messagepack", "serializer", "serialization", "binary"]
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
+    "Topic :: File Formats",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -24,7 +28,6 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
-    "Intended Audience :: Developers",
 ]
 
 [project.urls]
@@ -43,7 +46,7 @@ version = {attr = "msgpack.__version__"}
 
 [tool.ruff]
 line-length = 100
-target-version = "py39"
+target-version = "py38"
 lint.select = [
     "E", # pycodestyle
     "F", # Pyflakes
