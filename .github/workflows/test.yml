@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
-        py: ["3.13-dev", "3.12", "3.11", "3.10", "3.9", "3.8"]
+        py: ["3.14-dev", "3.13", "3.12", "3.11", "3.10", "3.9", "3.8"]
 
     runs-on: ${{ matrix.os }}
     name: Run test with Python ${{ matrix.py }} on ${{ matrix.os }}
@@ -26,10 +26,15 @@ jobs:
           allow-prereleases: true
           cache: "pip"
 
+      - name: Prepare
+        shell: bash
+        run: |
+          pip install -U pip
+          pip install -r requirements.txt pytest
+
       - name: Build
         shell: bash
         run: |
-          pip install -r requirements.txt pytest
           make cython
           pip install .
 
