@@ -31,7 +31,7 @@ jobs:
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
-          CIBW_SKIP: "pp*"
+          CIBW_SKIP: "pp* cp38-macosx_*"
 
       - name: Build sdist
         if: runner.os == 'Linux'
