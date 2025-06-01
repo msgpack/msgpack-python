@@ -9,17 +9,12 @@ jobs:
   build_wheels:
     strategy:
       matrix:
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        # macos-13 is for intel
+        os: ["ubuntu-24.04", "ubuntu-24.04-arm", "windows-latest", "macos-13", "macos-latest"]
     runs-on: ${{ matrix.os }}
     name: Build wheels on ${{ matrix.os }}
 
     steps:
-      - name: Set up QEMU
-        if: runner.os == 'Linux'
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: all
-
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -32,12 +27,10 @@ jobs:
           make cython
 
       - name: Build
-        uses: pypa/cibuildwheel@v2.20.0
+        uses: pypa/cibuildwheel@v2.23.3
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
-          CIBW_ARCHS_LINUX: auto aarch64
-          CIBW_ARCHS_MACOS: x86_64 universal2 arm64
           CIBW_SKIP: "pp* cp38-macosx_*"
 
       - name: Build sdist
