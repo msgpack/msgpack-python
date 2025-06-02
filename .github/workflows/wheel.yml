@@ -47,6 +47,24 @@ jobs:
           name: wheels-${{ matrix.os }}
           path: wheelhouse
 
+  # combine all wheels into one artifact
+  combine_wheels:
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          # unpacks all CIBW artifacts into dist/
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - name: Upload Wheels to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheels-all
+          path: dist
+
   # https://github.com/pypa/cibuildwheel/blob/main/examples/github-deploy.yml
   upload_pypi:
     needs: [build_wheels]
