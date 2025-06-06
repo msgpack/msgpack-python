@@ -1,3 +1,10 @@
+1.1.1rc1
+========
+
+Release Date: 2025-06-06
+
+* Update Cython to 3.1.1 and cibuildwheel to 2.23.3.
+
 1.1.0
 =====
 
