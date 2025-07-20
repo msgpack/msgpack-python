@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-from concurrent.futures import ThreadPoolExecutor
-from msgpack import Packer
 import threading
+from concurrent.futures import ThreadPoolExecutor
+
+from msgpack import Packer
 
 
 def run_threaded(
