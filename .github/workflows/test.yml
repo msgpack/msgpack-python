@@ -41,7 +41,7 @@ jobs:
       - name: Test (C extension)
         shell: bash
         run: |
-          PYTHON_GIL=0 pytest -v test
+          pytest -v test
 
       - name: Test (pure Python fallback)
         shell: bash
