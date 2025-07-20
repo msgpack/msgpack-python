@@ -1,5 +1,5 @@
 # coding: utf-8
-
+# cython: freethreading_compatible = True 
 from cpython cimport *
 cdef extern from "Python.h":
     ctypedef struct PyObject

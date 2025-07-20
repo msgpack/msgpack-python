@@ -32,8 +32,9 @@ jobs:
         uses: pypa/cibuildwheel@v2.23.3
         env:
           CIBW_TEST_REQUIRES: "pytest"
-          CIBW_TEST_COMMAND: "pytest {package}/test"
+          CIBW_TEST_COMMAND: "PYTHON_GIL=0 pytest {package}/test"
           CIBW_SKIP: "pp* cp38-macosx_*"
+          CIBW_ENABLE: cpython-freerelease
 
       - name: Build sdist
         if: runner.os == 'Linux' && runner.arch == 'X64'
