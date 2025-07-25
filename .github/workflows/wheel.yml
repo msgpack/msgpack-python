@@ -34,6 +34,7 @@ jobs:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
           CIBW_SKIP: "pp* cp38-macosx_*"
+          CIBW_ENABLE: cpython-freerelease
 
       - name: Build sdist
         if: runner.os == 'Linux' && runner.arch == 'X64'

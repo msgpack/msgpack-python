@@ -1,5 +1,5 @@
 # coding: utf-8
-
+# cython: freethreading_compatible = True 
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 from cpython.datetime cimport (
