@@ -29,11 +29,11 @@ jobs:
           make cython
 
       - name: Build
-        uses: pypa/cibuildwheel@v2.23.3
+        uses: pypa/cibuildwheel@v3.1.1
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
-          CIBW_SKIP: "pp* cp38-macosx_*"
+          CIBW_SKIP: "pp* cp38-*"
 
       - name: Build sdist
         if: runner.os == 'Linux' && runner.arch == 'X64'
