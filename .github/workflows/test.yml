@@ -32,6 +32,11 @@ jobs:
           pip install -U pip
           pip install -r requirements.txt pytest
 
+      - name: Install pytest-run-parallel under free-threading
+        if: contains(matrix.py, 't')
+        run: |
+          pip install pytest-run-parallel
+
       - name: Build
         shell: bash
         run: |
@@ -39,14 +44,28 @@ jobs:
           pip install .
 
       - name: Test (C extension)
+        if: ! contains(matrix.py, 't')
         shell: bash
         run: |
           pytest -v test
 
       - name: Test (pure Python fallback)
+        if: ! contains(matrix.py, 't')
         shell: bash
         run: |
           MSGPACK_PUREPYTHON=1 pytest -v test
+
+      - name: Test (C extension) in parallel under free-threading
+        if: contains(matrix.py, 't')
+        shell: bash
+        run: |
+          pytest -v --parallel-threads=auto --iterations=20 test
+
+      - name: Test (pure Python fallback) in parallel under free-threading
+        if: contains(matrix.py, 't')
+        shell: bash
+        run: |
+          MSGPACK_PUREPYTHON=1 pytest -v --parallel-threads=auto --iterations=20 test
 
       - name: build packages
         shell: bash
