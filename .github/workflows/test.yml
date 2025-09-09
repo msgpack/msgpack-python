@@ -45,7 +45,7 @@ jobs:
           pip install .
 
       - name: Test (C extension)
-        if: ! contains(matrix.py, 't')
+        if: ${{ ! contains(matrix.py, 't') }}
         shell: bash
         run: |
           pytest -v test
