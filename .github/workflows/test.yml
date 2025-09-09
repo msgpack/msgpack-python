@@ -51,7 +51,7 @@ jobs:
           pytest -v test
 
       - name: Test (pure Python fallback)
-        if: ! contains(matrix.py, 't')
+        if: ${{ ! contains(matrix.py, 't') }}
         shell: bash
         run: |
           MSGPACK_PUREPYTHON=1 pytest -v test
