@@ -1,5 +1,5 @@
 # coding: utf-8
-#cython: embedsignature=True, c_string_encoding=ascii, language_level=3, freethreading_compatible=True
+# cython: embedsignature=True, c_string_encoding=ascii, language_level=3, freethreading_compatible=True
 from cpython.datetime cimport import_datetime, datetime_new
 import_datetime()
 

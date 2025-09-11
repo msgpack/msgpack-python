@@ -29,8 +29,6 @@ jobs:
       - name: Prepare
         shell: bash
         run: |
-          # TODO: Workaround for Windows tests failing when upgrading `pip` with exit code 1
-          # pip install -U pip
           pip install -r requirements.txt pytest
 
       - name: Install pytest-run-parallel under free-threading
