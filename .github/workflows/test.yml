@@ -9,9 +9,13 @@ jobs:
   test:
     strategy:
       matrix:
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        os: ["ubuntu-latest", "windows-latest", "windows-11-arm", "macos-latest"]
         py: ["3.14-dev", "3.13", "3.12", "3.11", "3.10", "3.9"]
-
+        exclude:
+          - os: windows-11-arm
+            py: "3.9"
+          - os: windows-11-arm
+            py: "3.10"
     runs-on: ${{ matrix.os }}
     name: Run test with Python ${{ matrix.py }} on ${{ matrix.os }}
 
@@ -29,8 +33,8 @@ jobs:
       - name: Prepare
         shell: bash
         run: |
-          pip install -U pip
-          pip install -r requirements.txt pytest
+          python -m pip install -U pip
+          python -m pip install -r requirements.txt pytest
 
       - name: Build
         shell: bash
