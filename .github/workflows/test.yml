@@ -11,6 +11,11 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         py: ["3.14", "3.14t", "3.13", "3.13t", "3.12", "3.11", "3.10", "3.9"]
+        exclude:
+          - os: windows-11-arm
+            py: "3.9"
+          - os: windows-11-arm
+            py: "3.10"
 
     runs-on: ${{ matrix.os }}
     name: Run test with Python ${{ matrix.py }} on ${{ matrix.os }}
@@ -29,7 +34,8 @@ jobs:
       - name: Prepare
         shell: bash
         run: |
-          pip install -r requirements.txt pytest
+          python -m pip install -U pip
+          python -m pip install -r requirements.txt pytest
 
       - name: Install pytest-run-parallel under free-threading
         if: contains(matrix.py, 't')
