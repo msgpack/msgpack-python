@@ -31,6 +31,7 @@ jobs:
       - name: Build
         uses: pypa/cibuildwheel@v3.1.1
         env:
+          CIBW_PRERELEASE_PYTHONS: "auto"
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
           CIBW_SKIP: "pp* cp38-* cp39-win_arm64 cp310-win_arm64"
