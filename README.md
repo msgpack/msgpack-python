@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/msgpack/msgpack-python/actions/workflows/wheel.yml/badge.svg)](https://github.com/msgpack/msgpack-python/actions/workflows/wheel.yml)
 [![Documentation Status](https://readthedocs.org/projects/msgpack-python/badge/?version=latest)](https://msgpack-python.readthedocs.io/en/latest/?badge=latest)
 
-## What's this
+## What is this?
 
 [MessagePack](https://msgpack.org/) is an efficient binary serialization format.
 It lets you exchange data among multiple languages like JSON.
@@ -25,9 +25,9 @@ But msgpack provides a pure Python implementation (`msgpack.fallback`) for PyPy.
 
 ### Windows
 
-When you can't use a binary distribution, you need to install Visual Studio
-or Windows SDK on Windows.
-Without extension, using pure Python implementation on CPython runs slowly.
+If you can't use a binary distribution, you need to install Visual Studio
+or the Windows SDK on Windows.
+Without the extension, the pure Python implementation on CPython runs slowly.
 
 
 ## How to use
@@ -35,11 +35,11 @@ Without extension, using pure Python implementation on CPython runs slowly.
 ### One-shot pack & unpack
 
 Use `packb` for packing and `unpackb` for unpacking.
-msgpack provides `dumps` and `loads` as an alias for compatibility with
+msgpack provides `dumps` and `loads` as aliases for compatibility with
 `json` and `pickle`.
 
-`pack` and `dump` packs to a file-like object.
-`unpack` and `load` unpacks from a file-like object.
+`pack` and `dump` pack to a file-like object.
+`unpack` and `load` unpack from a file-like object.
 
 ```pycon
 >>> import msgpack
@@ -73,7 +73,7 @@ for unpacked in unpacker:
 ```
 
 
-### Packing/unpacking of custom data type
+### Packing/unpacking of custom data types
 
 It is also possible to pack/unpack custom data types. Here is an example for
 `datetime.datetime`.
@@ -140,8 +140,8 @@ True
 ### Advanced unpacking control
 
 As an alternative to iteration, `Unpacker` objects provide `unpack`,
-`skip`, `read_array_header` and `read_map_header` methods. The former two
-read an entire message from the stream, respectively de-serialising and returning
+`skip`, `read_array_header`, and `read_map_header` methods. The former two
+read an entire message from the stream, respectively deserializing and returning
 the result, or ignoring it. The latter two methods return the number of elements
 in the upcoming container, so that each element in an array, or key-value pair
 in a map, can be unpacked or skipped individually.
@@ -149,7 +149,7 @@ in a map, can be unpacked or skipped individually.
 
 ## Notes
 
-### string and binary type in old msgpack spec
+### String and binary types in the old MessagePack spec
 
 Early versions of msgpack didn't distinguish string and binary types.
 The type for representing both string and binary types was named **raw**.
@@ -167,7 +167,7 @@ and `raw=True` options.
 
 ### ext type
 
-To use the **ext** type, pass `msgpack.ExtType` object to packer.
+To use the **ext** type, pass a `msgpack.ExtType` object to the packer.
 
 ```pycon
 >>> import msgpack
@@ -181,26 +181,26 @@ You can use it with `default` and `ext_hook`. See below.
 
 ### Security
 
-To unpacking data received from unreliable source, msgpack provides
+When unpacking data received from an unreliable source, msgpack provides
 two security options.
 
 `max_buffer_size` (default: `100*1024*1024`) limits the internal buffer size.
-It is used to limit the preallocated list size too.
+It is also used to limit preallocated list sizes.
 
 `strict_map_key` (default: `True`) limits the type of map keys to bytes and str.
-While msgpack spec doesn't limit the types of the map keys,
-there is a risk of the hashdos.
+While the MessagePack spec doesn't limit map key types,
+there is a risk of a hash DoS.
 If you need to support other types for map keys, use `strict_map_key=False`.
 
 
 ### Performance tips
 
-CPython's GC starts when growing allocated object.
-This means unpacking may cause useless GC.
-You can use `gc.disable()` when unpacking large message.
+CPython's GC starts when the number of allocated objects grows.
+This means unpacking may trigger unnecessary GC.
+You can use `gc.disable()` when unpacking a large message.
 
-List is the default sequence type of Python.
-But tuple is lighter than list.
+A list is the default sequence type in Python.
+However, a tuple is lighter than a list.
 You can use `use_list=False` while unpacking when performance is important.
 
 
@@ -208,7 +208,7 @@ You can use `use_list=False` while unpacking when performance is important.
 
 ### msgpack 0.5
 
-Package name on PyPI was changed from `msgpack-python` to `msgpack` from 0.5.
+The package name on PyPI was changed from `msgpack-python` to `msgpack` in 0.5.
 
 When upgrading from msgpack-0.4 or earlier, do `pip uninstall msgpack-python` before
 `pip install -U msgpack`.
@@ -218,25 +218,25 @@ When upgrading from msgpack-0.4 or earlier, do `pip uninstall msgpack-python` be
 
 * Python 2 support
 
-  * The extension module does not support Python 2 anymore.
+  * The extension module no longer supports Python 2.
     The pure Python implementation (`msgpack.fallback`) is used for Python 2.
   
   * msgpack 1.0.6 drops official support of Python 2.7, as pip and
-    GitHub Action (setup-python) no longer support Python 2.7.
+    GitHub Action "setup-python" no longer supports Python 2.7.
 
 * Packer
 
   * Packer uses `use_bin_type=True` by default.
-    Bytes are encoded in bin type in msgpack.
-  * The `encoding` option is removed.  UTF-8 is used always.
+    Bytes are encoded in the bin type in MessagePack.
+  * The `encoding` option is removed. UTF-8 is always used.
 
 * Unpacker
 
-  * Unpacker uses `raw=False` by default.  It assumes str types are valid UTF-8 string
-    and decode them to Python str (unicode) object.
+  * Unpacker uses `raw=False` by default. It assumes str values are valid UTF-8 strings
+    and decodes them to Python str (Unicode) objects.
   * `encoding` option is removed.  You can use `raw=True` to support old format (e.g. unpack into bytes, not str).
-  * Default value of `max_buffer_size` is changed from 0 to 100 MiB to avoid DoS attack.
+  * The default value of `max_buffer_size` is changed from 0 to 100 MiB to avoid DoS attacks.
     You need to pass `max_buffer_size=0` if you have large but safe data.
-  * Default value of `strict_map_key` is changed to True to avoid hashdos.
-    You need to pass `strict_map_key=False` if you have data which contain map keys
-    which type is not bytes or str.
+  * The default value of `strict_map_key` is changed to True to avoid hash DoS.
+    You need to pass `strict_map_key=False` if you have data that contain map keys
+    whose type is neither bytes nor str.
