@@ -3,10 +3,13 @@
 
 Release Date: 2025-10-08
 
+This release does not change source code. It updates only building wheels:
+
 * Update Cython to v3.1.4
 * Update cibuildwheel to v3.2.0
 * Drop Python 3.8
 * Add Python 3.14
+* Add windows-arm
 
 1.1.1
 =====
