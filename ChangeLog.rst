@@ -1,3 +1,13 @@
+1.1.2
+=====
+
+Release Date: 2025-10-08
+
+* Update Cython to v3.1.4
+* Update cibuildwheel to v3.2.0
+* Drop Python 3.8
+* Add Python 3.14
+
 1.1.1
 =====
 
