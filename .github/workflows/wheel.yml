@@ -17,8 +17,8 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.x"
           cache: "pip"
@@ -33,8 +33,7 @@ jobs:
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
-          CIBW_SKIP: "pp* cp38-* cp39-win_arm64 cp310-win_arm64"
-          CIBW_ENABLE: cpython-freethreading
+          CIBW_SKIP: "pp* cp38-* cp39-* cp310-win_arm64"
 
       - name: Build sdist
         if: runner.os == 'Linux' && runner.arch == 'X64'
