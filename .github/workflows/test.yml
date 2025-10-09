@@ -10,10 +10,8 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "windows-11-arm", "macos-latest"]
-        py: ["3.14", "3.14t", "3.13", "3.12", "3.11", "3.10", "3.9"]
+        py: ["3.14", "3.14t", "3.13", "3.12", "3.11", "3.10"]
         exclude:
-          - os: windows-11-arm
-            py: "3.9"
           - os: windows-11-arm
             py: "3.10"
     runs-on: ${{ matrix.os }}
@@ -21,10 +19,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.py }}
           allow-prereleases: true
