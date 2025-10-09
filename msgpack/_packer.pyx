@@ -1,5 +1,3 @@
-# coding: utf-8
-
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 from cpython.datetime cimport (
@@ -129,6 +127,7 @@ cdef class Packer:
         if self.exports > 0:
             raise BufferError("Existing exports of data: Packer cannot be changed")
 
+    @cython.critical_section
     def __init__(self, *, default=None,
                  bint use_single_float=False, bint autoreset=True, bint use_bin_type=True,
                  bint strict_types=False, bint datetime=False, unicode_errors=None,
@@ -269,6 +268,7 @@ cdef class Packer:
                 return ret
         return self._pack_inner(o, 0, nest_limit)
 
+    @cython.critical_section
     def pack(self, object obj):
         cdef int ret
         self._check_exports()
@@ -284,6 +284,7 @@ cdef class Packer:
             self.pk.length = 0
             return buf
 
+    @cython.critical_section
     def pack_ext_type(self, typecode, data):
         self._check_exports()
         if len(data) > ITEM_LIMIT:
@@ -291,6 +292,7 @@ cdef class Packer:
         msgpack_pack_ext(&self.pk, typecode, len(data))
         msgpack_pack_raw_body(&self.pk, data, len(data))
 
+    @cython.critical_section
     def pack_array_header(self, long long size):
         self._check_exports()
         if size > ITEM_LIMIT:
@@ -301,6 +303,7 @@ cdef class Packer:
             self.pk.length = 0
             return buf
 
+    @cython.critical_section
     def pack_map_header(self, long long size):
         self._check_exports()
         if size > ITEM_LIMIT:
@@ -311,6 +314,7 @@ cdef class Packer:
             self.pk.length = 0
             return buf
 
+    @cython.critical_section
     def pack_map_pairs(self, object pairs):
         """
         Pack *pairs* as msgpack map type.
@@ -331,6 +335,7 @@ cdef class Packer:
             self.pk.length = 0
             return buf
 
+    @cython.critical_section
     def reset(self):
         """Reset internal buffer.
 
@@ -339,6 +344,7 @@ cdef class Packer:
         self._check_exports()
         self.pk.length = 0
 
+    @cython.critical_section
     def bytes(self):
         """Return internal buffer contents as bytes object"""
         return PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
