@@ -355,10 +355,12 @@ static int unpack_callback_ext(unpack_user* u, const char* base, const char* pos
                 return -1;
             }
 
-            py = PyNumber_Add(epoch, d);
+            PyObject *added = PyNumber_Add(epoch, d);
+            py = PyObject_CallMethod(added, "astimezone", "O", Py_None);
 
             Py_DECREF(epoch);
             Py_DECREF(d);
+            Py_DECREF(added);
         }
         else { // float
             PyObject *a = PyFloat_FromDouble((double)ts.tv_nsec);

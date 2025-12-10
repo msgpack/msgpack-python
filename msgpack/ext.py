@@ -157,9 +157,10 @@ class Timestamp:
         :rtype: `datetime.datetime`
         """
         utc = datetime.timezone.utc
-        return datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
+        utcDatetime = datetime.datetime.fromtimestamp(0, utc) + datetime.timedelta(
             seconds=self.seconds, microseconds=self.nanoseconds // 1000
         )
+        return utcDatetime.astimezone(tz=None)
 
     @staticmethod
     def from_datetime(dt):
