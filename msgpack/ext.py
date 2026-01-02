@@ -6,6 +6,7 @@ from collections import namedtuple
 
 class ExtType(namedtuple("ExtType", "code data")):
     """ExtType represents ext type in msgpack."""
+
     code: int
     data: bytes
 
@@ -16,7 +17,7 @@ class ExtType(namedtuple("ExtType", "code data")):
             raise TypeError("data must be bytes")
         if not 0 <= code <= 127:
             raise ValueError("code must be 0~127")
-        return super().__new__(cls, code, data) # type: ignore
+        return super().__new__(cls, code, data)  # type: ignore
 
 
 class Timestamp:

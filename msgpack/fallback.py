@@ -7,7 +7,7 @@ import typing as t
 from collections.abc import Sequence
 from datetime import datetime as _DateTime
 
-_ClassInfo: t.TypeAlias = type | types.UnionType | tuple['_ClassInfo', ...]
+_ClassInfo: t.TypeAlias = type | types.UnionType | tuple["_ClassInfo", ...]
 _Pair = tuple[t.Any, t.Any]
 _Pairs = t.Iterable[_Pair]
 _SizeFmt = tuple[int, str]
@@ -90,7 +90,7 @@ def unpackb(packed: bytes, **kwargs: dict[str, t.Any]):
 
     See :class:`Unpacker` for options.
     """
-    unpacker = Unpacker(None, max_buffer_size=len(packed), **kwargs) # type: ignore
+    unpacker = Unpacker(None, max_buffer_size=len(packed), **kwargs)  # type: ignore
     unpacker.feed(packed)
     try:
         ret = unpacker._unpack()
@@ -528,19 +528,20 @@ class Unpacker:
                 return
             if self._object_pairs_hook is not None:
                 ret = self._object_pairs_hook(
-                    (self._unpack(EX_CONSTRUCT), self._unpack(EX_CONSTRUCT)) for _ in range(n) # type: ignore
+                    (self._unpack(EX_CONSTRUCT), self._unpack(EX_CONSTRUCT))
+                    for _ in range(n)  # type: ignore
                 )
             else:
                 ret = {}
                 for _ in range(n):
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (str, bytes):
-                        raise ValueError("%s is not allowed for map key" % str(type(key))) # type: ignore
+                        raise ValueError("%s is not allowed for map key" % str(type(key)))  # type: ignore
                     if isinstance(key, str):
                         key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
                 if self._object_hook is not None:
-                    ret = self._object_hook(ret) # type: ignore
+                    ret = self._object_hook(ret)  # type: ignore
             return ret
         if execute == EX_SKIP:
             return

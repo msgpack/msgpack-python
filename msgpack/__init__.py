@@ -25,7 +25,7 @@ def pack(o: t.Any, stream: t.BinaryIO, **kwargs: dict[str, t.Any]):
 
     See :class:`Packer` for options.
     """
-    packer = Packer(autoreset=True, **kwargs) # type: ignore
+    packer = Packer(autoreset=True, **kwargs)  # type: ignore
     stream.write(t.cast(bytes, packer.pack(o)))
 
 
@@ -35,7 +35,7 @@ def packb(o: t.Any, **kwargs: dict[str, t.Any]):
 
     See :class:`Packer` for options.
     """
-    return Packer(autoreset=True, **kwargs).pack(o) # type: ignore
+    return Packer(autoreset=True, **kwargs).pack(o)  # type: ignore
 
 
 def unpack(stream: t.BinaryIO, **kwargs: dict[str, t.Any]):
