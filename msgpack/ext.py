@@ -1,7 +1,7 @@
 import datetime
 import struct
-from collections import namedtuple
 import typing as t
+from collections import namedtuple
 
 
 class ExtType(namedtuple("ExtType", "code data")):

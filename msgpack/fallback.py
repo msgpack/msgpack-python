@@ -2,10 +2,10 @@
 
 import struct
 import sys
-from datetime import datetime as _DateTime
-import typing as t
 import types
+import typing as t
 from collections.abc import Sequence
+from datetime import datetime as _DateTime
 
 _ClassInfo: t.TypeAlias = type | types.UnionType | tuple['_ClassInfo', ...]
 _Pair = tuple[t.Any, t.Any]
