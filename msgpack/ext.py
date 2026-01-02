@@ -1,19 +1,22 @@
 import datetime
 import struct
 from collections import namedtuple
+import typing as t
 
 
 class ExtType(namedtuple("ExtType", "code data")):
     """ExtType represents ext type in msgpack."""
+    code: int
+    data: bytes
 
-    def __new__(cls, code, data):
+    def __new__(cls, code: int, data: bytes):
         if not isinstance(code, int):
             raise TypeError("code must be int")
         if not isinstance(data, bytes):
             raise TypeError("data must be bytes")
         if not 0 <= code <= 127:
             raise ValueError("code must be 0~127")
-        return super().__new__(cls, code, data)
+        return super().__new__(cls, code, data) # type: ignore
 
 
 class Timestamp:
@@ -28,7 +31,7 @@ class Timestamp:
 
     __slots__ = ["seconds", "nanoseconds"]
 
-    def __init__(self, seconds, nanoseconds=0):
+    def __init__(self, seconds: int, nanoseconds=0):
         """Initialize a Timestamp object.
 
         :param int seconds:
@@ -54,13 +57,13 @@ class Timestamp:
         """String representation of Timestamp."""
         return f"Timestamp(seconds={self.seconds}, nanoseconds={self.nanoseconds})"
 
-    def __eq__(self, other):
+    def __eq__(self, other: t.Any):
         """Check for equality with another Timestamp object"""
         if type(other) is self.__class__:
             return self.seconds == other.seconds and self.nanoseconds == other.nanoseconds
         return False
 
-    def __ne__(self, other):
+    def __ne__(self, other: t.Any):
         """not-equals method (see :func:`__eq__()`)"""
         return not self.__eq__(other)
 
@@ -68,7 +71,7 @@ class Timestamp:
         return hash((self.seconds, self.nanoseconds))
 
     @staticmethod
-    def from_bytes(b):
+    def from_bytes(b: bytes):
         """Unpack bytes into a `Timestamp` object.
 
         Used for pure-Python msgpack unpacking.
@@ -116,7 +119,7 @@ class Timestamp:
         return data
 
     @staticmethod
-    def from_unix(unix_sec):
+    def from_unix(unix_sec: int | float):
         """Create a Timestamp from posix timestamp in seconds.
 
         :param unix_float: Posix timestamp in seconds.
@@ -135,7 +138,7 @@ class Timestamp:
         return self.seconds + self.nanoseconds / 1e9
 
     @staticmethod
-    def from_unix_nano(unix_ns):
+    def from_unix_nano(unix_ns: int):
         """Create a Timestamp from posix timestamp in nanoseconds.
 
         :param int unix_ns: Posix timestamp in nanoseconds.
@@ -162,7 +165,7 @@ class Timestamp:
         )
 
     @staticmethod
-    def from_datetime(dt):
+    def from_datetime(dt: datetime.datetime):
         """Create a Timestamp from datetime with tzinfo.
 
         :rtype: Timestamp
