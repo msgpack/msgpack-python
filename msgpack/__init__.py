@@ -19,7 +19,7 @@ else:
         from .fallback import Packer, Unpacker, unpackb
 
 
-def pack(o: t.Any, stream: t.BinaryIO, **kwargs: dict[str, t.Any]):
+def pack(o: t.Any, stream: t.BinaryIO, **kwargs: t.Any):
     """
     Pack object `o` and write it to `stream`
 
@@ -29,7 +29,7 @@ def pack(o: t.Any, stream: t.BinaryIO, **kwargs: dict[str, t.Any]):
     stream.write(t.cast(bytes, packer.pack(o)))
 
 
-def packb(o: t.Any, **kwargs: dict[str, t.Any]):
+def packb(o: t.Any, **kwargs: t.Any) -> bytes:
     """
     Pack object `o` and return packed bytes
 
@@ -38,7 +38,7 @@ def packb(o: t.Any, **kwargs: dict[str, t.Any]):
     return Packer(autoreset=True, **kwargs).pack(o)  # type: ignore
 
 
-def unpack(stream: t.BinaryIO, **kwargs: dict[str, t.Any]):
+def unpack(stream: t.BinaryIO, **kwargs: t.Any):
     """
     Unpack an object from `stream`.
 

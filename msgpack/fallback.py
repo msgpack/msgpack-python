@@ -78,7 +78,7 @@ def _get_data_from_buffer(obj: bytes):
     return view
 
 
-def unpackb(packed: bytes, **kwargs: dict[str, t.Any]):
+def unpackb(packed: bytes, **kwargs: t.Any):
     """
     Unpack an object from `packed`.
 
