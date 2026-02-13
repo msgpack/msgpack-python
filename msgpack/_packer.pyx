@@ -8,7 +8,7 @@ from cpython.datetime cimport (
 cdef ExtType
 cdef Timestamp
 
-from .ext import ExtType, Timestamp
+from .ext import ExtType, Timestamp, Bypass
 
 
 cdef extern from "Python.h":
@@ -222,6 +222,8 @@ cdef class Packer:
             llval = o.seconds
             ulval = o.nanoseconds
             msgpack_pack_timestamp(&self.pk, llval, ulval)
+        elif type(o) is Bypass:
+            msgpack_pack_raw_body(&self.pk, o.data, len(o.data))
         elif PyList_CheckExact(o) if strict else (PyTuple_Check(o) or PyList_Check(o)):
             L = Py_SIZE(o)
             if L > ITEM_LIMIT:
