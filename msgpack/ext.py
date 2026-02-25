@@ -16,6 +16,19 @@ class ExtType(namedtuple("ExtType", "code data")):
         return super().__new__(cls, code, data)
 
 
+class Bypass:
+    """Bypass is a placeholder class to skip serialization and pass the bytes value as is."""
+
+    __slots__ = ["data"]
+
+    def __init__(self, data):
+        if isinstance(data, bytes):
+            self.data = data
+
+        else:
+            self.data = memoryview(data).tobytes()
+
+
 class Timestamp:
     """Timestamp represents the Timestamp extension type in msgpack.
 
