@@ -45,7 +45,10 @@ static inline int unpack_container_header(unpack_context* ctx, const char* data,
         PyErr_SetString(PyExc_ValueError, "Unexpected type header on stream");
         return -1;
     }
-    unpack_callback_uint32(&ctx->user, size, &ctx->stack[0].obj);
+
+    if (unpack_callback_uint32(&ctx->user, size, &ctx->stack[0].obj) < 0)
+        return -1;
+
     return 1;
 }
 
