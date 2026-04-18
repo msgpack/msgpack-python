@@ -109,6 +109,8 @@ static inline int unpack_callback_int64(unpack_user* u, int64_t d, msgpack_unpac
     } else {
         p = PyLong_FromLong((long)d);
     }
+    if (!p)
+        return -1;
     *o = p;
     return 0;
 }
