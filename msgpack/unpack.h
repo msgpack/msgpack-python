@@ -70,12 +70,7 @@ static inline int unpack_callback_uint32(unpack_user* u, uint32_t d, msgpack_unp
 
 static inline int unpack_callback_uint64(unpack_user* u, uint64_t d, msgpack_unpack_object* o)
 {
-    PyObject *p;
-    if (d > LONG_MAX) {
-        p = PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG)d);
-    } else {
-        p = PyLong_FromLong((long)d);
-    }
+    PyObject *p = PyLong_FromUnsignedLongLong((unsigned PY_LONG_LONG)d);
     if (!p)
         return -1;
     *o = p;
