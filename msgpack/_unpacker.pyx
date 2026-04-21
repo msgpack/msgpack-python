@@ -205,7 +205,10 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
         raise FormatError
     elif ret == -3:
         raise StackError
-    raise ValueError("Unpack failed: error = %d" % (ret,))
+    elif PyErr_Occurred():
+        raise
+    else:
+        raise ValueError("Unpack failed: error = %d" % (ret,))
 
 
 cdef class Unpacker:
@@ -481,6 +484,8 @@ cdef class Unpacker:
                 raise FormatError
             elif ret == -3:
                 raise StackError
+            elif PyErr_Occurred():
+                raise
             else:
                 raise ValueError("Unpack failed: error = %d" % (ret,))
 
