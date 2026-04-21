@@ -98,11 +98,6 @@ static inline int unpack_callback_int8(unpack_user* u, int8_t d, msgpack_unpack_
 
 static inline int unpack_callback_int64(unpack_user* u, int64_t d, msgpack_unpack_object* o)
 {
-    PyObject *p;
-    if (d > LONG_MAX || d < LONG_MIN) {
-        p = PyLong_FromLongLong((PY_LONG_LONG)d);
-    } else {
-        p = PyLong_FromLong((long)d);
     PyObject *p = PyLong_FromLongLong((PY_LONG_LONG)d);
     if (!p)
         return -1;
