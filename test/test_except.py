@@ -4,7 +4,7 @@ import datetime
 
 from pytest import raises
 
-from msgpack import FormatError, OutOfData, StackError, Unpacker, packb, unpackb
+from msgpack import ExtType, FormatError, OutOfData, StackError, Unpacker, packb, unpackb
 
 
 class DummyException(Exception):
@@ -30,6 +30,34 @@ def test_raise_from_object_hook():
         packb({"fizz": {"buzz": "spam"}}),
         object_pairs_hook=hook,
     )
+
+
+def test_raise_from_list_hook():
+    def hook(lst: list) -> list:
+        raise DummyException
+
+    with raises(DummyException):
+        unpackb(packb([1, 2, 3]), list_hook=hook)
+
+    with raises(DummyException):
+        unpacker = Unpacker(list_hook=hook)
+        unpacker.feed(packb([1, 2, 3]))
+        unpacker.unpack()
+
+
+def test_raise_from_ext_hook():
+    def hook(code: int, data: bytes) -> ExtType:
+        raise DummyException
+
+    packed = packb(ExtType(42, b"hello"))
+
+    with raises(DummyException):
+        unpackb(packed, ext_hook=hook)
+
+    with raises(DummyException):
+        unpacker = Unpacker(ext_hook=hook)
+        unpacker.feed(packed)
+        unpacker.unpack()
 
 
 def test_invalidvalue():
