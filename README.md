@@ -119,15 +119,15 @@ It is also possible to pack/unpack custom data types using the **ext** type.
 >>> import array
 >>> def default(obj):
 ...     if isinstance(obj, array.array) and obj.typecode == 'd':
-...         return msgpack.ExtType(42, obj.tostring())
+...         return msgpack.ExtType(42, obj.tobytes())
 ...     raise TypeError("Unknown type: %r" % (obj,))
 ...
 >>> def ext_hook(code, data):
 ...     if code == 42:
 ...         a = array.array('d')
-...         a.fromstring(data)
+...         a.frombytes(data)
 ...         return a
-...     return ExtType(code, data)
+...     return msgpack.ExtType(code, data)
 ...
 >>> data = array.array('d', [1.2, 3.4])
 >>> packed = msgpack.packb(data, default=default)
