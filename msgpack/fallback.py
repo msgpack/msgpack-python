@@ -861,6 +861,10 @@ class Packer:
             self._buffer.write(b"\xc9" + struct.pack(">I", L))
         self._buffer.write(struct.pack("B", typecode))
         self._buffer.write(data)
+        if self._autoreset:
+            ret = self._buffer.getvalue()
+            self._buffer = BytesIO()
+            return ret
 
     def _pack_array_header(self, n):
         if n <= 0x0F:
