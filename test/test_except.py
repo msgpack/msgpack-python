@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import datetime
+import gc
+import tracemalloc
 
 from pytest import raises
 
@@ -78,6 +80,39 @@ def test_invalidvalue():
 
     with raises(StackError):
         unpackb(b"\x91" * 3000)  # nested fixarray(len=1)
+
+
+def test_no_memory_leak_on_nested_invalid_tag() -> None:
+    """Regression test: unpacking nested arrays containing an invalid tag must not leak objects."""
+
+    kwargs: dict = {
+        "raw": False,
+        "strict_map_key": False,
+        "max_array_len": 1 << 20,
+        "max_map_len": 1 << 20,
+    }
+    n = 1000
+
+    for depth in range(1, 15):
+        data = bytes([0x91] * depth + [0xC1])
+
+        gc.collect()
+        tracemalloc.start()
+        s1 = tracemalloc.take_snapshot()
+
+        for _ in range(n):
+            try:
+                unpackb(data, **kwargs)
+            except Exception:
+                pass
+
+        gc.collect()
+        s2 = tracemalloc.take_snapshot()
+        tracemalloc.stop()
+
+        leaked = sum(s.count_diff for s in s2.compare_to(s1, "lineno") if s.count_diff > 0)
+        per_call = leaked / n
+        assert per_call < 1.0, f"depth={depth}: {per_call:.2f} leaked objects/call (expected < 1)"
 
 
 def test_strict_map_key():
