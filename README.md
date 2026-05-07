@@ -204,6 +204,41 @@ However, a tuple is lighter than a list.
 You can use `use_list=False` while unpacking when performance is important.
 
 
+### Thread safety (CPython 3.14+ free-threaded build)
+
+msgpack is designed to be thread-safe when used with CPython 3.14's
+free-threaded build (PEP 703).
+
+#### Thread-Safety Guarantees
+
+* **Individual `Packer` and `Unpacker` instances are thread-safe**:
+  You can safely call methods on the same `Packer` or `Unpacker` instance
+  from multiple threads concurrently. All public methods are protected by
+  critical sections that ensure atomic access to internal state.
+
+* **Module-level functions are thread-safe**: Functions like `packb()` and
+  `unpackb()` create their own instances internally and are safe to call
+  from multiple threads.
+
+#### Performance Considerations
+
+While sharing a single `Packer` or `Unpacker` instance across threads is safe,
+it may serialize operations due to critical section locking. For optimal
+performance in multi-threaded applications, create separate instances per thread:
+
+```python
+import msgpack
+from concurrent.futures import ThreadPoolExecutor
+
+def worker(data):
+    # Each thread creates its own packer
+    packer = msgpack.Packer()
+    return packer.pack(data)
+
+with ThreadPoolExecutor(max_workers=4) as executor:
+    results = executor.map(worker, <data>)
+```
+
 ## Major breaking changes in the history
 
 ### msgpack 0.5
