@@ -89,3 +89,17 @@ def test_strict_map_key():
     packed = packb(invalid, use_bin_type=True)
     with raises(ValueError):
         unpackb(packed, raw=False, strict_map_key=True)
+
+
+def test_strict_map_key_with_object_pairs_hook():
+    # strict_map_key should be enforced even when object_pairs_hook is set
+    invalid = {42: "value"}
+    packed = packb(invalid, use_bin_type=True)
+    with raises(ValueError):
+        unpackb(packed, raw=False, strict_map_key=True, object_pairs_hook=list)
+
+    # valid keys (str/bytes) should still work with object_pairs_hook
+    valid = {"key": "value"}
+    packed = packb(valid, use_bin_type=True)
+    result = unpackb(packed, raw=False, strict_map_key=True, object_pairs_hook=list)
+    assert result == [("key", "value")]
