@@ -322,6 +322,7 @@ cdef class Unpacker:
         self.buf = NULL
 
     def __dealloc__(self):
+        unpack_clear(&self.ctx)
         PyMem_Free(self.buf)
         self.buf = NULL
 
