@@ -2,7 +2,7 @@
 import os
 
 from .exceptions import *  # noqa: F403
-from .ext import ExtType, Timestamp
+from .ext import Bypass, ExtType, Timestamp
 
 version = (1, 1, 2)
 __version__ = "1.1.2"
