@@ -551,6 +551,7 @@ static inline int msgpack_pack_ext(msgpack_packer* x, char typecode, size_t l)
  */
 static inline int msgpack_pack_timestamp(msgpack_packer* x, int64_t seconds, uint32_t nanoseconds)
 {
+    int ret;
     if ((seconds >> 34) == 0) {
         /* seconds is unsigned and fits in 34 bits */
         uint64_t data64 = ((uint64_t)nanoseconds << 34) | (uint64_t)seconds;
@@ -558,26 +559,33 @@ static inline int msgpack_pack_timestamp(msgpack_packer* x, int64_t seconds, uin
             /* no nanoseconds and seconds is 32bits or smaller. timestamp32. */
             unsigned char buf[4];
             uint32_t data32 = (uint32_t)data64;
-            msgpack_pack_ext(x, -1, 4);
+            ret = msgpack_pack_ext(x, -1, 4);
+            if (ret != 0)
+                return ret;
+
             _msgpack_store32(buf, data32);
-            msgpack_pack_raw_body(x, buf, 4);
+            return msgpack_pack_raw_body(x, buf, 4);
         } else {
             /* timestamp64 */
             unsigned char buf[8];
-            msgpack_pack_ext(x, -1, 8);
-            _msgpack_store64(buf, data64);
-            msgpack_pack_raw_body(x, buf, 8);
+            ret = msgpack_pack_ext(x, -1, 8);
+            if (ret != 0)
+                return ret;
 
+            _msgpack_store64(buf, data64);
+            return msgpack_pack_raw_body(x, buf, 8);
         }
     } else {
-       /* seconds is signed or >34bits */
-       unsigned char buf[12];
-       _msgpack_store32(&buf[0], nanoseconds);
-       _msgpack_store64(&buf[4], seconds);
-       msgpack_pack_ext(x, -1, 12);
-       msgpack_pack_raw_body(x, buf, 12);
+        /* seconds is signed or >34bits */
+        unsigned char buf[12];
+        _msgpack_store32(&buf[0], nanoseconds);
+        _msgpack_store64(&buf[4], seconds);
+        ret = msgpack_pack_ext(x, -1, 12);
+        if (ret != 0)
+            return ret;
+
+        return msgpack_pack_raw_body(x, buf, 12);
     }
-    return 0;
 }
 
 
