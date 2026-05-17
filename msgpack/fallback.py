@@ -52,8 +52,6 @@ TYPE_RAW = 3
 TYPE_BIN = 4
 TYPE_EXT = 5
 
-DEFAULT_RECURSE_LIMIT = 511
-
 
 def _check_type_strict(obj, t, type=type, tuple=tuple):
     if type(t) is tuple:
@@ -682,7 +680,6 @@ class Packer:
     def _pack(
         self,
         obj,
-        nest_limit=DEFAULT_RECURSE_LIMIT,
         check=isinstance,
         check_type_strict=_check_type_strict,
     ):
@@ -693,8 +690,6 @@ class Packer:
         else:
             list_types = (list, tuple)
         while True:
-            if nest_limit < 0:
-                raise ValueError("recursion limit exceeded")
             if obj is None:
                 return self._buffer.write(b"\xc0")
             if check(obj, bool):
@@ -783,10 +778,10 @@ class Packer:
                 n = len(obj)
                 self._pack_array_header(n)
                 for i in range(n):
-                    self._pack(obj[i], nest_limit - 1)
+                    self._pack(obj[i])
                 return
             if check(obj, dict):
-                return self._pack_map_pairs(len(obj), obj.items(), nest_limit - 1)
+                return self._pack_map_pairs(len(obj), obj.items())
 
             if self._datetime and check(obj, _DateTime) and obj.tzinfo is not None:
                 obj = Timestamp.from_datetime(obj)
@@ -886,11 +881,11 @@ class Packer:
             return self._buffer.write(struct.pack(">BI", 0xDF, n))
         raise ValueError("Dict is too large")
 
-    def _pack_map_pairs(self, n, pairs, nest_limit=DEFAULT_RECURSE_LIMIT):
+    def _pack_map_pairs(self, n, pairs):
         self._pack_map_header(n)
         for k, v in pairs:
-            self._pack(k, nest_limit - 1)
-            self._pack(v, nest_limit - 1)
+            self._pack(k)
+            self._pack(v)
 
     def _pack_raw_header(self, n):
         if n <= 0x1F:
