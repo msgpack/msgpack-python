@@ -38,7 +38,7 @@ cdef extern from "pack.h":
     int msgpack_pack_timestamp(msgpack_packer* x, long long seconds, unsigned long nanoseconds) except -1
 
 
-cdef int DEFAULT_RECURSE_LIMIT=511
+cdef int DEFAULT_RECURSE_LIMIT=1024
 cdef long long ITEM_LIMIT = (2**32)-1
 
 

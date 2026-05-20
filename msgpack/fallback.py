@@ -52,7 +52,7 @@ TYPE_RAW = 3
 TYPE_BIN = 4
 TYPE_EXT = 5
 
-DEFAULT_RECURSE_LIMIT = 511
+DEFAULT_RECURSE_LIMIT = 1024
 
 
 def _check_type_strict(obj, t, type=type, tuple=tuple):

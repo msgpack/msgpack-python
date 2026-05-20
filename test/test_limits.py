@@ -153,6 +153,24 @@ def test_auto_max_array_len():
         unpacker.unpack()
 
 
+def test_nest_limit_1024():
+    import sys
+
+    # Build a list nested 1024 levels deep
+    d = None
+    for _ in range(1024):
+        d = [d]
+
+    # Temporarily raise Python's recursion limit so packing 1024 levels succeeds
+    old_limit = sys.getrecursionlimit()
+    sys.setrecursionlimit(max(old_limit, 10000))
+    try:
+        packed = packb(d)
+        assert unpackb(packed) == d
+    finally:
+        sys.setrecursionlimit(old_limit)
+
+
 def test_auto_max_map_len():
     # len(packed) == 6 -> max_map_len == 3
     packed = b"\xde\x00\x04zzz"
