@@ -97,3 +97,15 @@ def test_multidim_memoryview():
     data = view.cast(view.format, (3, 2))
     packed = packb(data)
     assert packed == b"\xc4\x06\x00\x00\x00\x00\x00\x00"
+
+
+def test_unpack_noncontiguous_memoryview():
+    # Use a multi-byte value so the padded stride-2 view is non-contiguous.
+    packed = packb(2**32)
+    padded = bytearray()
+    for byte in packed:
+        padded.append(byte)
+        padded.append(0)
+    noncont = memoryview(bytes(padded))[::2]
+    assert not noncont.c_contiguous
+    assert unpackb(noncont) == 2**32
