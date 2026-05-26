@@ -130,9 +130,7 @@ cdef inline int get_data_from_buffer(object obj,
         # create a contiguous copy and get buffer
         contiguous = PyMemoryView_GetContiguous(obj, PyBUF_READ, b'C')
         PyObject_GetBuffer(contiguous, view, PyBUF_SIMPLE)
-        # view must hold the only reference to contiguous,
-        # so memory is freed when view is released
-        Py_DECREF(contiguous)
+
     buffer_len[0] = view.len
     buf[0] = <char*> view.buf
     return 1
