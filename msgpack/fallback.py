@@ -328,8 +328,7 @@ class Unpacker:
             self._buf_checkpoint = 0
 
         # Use extend here: INPLACE_ADD += doesn't reliably typecast memoryview in jython
-        # tobytes ensures compatibility with non-contiguous memoryviews
-        self._buffer.extend(view.tobytes())
+        self._buffer.extend(view if view.contiguous else view.tobytes())
         view.release()
 
     def _consume(self):
