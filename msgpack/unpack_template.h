@@ -72,6 +72,14 @@ static inline PyObject* unpack_data(unpack_context* ctx)
 
 static inline void unpack_clear(unpack_context *ctx)
 {
+    unsigned int i;
+    for (i = 1; i < ctx->top; i++) {
+        Py_CLEAR(ctx->stack[i].obj);
+        /* map_key holds a live reference only while waiting for the value */
+        if (ctx->stack[i].ct == CT_MAP_VALUE) {
+            Py_CLEAR(ctx->stack[i].map_key);
+        }
+    }
     Py_CLEAR(ctx->stack[0].obj);
 }
 
