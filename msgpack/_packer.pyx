@@ -291,6 +291,10 @@ cdef class Packer:
             raise ValueError("ext data too large")
         msgpack_pack_ext(&self.pk, typecode, len(data))
         msgpack_pack_raw_body(&self.pk, data, len(data))
+        if self.autoreset:
+            buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
+            self.pk.length = 0
+            return buf
 
     @cython.critical_section
     def pack_array_header(self, long long size):
