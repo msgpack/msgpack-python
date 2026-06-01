@@ -6,7 +6,7 @@ from msgpack import ExtType
 
 def test_pack_ext_type():
     def p(s):
-        packer = msgpack.Packer()
+        packer = msgpack.Packer(autoreset=False)
         packer.pack_ext_type(0x42, s)
         return packer.bytes()
 
@@ -18,6 +18,15 @@ def test_pack_ext_type():
     assert p(b"ABC") == b"\xc7\x03\x42ABC"  # ext 8
     assert p(b"A" * 0x0123) == b"\xc8\x01\x23\x42" + b"A" * 0x0123  # ext 16
     assert p(b"A" * 0x00012345) == b"\xc9\x00\x01\x23\x45\x42" + b"A" * 0x00012345  # ext 32
+
+
+def test_pack_ext_type_autoreset():
+    packer = msgpack.Packer()
+
+    assert packer.pack_ext_type(0x42, b"A") == b"\xd4\x42A"
+    assert packer.bytes() == b""
+    assert packer.pack_ext_type(0x42, b"ABC") == b"\xc7\x03\x42ABC"
+    assert packer.bytes() == b""
 
 
 def test_unpack_ext_type():
