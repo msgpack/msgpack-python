@@ -98,7 +98,7 @@ Release Date: 2023-03-08
 Release Date: 2022-06-03
 
 - Support Python 3.11 (beta).
-- Don't define <span class="title-ref">\_\_\*\_ENDIAN\_\_</span> macro
+- Don't define `__*_ENDIAN__` macro
   on Unix. by @methane in
   <https://github.com/msgpack/msgpack-python/pull/495>
 - Use PyFloat_Pack8() on Python 3.11a7 by @vstinner in
@@ -200,14 +200,13 @@ reason (DoS).
 # 0.5.6
 
 - Fix fallback.Unpacker.feed() dropped unused data from buffer (#287)
-- Resurrect fallback.unpack() and
-  <span id="unpacker.unpack">unpacker.unpack</span>(). They were removed
-  at 0.5.5 but it breaks backward compatibility. (#288, \#290)
+- Resurrect fallback.unpack() and `unpacker.unpack()`. They were removed
+  at 0.5.5 but it breaks backward compatibility. (#288, #290)
 
 # 0.5.5
 
 - Fix memory leak in pure Python Unpacker.feed() (#283)
-- Fix unpack() didn't support <span class="title-ref">raw</span> option
+- Fix unpack() didn't support `raw` option
   (#285)
 
 # 0.5.4
@@ -372,11 +371,8 @@ Release Date: 2013-10-21
 
 - Default value of `use_list` is `True` for now. (It was `False` for
   0.2.x) You should pass it explicitly for compatibility to 0.2.x.
-- <span class="title-ref">Unpacker.unpack()</span> and some unpack
-  methods now raise <span class="title-ref">OutOfData</span> instead of
-  <span class="title-ref">StopIteration</span>.
-  <span class="title-ref">StopIteration</span> is used for iterator
-  protocol only.
+- `Unpacker.unpack()` and some unpack methods now raise `OutOfData` instead of
+  `StopIteration`. `StopIteration` is used for iterator protocol only.
 
 ## Changes
 
