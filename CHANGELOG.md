@@ -1,3 +1,19 @@
+1.2.0
+=====
+
+Release Date: TBD
+
+- Support free threaded Python. #654
+- Dropped support for Python 3.9. #656
+- Fix missing error checks in C code. #665, #666, #667, #672
+- Fix `strict_map_key` option didn't work for `object_pairs_hook`. #673
+- Increase DEFAULT_RECURSE_LIMIT of Unpacker to 1024. #676
+- Fix memory leak when Unpacker returns error for invalid input. #671
+- Fix `Packer.pack_ext_type()` ignored `autoreset` option. #663
+- Fix `Timestamp.from_datetime()` returning wrong value for pre-epoch datetimes. #662
+- Fix use-after-free in `unpackb()` and `Unpacker.unpack()` for non-contiguous input. #677
+
+
 # 1.1.2
 
 Release Date: 2025-10-08
