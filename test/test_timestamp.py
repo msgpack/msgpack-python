@@ -103,6 +103,13 @@ def test_timestamp_datetime():
 
     assert Timestamp.from_datetime(ts).to_datetime() == ts
 
+    # Regression test: pre-epoch fractional seconds must floor toward -inf.
+    pre_epoch = datetime.datetime(1969, 12, 31, 23, 59, 59, 500000, tzinfo=utc)
+    ts_pre_epoch = Timestamp.from_datetime(pre_epoch)
+    assert ts_pre_epoch.seconds == -1
+    assert ts_pre_epoch.nanoseconds == 500000000
+    assert ts_pre_epoch.to_datetime() == pre_epoch
+
 
 def test_unpack_datetime():
     t = Timestamp(42, 14)
