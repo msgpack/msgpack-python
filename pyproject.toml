@@ -26,7 +26,7 @@ Homepage = "https://msgpack.org/"
 Documentation = "https://msgpack-python.readthedocs.io/"
 Repository = "https://github.com/msgpack/msgpack-python/"
 Tracker = "https://github.com/msgpack/msgpack-python/issues"
-Changelog = "https://github.com/msgpack/msgpack-python/blob/main/ChangeLog.rst"
+Changelog = "https://github.com/msgpack/msgpack-python/blob/main/CHANGELOG.md"
 
 [tool.setuptools]
 # Do not install C/C++/Cython source files
