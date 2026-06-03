@@ -48,7 +48,7 @@ jobs:
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"
-          CIBW_SKIP: "pp* cp38-* cp39-* cp310-win_arm64"
+          CIBW_SKIP: "cp38-* cp39-* cp310-win_arm64"
           CIBW_ARCHS: ${{ matrix.cibw_archs || 'auto' }}
 
       - name: Build sdist
