@@ -317,10 +317,6 @@ cdef class Unpacker:
     cdef Py_ssize_t max_buffer_size
     cdef uint64_t stream_offset
 
-    def __cinit__(self):
-        self.buf = NULL
-        unpack_init(&self.ctx)
-
     def __dealloc__(self):
         unpack_clear(&self.ctx)
         PyMem_Free(self.buf)
