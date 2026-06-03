@@ -170,7 +170,7 @@ def test_nest_limit_1024():
 
     # Temporarily raise Python's recursion limit so packing 1024 levels succeeds
     old_limit = sys.getrecursionlimit()
-    sys.setrecursionlimit(max(old_limit, 10000))
+    sys.setrecursionlimit(max(old_limit, 30000))
     try:
         packed = packb(d)
         result = unpackb(packed)
