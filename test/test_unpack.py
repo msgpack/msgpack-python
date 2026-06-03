@@ -1,4 +1,6 @@
+import gc
 import sys
+import weakref
 from io import BytesIO
 
 from pytest import mark, raises
@@ -87,3 +89,37 @@ def test_unpacker_tell_read_bytes():
         assert obj == unp
         assert pos == unpacker.tell()
         assert unpacker.read_bytes(n) == raw
+
+
+@mark.skipif(
+    Unpacker.__module__ == "msgpack.fallback",
+    reason="specific to C extension reinit leak",
+)
+def test_unpacker_reinit_clears_partial_state():
+    refs = []
+
+    class Marker:
+        pass
+
+    def hook(code, data):
+        obj = Marker()
+        refs.append(weakref.ref(obj))
+        return obj
+
+    unpacker = Unpacker(ext_hook=hook, strict_map_key=False)
+    # Keep parser state mid-map with a live key object from ext_hook.
+    # Encodes: [ {ExtType(1, b"a"): <missing value>} ].
+    unpacker.feed(b"\x91\x81\xd4\x01a")
+    with raises(OutOfData):
+        unpacker.unpack()
+    assert len(refs) == 1
+    assert refs[0]() is not None
+
+    unpacker.__init__()
+    gc.collect()
+    assert refs[0]() is None
+    with raises(OutOfData):
+        unpacker.unpack()
+
+    unpacker.feed(packb({"a": 1}))
+    assert unpacker.unpack() == {"a": 1}
