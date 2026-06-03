@@ -360,9 +360,11 @@ cdef class Packer:
         """
         return memoryview(self)
 
+    @cython.critical_section
     def __getbuffer__(self, Py_buffer *buffer, int flags):
         PyBuffer_FillInfo(buffer, self, self.pk.buf, self.pk.length, 1, flags)
         self.exports += 1
 
+    @cython.critical_section
     def __releasebuffer__(self, Py_buffer *buffer):
         self.exports -= 1
