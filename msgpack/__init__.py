@@ -4,7 +4,7 @@ import os
 from .exceptions import *  # noqa: F403
 from .ext import ExtType, Timestamp
 
-version = (1, 2, 0, "rc1")
+version = (1, 2, 0)
 __version__ = "1.2.0rc1"
 
 
