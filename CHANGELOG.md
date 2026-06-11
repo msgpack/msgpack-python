@@ -1,6 +1,6 @@
 # 1.2.0
 
-Release Date: TBD
+Release Date: 2026-06-11
 
 - Support free threaded Python. #654, #686
 - Dropped support for Python 3.9. #656
