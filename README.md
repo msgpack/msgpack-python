@@ -72,6 +72,10 @@ for unpacked in unpacker:
     print(unpacked)
 ```
 
+> [!IMPORTANT]
+> If `Unpacker.unpack()` stops with an exception other than `OutOfData`, that `Unpacker` cannot be reused.
+> Create a new `Unpacker` when reading another stream.
+
 
 ### Packing/unpacking of custom data types
 
@@ -220,7 +224,7 @@ When upgrading from msgpack-0.4 or earlier, do `pip uninstall msgpack-python` be
 
   * The extension module no longer supports Python 2.
     The pure Python implementation (`msgpack.fallback`) is used for Python 2.
-  
+
   * msgpack 1.0.6 drops official support of Python 2.7, as pip and
     GitHub Action "setup-python" no longer supports Python 2.7.
 
