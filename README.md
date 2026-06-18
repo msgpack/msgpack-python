@@ -73,7 +73,8 @@ for unpacked in unpacker:
 ```
 
 > [!IMPORTANT]
-> If `Unpacker.unpack()` stops with an exception other than OutOfData, that `Unpacker` cannot be reused. Create a new Unpacker when reading another stream.
+> If `Unpacker.unpack()` stops with an exception other than `OutOfData`, that `Unpacker` cannot be reused.
+> Create a new `Unpacker` when reading another stream.
 
 
 ### Packing/unpacking of custom data types
