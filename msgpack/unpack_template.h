@@ -72,15 +72,14 @@ static inline PyObject* unpack_data(unpack_context* ctx)
 
 static inline void unpack_clear(unpack_context *ctx)
 {
-    unsigned int i;
-    for (i = 1; i < ctx->top; i++) {
-        Py_CLEAR(ctx->stack[i].obj);
+    for (unsigned int i = 0; i < ctx->top; i++) {
         /* map_key holds a live reference only while waiting for the value */
         if (ctx->stack[i].ct == CT_MAP_VALUE) {
             Py_CLEAR(ctx->stack[i].map_key);
         }
+        Py_CLEAR(ctx->stack[i].obj);
     }
-    Py_CLEAR(ctx->stack[0].obj);
+    unpack_init(ctx);
 }
 
 static inline int unpack_execute(bool construct, unpack_context* ctx, const char* data, Py_ssize_t len, Py_ssize_t* off)
@@ -200,7 +199,7 @@ static inline int unpack_execute(bool construct, unpack_context* ctx, const char
                 case 0xd5:  // fixext 2
                 case 0xd6:  // fixext 4
                 case 0xd7:  // fixext 8
-                    again_fixed_trail_if_zero(ACS_EXT_VALUE, 
+                    again_fixed_trail_if_zero(ACS_EXT_VALUE,
                                               (1 << (((unsigned int)*p) & 0x03))+1,
                                               _ext_zero);
                 case 0xd8:  // fixext 16
@@ -344,6 +343,7 @@ _push:
         goto _header_again;
     case CT_MAP_VALUE:
         if(construct_cb(_map_item)(user, c->count, &c->obj, c->map_key, obj) < 0) { goto _failed; }
+        c->map_key = NULL;
         if(++c->count == c->size) {
             obj = c->obj;
             if (construct_cb(_map_end)(user, &obj) < 0) { goto _failed; }
@@ -406,10 +406,18 @@ _end:
 #undef start_container
 
 static int unpack_construct(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
-    return unpack_execute(1, ctx, data, len, off);
+    int ret = unpack_execute(1, ctx, data, len, off);
+    if (ret == -1) {
+        unpack_clear(ctx);
+    }
+    return ret;
 }
 static int unpack_skip(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
-    return unpack_execute(0, ctx, data, len, off);
+    int ret = unpack_execute(0, ctx, data, len, off);
+    if (ret == -1) {
+        unpack_clear(ctx);
+    }
+    return ret;
 }
 
 #define unpack_container_header read_array_header

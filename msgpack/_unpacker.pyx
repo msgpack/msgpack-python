@@ -51,6 +51,7 @@ cdef extern from "unpack.h":
     execute_fn unpack_skip
     execute_fn read_array_header
     execute_fn read_map_header
+
     void unpack_init(unpack_context* ctx)
     object unpack_data(unpack_context* ctx)
     void unpack_clear(unpack_context* ctx)
@@ -197,6 +198,7 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
         if off < buf_len:
             raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
         return obj
+
     unpack_clear(&ctx)
     if ret == 0:
         raise ValueError("Unpack failed: incomplete input")
@@ -475,7 +477,7 @@ cdef class Unpacker:
                 obj = unpack_data(&self.ctx)
                 unpack_init(&self.ctx)
                 return obj
-            elif ret == 0:
+            if ret == 0:
                 if self.file_like is not None:
                     self.read_from_file()
                     continue
@@ -483,7 +485,9 @@ cdef class Unpacker:
                     raise StopIteration("No more data to unpack.")
                 else:
                     raise OutOfData("No more data to unpack.")
-            elif ret == -2:
+
+            unpack_clear(&self.ctx)
+            if ret == -2:
                 raise FormatError
             elif ret == -3:
                 raise StackError

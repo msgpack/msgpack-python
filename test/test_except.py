@@ -33,6 +33,22 @@ def test_raise_from_object_hook():
         object_pairs_hook=hook,
     )
 
+    up = Unpacker(object_hook=hook)
+
+    def up_unpack(x):
+        up.feed(x)
+        return up.unpack()
+
+    raises(DummyException, up_unpack, packb({}))
+    raises(DummyException, up_unpack, packb({"fizz": "buzz"}))
+    raises(DummyException, up_unpack, packb({"fizz": "buzz"}))
+    raises(DummyException, up_unpack, packb({"fizz": {"buzz": "spam"}}))
+    raises(
+        DummyException,
+        up_unpack,
+        packb({"fizz": {"buzz": "spam"}}),
+    )
+
 
 def test_raise_from_list_hook():
     def hook(lst: list) -> list:
@@ -138,3 +154,13 @@ def test_strict_map_key_with_object_pairs_hook():
     packed = packb(valid, use_bin_type=True)
     result = unpackb(packed, raw=False, strict_map_key=True, object_pairs_hook=list)
     assert result == [("key", "value")]
+
+
+def test_unpacker_should_not_crash_after_exception():
+    up = Unpacker()  # default: strict_map_key=True
+    up.feed(b"\x83\x73\xc4\x00")  # fixmap(3): int key (rejected) + empty bin8
+    try:
+        up.unpack()  # ValueError: int is not allowed for map key ...
+    except Exception:
+        pass
+    up.skip()  # SIGSEGV (resumes from a corrupt parser context)
