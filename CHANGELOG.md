@@ -1,3 +1,12 @@
+# 1.2.1
+
+Release Date: 2026-06-19
+
+Fix a segfault when calling `Unpacker.unpack()` or `Unpacker.skip()` after an unpacking failure.
+But note that reusing the same `Unpacker` instance after an unpacking failure is not supported.
+Please create a new `Unpacker` instance instead. GHSA-6v7p-g79w-8964
+
+
 # 1.2.0
 
 Release Date: 2026-06-11
