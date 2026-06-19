@@ -137,7 +137,7 @@ class Unpacker:
         If specified, unpacker reads serialized data from it and `.feed()` is not usable.
 
     :param int read_size:
-        Used as `file_like.read(read_size)`. (default: `min(16*1024, max_buffer_size)`)
+        Used as `file_like.read(read_size)`. Must be equal to or smaller than *max_buffer_size*.
 
     :param bool use_list:
         If true, unpack msgpack array to Python list.
