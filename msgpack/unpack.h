@@ -283,6 +283,7 @@ static int unpack_timestamp(const char* buf, unsigned int buflen, msgpack_timest
         ts->tv_sec = _msgpack_load64(int64_t, buf + 4);
         return 0;
     default:
+        PyErr_Format(PyExc_ValueError, "invalid timestamp data (length %u)", buflen);
         return -1;
     }
 }
@@ -336,12 +337,18 @@ static int unpack_callback_ext(unpack_user* u, const char* base, const char* pos
         else if (u->timestamp == 3) {  // datetime
             // Calculate datetime using epoch + delta
             // due to limitations PyDateTime_FromTimestamp on Windows with negative timestamps
+            int64_t days = ts.tv_sec / (24*3600);
+            if (days < INT_MIN || days > INT_MAX) {
+                PyErr_Format(PyExc_OverflowError,
+                            "days=%lld; too large to convert to C int", days);
+                return -1;
+            }
             PyObject *epoch = PyDateTimeAPI->DateTime_FromDateAndTime(1970, 1, 1, 0, 0, 0, 0, u->utc, PyDateTimeAPI->DateTimeType);
             if (epoch == NULL) {
                 return -1;
             }
 
-            PyObject* d = PyDelta_FromDSU(ts.tv_sec/(24*3600), ts.tv_sec%(24*3600), ts.tv_nsec / 1000);
+            PyObject* d = PyDelta_FromDSU((int)days, ts.tv_sec%(24*3600), ts.tv_nsec / 1000);
             if (d == NULL) {
                 Py_DECREF(epoch);
                 return -1;
