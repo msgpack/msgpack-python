@@ -1,0 +1,62 @@
+name: Run tests with debug Python
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      PYTHON_VERSION: 3.14.6
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: /opt/python-debug
+          key: python-debug-${{ runner.os }}-${{ env.PYTHON_VERSION }}
+
+      - name: Install build dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev zlib1g-dev \
+            libbz2-dev libreadline-dev libsqlite3-dev curl libncursesw5-dev \
+            xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+
+      - name: Build Python with Py_DEBUG
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz
+          tar -xzf Python-${PYTHON_VERSION}.tgz
+          cd Python-${PYTHON_VERSION}
+
+          ./configure --with-pydebug --prefix=/opt/python-debug
+          make -j4
+          sudo make install
+
+      - name: Create venv from debug Python
+        run: |
+          PYDBG_BIN="/opt/python-debug/bin/python3"
+          "$PYDBG_BIN" -m venv .venv
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+          echo "VIRTUAL_ENV=$PWD/.venv" >> "$GITHUB_ENV"
+
+      - name: Prepare
+        run: |
+          python -m pip install -r requirements.txt pytest
+
+      - name: Build
+        run: |
+          make cython
+          pip install .
+
+      - name: Test (C extension)
+        run: |
+          pytest -v test
+
+      - name: Test (pure Python fallback)
+        run: |
+          MSGPACK_PUREPYTHON=1 pytest -v test
