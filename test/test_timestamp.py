@@ -176,3 +176,8 @@ def test_pack_datetime_without_tzinfo():
     packed = msgpack.packb(dt, datetime=True)
     unpacked = msgpack.unpackb(packed, timestamp=3)
     assert unpacked == dt
+
+
+def test_too_large_timestamp():
+    # timestamp64 format が大きすぎるとき、int64 ->int32 変換でdatetime型への変換が失敗する。
+    print(msgpack.unpackb(b"\xd7\xff" + b"\x00" * 8, timestamp=3))
