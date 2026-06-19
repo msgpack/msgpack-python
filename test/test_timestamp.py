@@ -179,5 +179,6 @@ def test_pack_datetime_without_tzinfo():
 
 
 def test_too_large_timestamp():
-    # timestamp64 format が大きすぎるとき、int64 ->int32 変換でdatetime型への変換が失敗する。
+    # When timestamp64 is too large, conversion to datetime fails due to int64 -> int32 conversion.
+    # https://github.com/msgpack/msgpack-python/issues/696
     print(msgpack.unpackb(b"\xd7\xff" + b"\x00" * 8, timestamp=3))
