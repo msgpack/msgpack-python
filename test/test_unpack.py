@@ -123,3 +123,22 @@ def test_unpacker_reinit_clears_partial_state():
 
     unpacker.feed(packb({"a": 1}))
     assert unpacker.unpack() == {"a": 1}
+
+
+@mark.skipif(
+    Unpacker.__module__ == "msgpack.fallback",
+    reason="reentrant guard is implemented in C extension only",
+)
+def test_unpacker_reentrant_feed():
+    import struct
+
+    def ext_hook(code, data):
+        # re-entrant feed on the SAME unpacker, large enough to force a buffer realloc
+        up.feed(b"\xc0" * 100)
+        return 0
+
+    up = Unpacker(ext_hook=ext_hook, max_buffer_size=64 * 1024 * 1024)
+    # array(11): [ ExtType(code=5, data=b'A') (fires the re-entrant hook), then 10 more elements ]
+    up.feed(b"\xdc" + struct.pack(">H", 11) + b"\xd4\x05A" + b"\x2a" * 10)
+    with raises(RuntimeError):
+        up.unpack()
