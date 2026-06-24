@@ -5,7 +5,15 @@ from io import BytesIO
 
 from pytest import mark, raises
 
-from msgpack import ExtType, OutOfData, Unpacker, packb
+from msgpack import (
+    ExtraData,
+    ExtType,
+    OutOfData,
+    Unpacker,
+    packb,
+    unpack,
+    unpackb,
+)
 
 
 def test_unpack_array_header_from_file():
@@ -142,3 +150,20 @@ def test_unpacker_reentrant_feed():
     up.feed(b"\xdc" + struct.pack(">H", 11) + b"\xd4\x05A" + b"\x2a" * 10)
     with raises(RuntimeError):
         up.unpack()
+
+
+def test_unpackb_raises_extra_data_with_trailing_bytes():
+    packed = packb(42) + packb("trailing")
+    with raises(ExtraData) as exc_info:
+        unpackb(packed)
+    err = exc_info.value
+    assert err.unpacked == 42
+    assert err.extra == packb("trailing")
+
+
+def test_unpack_raises_extra_data_on_stream_with_trailing_bytes():
+    stream = BytesIO(packb(100) + packb(200))
+    with raises(ExtraData) as exc_info:
+        unpack(stream)
+    assert exc_info.value.unpacked == 100
+    assert exc_info.value.extra == packb(200)
