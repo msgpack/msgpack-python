@@ -40,11 +40,6 @@ struct unpack_context;
 typedef struct unpack_context unpack_context;
 typedef int (*execute_fn)(unpack_context *ctx, const char* data, Py_ssize_t len, Py_ssize_t* off);
 
-static inline msgpack_unpack_object unpack_callback_root(unpack_user* u)
-{
-    return NULL;
-}
-
 static inline int unpack_callback_uint16(unpack_user* u, uint16_t d, msgpack_unpack_object* o)
 {
     PyObject *p = PyLong_FromLong((long)d);

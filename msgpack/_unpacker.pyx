@@ -46,7 +46,7 @@ cdef extern from "unpack.h":
         Py_ssize_t count
 
     ctypedef int (*execute_fn)(unpack_context* ctx, const char* data,
-                               Py_ssize_t len, Py_ssize_t* off) except? -1
+                               Py_ssize_t len, Py_ssize_t* off) except -1
     execute_fn unpack_construct
     execute_fn unpack_skip
     execute_fn read_array_header
@@ -206,8 +206,6 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
         raise FormatError
     elif ret == -3:
         raise StackError
-    elif PyErr_Occurred():
-        raise
     else:
         raise ValueError("Unpack failed: error = %d" % (ret,))
 
@@ -502,8 +500,6 @@ cdef class Unpacker:
                     raise FormatError
                 elif ret == -3:
                     raise StackError
-                elif PyErr_Occurred():
-                    raise
                 else:
                     raise ValueError("Unpack failed: error = %d" % (ret,))
         finally:
