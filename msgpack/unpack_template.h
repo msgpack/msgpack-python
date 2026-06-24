@@ -335,7 +335,7 @@ _push:
         goto _header_again;
 
     default:
-        PyErr_Format(PyExc_RuntimeError, "Invalid container type: %d", c->ct);
+        PyErr_Format(PyExc_RuntimeError, "Invalid container type: %u", c->ct);
         goto _failed;
     }
 
