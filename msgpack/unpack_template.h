@@ -35,11 +35,6 @@ struct unpack_context {
     unsigned int cs;
     unsigned int trail;
     unsigned int top;
-    /*
-    unpack_stack* stack;
-    unsigned int stack_size;
-    unpack_stack embed_stack[MSGPACK_EMBED_STACK_SIZE];
-    */
     unpack_stack stack[MSGPACK_EMBED_STACK_SIZE];
 };
 
@@ -49,21 +44,8 @@ static inline void unpack_init(unpack_context* ctx)
     ctx->cs = CS_HEADER;
     ctx->trail = 0;
     ctx->top = 0;
-    /*
-    ctx->stack = ctx->embed_stack;
-    ctx->stack_size = MSGPACK_EMBED_STACK_SIZE;
-    */
-    ctx->stack[0].obj = unpack_callback_root(&ctx->user);
+    ctx->stack[0].obj = NULL;
 }
-
-/*
-static inline void unpack_destroy(unpack_context* ctx)
-{
-    if(ctx->stack_size != MSGPACK_EMBED_STACK_SIZE) {
-        free(ctx->stack);
-    }
-}
-*/
 
 static inline PyObject* unpack_data(unpack_context* ctx)
 {
@@ -94,9 +76,6 @@ static inline int unpack_execute(bool construct, unpack_context* ctx, const char
     unsigned int cs = ctx->cs;
     unsigned int top = ctx->top;
     unpack_stack* stack = ctx->stack;
-    /*
-    unsigned int stack_size = ctx->stack_size;
-    */
     unpack_user* user = &ctx->user;
 
     PyObject* obj = NULL;
@@ -319,6 +298,7 @@ static inline int unpack_execute(bool construct, unpack_context* ctx, const char
                 start_container(_map, _msgpack_load32(uint32_t,n), CT_MAP_KEY);
 
             default:
+                PyErr_Format(PyExc_RuntimeError, "Invalid state: %d", cs);
                 goto _failed;
             }
         }
@@ -355,6 +335,7 @@ _push:
         goto _header_again;
 
     default:
+        PyErr_Format(PyExc_RuntimeError, "Invalid container type: %u", c->ct);
         goto _failed;
     }
 
