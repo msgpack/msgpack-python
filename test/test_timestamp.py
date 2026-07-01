@@ -111,6 +111,40 @@ def test_timestamp_datetime():
     assert ts_pre_epoch.to_datetime() == pre_epoch
 
 
+def test_from_datetime_far_future_precision():
+    # Regression: Timestamp.from_datetime used the float datetime.timestamp(),
+    # which cannot hold microsecond precision far from the epoch.  It rounded the
+    # whole-second part up by one while still taking the exact microsecond for the
+    # nanoseconds, yielding a Timestamp one second in the future -- and raised
+    # OverflowError near datetime.max.  It must instead match the integer
+    # arithmetic used by the Cython packer.
+    utc = datetime.timezone.utc
+    epoch = datetime.datetime(1970, 1, 1, tzinfo=utc)
+
+    for dt in [
+        datetime.datetime(2515, 1, 1, 0, 0, 0, 999999, tzinfo=utc),
+        datetime.datetime(3000, 1, 1, 0, 0, 0, 999999, tzinfo=utc),
+        datetime.datetime(5000, 6, 15, 12, 30, 45, 123456, tzinfo=utc),
+        # Near datetime.max: previously raised OverflowError.
+        datetime.datetime(9999, 12, 31, 23, 59, 59, 999999, tzinfo=utc),
+    ]:
+        ts = Timestamp.from_datetime(dt)
+        # Round-trips exactly (was one second in the future).
+        assert ts.to_datetime() == dt
+        # Whole-second part is exact, computed independently of the implementation.
+        assert ts.seconds == (dt - epoch) // datetime.timedelta(seconds=1)
+        assert ts.nanoseconds == dt.microsecond * 1000
+        # The pure-Python path agrees with packing the datetime directly (the
+        # reference path), i.e. no off-by-one-second divergence.
+        assert msgpack.packb(ts) == msgpack.packb(dt, datetime=True)
+
+    # Explicit value: 3000-01-01T00:00:00.999999Z is 32503680000 s after the
+    # epoch; the float path produced 32503680001 (one second in the future).
+    ts = Timestamp.from_datetime(datetime.datetime(3000, 1, 1, 0, 0, 0, 999999, tzinfo=utc))
+    assert ts.seconds == 32503680000
+    assert ts.nanoseconds == 999999000
+
+
 def test_unpack_datetime():
     t = Timestamp(42, 14)
     utc = datetime.timezone.utc
