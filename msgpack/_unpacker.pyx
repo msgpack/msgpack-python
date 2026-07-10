@@ -178,6 +178,10 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
         max_str_len = buf_len
     if max_bin_len == -1:
         max_bin_len = buf_len
+    # These default to max_buffer_size for compatibility and
+    # are not divided by the per-element pointer size, so a large declared count
+    # can pre-allocate ~8x max_buffer_size.  Callers unpacking untrusted data
+    # should set explicit limits; see the Unpacker docstring.
     if max_array_len == -1:
         max_array_len = buf_len
     if max_map_len == -1:
@@ -273,10 +277,16 @@ cdef class Unpacker:
     :param int max_array_len:
         Limits max length of array.
         (default: max_buffer_size)
+        Note: this default is derived from *max_buffer_size* and is not scaled
+        by the per-element (pointer) size, so a message declaring a large array
+        count can pre-allocate up to roughly ``8 * max_buffer_size`` bytes
+        before the elements are read.  Set this (or a smaller *max_buffer_size*)
+        explicitly when unpacking data from an untrusted source.
 
     :param int max_map_len:
         Limits max length of map.
         (default: max_buffer_size//2)
+        Same caveat as *max_array_len*; set explicitly for untrusted input.
 
     :param int max_ext_len:
         Deprecated, use *max_buffer_size* instead.
