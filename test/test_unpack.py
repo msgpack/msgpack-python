@@ -90,10 +90,10 @@ def test_unpacker_tell_read_bytes():
     objects = 1, "abc", "ghi"
     packed = b"\x01\x02\xa3abc\xa3def\xa3ghi"
     raw_data = b"\x02", b"\xa3def", b""
-    lenghts = 1, 4, 999
+    lengths = 1, 4, 999
     positions = 1, 6, 14
     unpacker = Unpacker(BytesIO(packed))
-    for obj, unp, pos, n, raw in zip(objects, unpacker, positions, lenghts, raw_data):
+    for obj, unp, pos, n, raw in zip(objects, unpacker, positions, lengths, raw_data):
         assert obj == unp
         assert pos == unpacker.tell()
         assert unpacker.read_bytes(n) == raw
