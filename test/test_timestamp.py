@@ -71,6 +71,15 @@ def test_unpack_timestamp():
         msgpack.unpackb(b"\xc7\x05\xff\0\0\0\0\0")  # ext8 (len=5)
 
 
+def test_unpack_timestamp_out_of_range_nanoseconds():
+    # An out-of-range nanoseconds field must be rejected in every timestamp=
+    # mode (spec: nanoseconds must not exceed 999999999), not only the default.
+    for data in (b"\xd7\xff" + b"\xff" * 8, b"\xc7\x0c\xff" + b"\xff" * 12):
+        for mode in (0, 1, 2, 3):
+            with pytest.raises(ValueError):
+                msgpack.unpackb(data, timestamp=mode)
+
+
 def test_timestamp_from():
     t = Timestamp(42, 14000)
     assert Timestamp.from_unix(42.000014) == t
