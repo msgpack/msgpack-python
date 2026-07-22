@@ -38,8 +38,10 @@ def encode_array(obj: Any, posn: int) -> Any | dict[str, Any]:
         else:
             offset += 4  # prefix with pad so fixstr + 3 + ?
             pad = itemsize - (offset % itemsize)
-            # use fixstr for padding so deduct one and wrap
-            pad = (pad - 1) % itemsize
+            # use fixstr for padding so deduct one
+            if pad < 2:
+                pad += itemsize # prewrap as pad cannot be less than one
+            pad -= 1
 
         if pad:
             obj = dict(
