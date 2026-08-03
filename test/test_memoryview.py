@@ -2,7 +2,9 @@
 
 from array import array
 
-from msgpack import packb, unpackb
+from pytest import raises
+
+from msgpack import ExtraData, packb, unpackb
 
 
 def make_array(f, data):
@@ -109,3 +111,20 @@ def test_unpack_noncontiguous_memoryview():
     noncont = memoryview(bytes(padded))[::2]
     assert not noncont.c_contiguous
     assert unpackb(noncont) == 2**32
+
+
+def test_unpack_noncontiguous_memoryview_extra_data():
+    # See https://github.com/msgpack/msgpack-python/issues/720
+    # ExtraData.extra must be copied out of the temporary contiguous copy
+    # before that copy is released.
+    packed = packb(0) + b"extra"
+    padded = bytearray()
+    for byte in packed:
+        padded.append(byte)
+        padded.append(0)
+    noncont = memoryview(bytes(padded))[::2]
+    assert not noncont.c_contiguous
+    with raises(ExtraData) as excinfo:
+        unpackb(noncont)
+    assert excinfo.value.unpacked == 0
+    assert excinfo.value.extra == b"extra"
