@@ -191,18 +191,15 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
                  use_list, raw, timestamp, strict_map_key, cerr,
                  max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
         ret = unpack_construct(&ctx, buf, buf_len, &off)
-        if ret == 1 and off < buf_len:
-            # buf may point into a temporary contiguous copy owned by view,
-            # so the extra data must be copied out before releasing view.
-            extra = PyBytes_FromStringAndSize(buf+off, buf_len-off)
+        if ret == 1:
+            obj = unpack_data(&ctx)
+            if off < buf_len:
+                # buf may point into a temporary contiguous copy owned by view,
+                # so the extra data must be copied out before releasing view.
+                raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
+            return obj
     finally:
         PyBuffer_Release(&view);
-
-    if ret == 1:
-        obj = unpack_data(&ctx)
-        if extra is not None:
-            raise ExtraData(obj, extra)
-        return obj
 
     unpack_clear(&ctx)
     if ret == 0:
