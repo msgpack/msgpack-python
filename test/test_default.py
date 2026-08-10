@@ -40,7 +40,7 @@ def encode_array(obj: Any, posn: int) -> Any | dict[str, Any]:
             pad = itemsize - (offset % itemsize)
             # use fixstr for padding so deduct one
             if pad < 2:
-                pad += itemsize # prewrap as pad cannot be less than one
+                pad += itemsize  # prewrap as pad cannot be less than one
             pad -= 1
 
         if pad:
