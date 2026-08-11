@@ -1,5 +1,6 @@
 """Fallback pure Python implementation of msgpack"""
 
+import inspect
 import struct
 import sys
 from datetime import datetime as _DateTime
@@ -622,7 +623,8 @@ class Packer:
     :param default:
         When specified, it should be callable.
         Convert user type to builtin type that Packer supports.
-        See also simplejson's document.
+        See also simplejson's document. In addition, this callable may have two parameters
+        where the second parameter is given the current position of the stream.
 
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
@@ -675,8 +677,16 @@ class Packer:
         self._buffer = BytesIO()
         self._datetime = bool(datetime)
         self._unicode_errors = unicode_errors or "strict"
-        if default is not None and not callable(default):
-            raise TypeError("default must be callable")
+        if default is not None:
+            if not callable(default):
+                raise TypeError("default must be callable")
+            default_argc = len(inspect.signature(default).parameters)
+            if default_argc == 1:
+                self._pass_posn = False
+            elif default_argc == 2:
+                self._pass_posn = True
+            else:
+                raise ValueError("default must take one or two parameters")
         self._default = default
 
     def _pack(
@@ -723,8 +733,11 @@ class Packer:
                 if -0x8000000000000000 <= obj < -0x80000000:
                     return self._buffer.write(struct.pack(">Bq", 0xD3, obj))
                 if not default_used and self._default is not None:
-                    obj = self._default(obj)
                     default_used = True
+                    if self._pass_posn:
+                        obj = self._default(obj, self._buffer.tell())
+                    else:
+                        obj = self._default(obj)
                     continue
                 raise OverflowError("Integer value out of range")
             if check(obj, (bytes, bytearray)):
@@ -794,8 +807,11 @@ class Packer:
                 continue
 
             if not default_used and self._default is not None:
-                obj = self._default(obj)
-                default_used = 1
+                default_used = True
+                if self._pass_posn:
+                    obj = self._default(obj, self._buffer.tell())
+                else:
+                    obj = self._default(obj)
                 continue
 
             if self._datetime and check(obj, _DateTime):
