@@ -168,7 +168,6 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
     cdef char* buf = NULL
     cdef Py_ssize_t buf_len
     cdef const char* cerr = NULL
-    cdef object extra = None
 
     if unicode_errors is not None:
         cerr = unicode_errors
