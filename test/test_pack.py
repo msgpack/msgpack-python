@@ -179,3 +179,24 @@ def test_get_buffer():
 
     expected = packb([1, 2], use_bin_type=True)
     assert written == expected
+
+
+@pytest.mark.skipif(
+    Packer.__module__ == "msgpack.fallback",
+    reason="buf_size only allocates in the C extension",
+)
+def test_buf_size_is_converted_once():
+    # Asking twice let the allocation and the recorded capacity disagree,
+    # so the packer overflowed a buffer smaller than the size it recorded.
+    class Counting:
+        count = 0
+
+        def __int__(self):
+            self.count += 1
+            return 600
+
+        __index__ = __int__
+
+    buf_size = Counting()
+    Packer(buf_size=buf_size)
+    assert buf_size.count == 1

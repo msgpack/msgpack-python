@@ -110,7 +110,7 @@ cdef class Packer:
     cdef bint autoreset
     cdef bint datetime
 
-    def __cinit__(self, buf_size=256*1024, **_kwargs):
+    def __cinit__(self, size_t buf_size=256*1024, **_kwargs):
         self.pk.buf = <char*> PyMem_Malloc(buf_size)
         if self.pk.buf == NULL:
             raise MemoryError("Unable to allocate internal buffer.")
