@@ -582,7 +582,10 @@ class Unpacker:
     next = __next__
 
     def skip(self):
-        self._unpack(EX_SKIP)
+        try:
+            self._unpack(EX_SKIP)
+        except RecursionError:
+            raise StackError
         self._consume()
 
     def unpack(self):
