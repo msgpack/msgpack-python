@@ -97,6 +97,11 @@ def test_invalidvalue():
     with raises(StackError):
         unpackb(b"\x91" * 3000)  # nested fixarray(len=1)
 
+    with raises(StackError):
+        unpacker = Unpacker()
+        unpacker.feed(b"\x91" * 3000)
+        unpacker.skip()
+
 
 def test_no_memory_leak_on_nested_invalid_tag() -> None:
     """Regression test: unpacking nested arrays containing an invalid tag must not leak objects."""
