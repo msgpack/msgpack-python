@@ -271,16 +271,21 @@ static int unpack_timestamp(const char* buf, unsigned int buflen, msgpack_timest
         uint64_t value =_msgpack_load64(uint64_t, buf);
         ts->tv_nsec = (uint32_t)(value >> 34);
         ts->tv_sec = value & 0x00000003ffffffffLL;
-        return 0;
+        break;
     }
     case 12:
         ts->tv_nsec = _msgpack_load32(uint32_t, buf);
         ts->tv_sec = _msgpack_load64(int64_t, buf + 4);
-        return 0;
+        break;
     default:
         PyErr_Format(PyExc_ValueError, "invalid timestamp data (length %u)", buflen);
         return -1;
     }
+    if (ts->tv_nsec > 999999999) {
+        PyErr_Format(PyExc_ValueError, "nanoseconds must be a non-negative integer not greater than 999999999.");
+        return -1;
+    }
+    return 0;
 }
 
 #include "datetime.h"
