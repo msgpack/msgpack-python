@@ -282,7 +282,7 @@ static int unpack_timestamp(const char* buf, unsigned int buflen, msgpack_timest
         return -1;
     }
     if (ts->tv_nsec > 999999999) {
-        PyErr_Format(PyExc_ValueError, "nanoseconds must be a non-negative integer less than 999999999.");
+        PyErr_Format(PyExc_ValueError, "nanoseconds must be a non-negative integer not greater than 999999999.");
         return -1;
     }
     return 0;
