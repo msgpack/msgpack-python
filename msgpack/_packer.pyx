@@ -27,7 +27,7 @@ cdef extern from "pack.h":
     int msgpack_pack_false(msgpack_packer* pk) except -1
     int msgpack_pack_long_long(msgpack_packer* pk, long long d) except -1
     int msgpack_pack_unsigned_long_long(msgpack_packer* pk, unsigned long long d) except -1
-    int msgpack_pack_float(msgpack_packer* pk, float d) except -1
+    int msgpack_pack_float(msgpack_packer* pk, double d) except -1
     int msgpack_pack_double(msgpack_packer* pk, double d) except -1
     int msgpack_pack_array(msgpack_packer* pk, size_t l) except -1
     int msgpack_pack_map(msgpack_packer* pk, size_t l) except -1
@@ -179,7 +179,7 @@ cdef class Packer:
                     raise OverflowError("Integer value out of range")
         elif PyFloat_CheckExact(o) if strict else PyFloat_Check(o):
             if self.use_float:
-                msgpack_pack_float(&self.pk, <float>o)
+                msgpack_pack_float(&self.pk, <double>o)
             else:
                 msgpack_pack_double(&self.pk, <double>o)
         elif PyBytesLike_CheckExact(o) if strict else PyBytesLike_Check(o):
