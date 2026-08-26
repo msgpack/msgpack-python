@@ -342,15 +342,15 @@ static inline int msgpack_pack_unsigned_long_long(msgpack_packer* x, unsigned lo
  * Float
  */
 
-static inline int msgpack_pack_float(msgpack_packer* x, float d)
+static inline int msgpack_pack_float(msgpack_packer* x, double d)
 {
     unsigned char buf[5];
     buf[0] = 0xca;
 
 #if PY_VERSION_HEX >= 0x030B00A7
-    PyFloat_Pack4(d, (char *)&buf[1], 0);
+    if (PyFloat_Pack4(d, (char *)&buf[1], 0) < 0) { return -1; }
 #else
-    _PyFloat_Pack4(d, &buf[1], 0);
+    if (_PyFloat_Pack4(d, &buf[1], 0) < 0) { return -1; }
 #endif
     msgpack_pack_append_buffer(x, buf, 5);
 }
