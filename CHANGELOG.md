@@ -1,6 +1,6 @@
 # 1.2.2
 
-Release Date: TBD
+Release Date: 2026-08-27
 
 - Fix the `read_size` documentation. #700
 - Fix silent truncation when unpacking an out-of-range timestamp with `timestamp=3`. #701
