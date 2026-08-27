@@ -8,6 +8,7 @@ from cpython.datetime cimport (
 cdef ExtType
 cdef Timestamp
 
+import inspect
 from .ext import ExtType, Timestamp
 
 
@@ -65,7 +66,8 @@ cdef class Packer:
     :param default:
         When specified, it should be callable.
         Convert user type to builtin type that Packer supports.
-        See also simplejson's document.
+        See also simplejson's document. In addition, this callable may have two parameters
+        where the second parameter is given the current position of the stream.
 
     :param bool use_single_float:
         Use single precision float type for float. (default: False)
@@ -106,6 +108,7 @@ cdef class Packer:
     cdef const char *unicode_errors
     cdef size_t exports  # number of exported buffers
     cdef bint strict_types
+    cdef bint _pass_posn
     cdef bint use_float
     cdef bint autoreset
     cdef bint datetime
@@ -140,6 +143,14 @@ cdef class Packer:
         if default is not None:
             if not PyCallable_Check(default):
                 raise TypeError("default must be a callable.")
+            default_argc = len(inspect.signature(default).parameters)
+            if default_argc == 1:
+                self._pass_posn = False
+            elif default_argc == 2:
+                self._pass_posn = True
+            else:
+                raise ValueError("default must take one or two parameters")
+
         self._default = default
 
         self._berrors = unicode_errors
@@ -263,7 +274,10 @@ cdef class Packer:
         if self._default is not None:
             ret = self._pack_inner(o, 1, nest_limit)
             if ret == -2:
-                o = self._default(o)
+                if self._pass_posn:
+                    o = self._default(o, self.pk.length)
+                else:
+                    o = self._default(o)
             else:
                 return ret
         return self._pack_inner(o, 0, nest_limit)
