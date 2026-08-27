@@ -1,3 +1,20 @@
+# 1.2.2
+
+Release Date: TBD
+
+- Fix the `read_size` documentation. #700
+- Fix silent truncation when unpacking an out-of-range timestamp with `timestamp=3`. #701
+- Prevent reentrant calls to `Unpacker.feed()` while unpacking. #704
+- Improve error handling and reporting in unpacking functions. #707
+- Fix `Timestamp.from_datetime()` precision for far-future datetimes. #710
+- Fix typos in the documentation. #712
+- Validate the nanoseconds range when unpacking timestamps in the C extension. #716
+- Fix a use-after-free in the `unpackb()` `ExtraData` path for non-contiguous input. #722
+- Prevent a buffer overflow when converting `Packer`'s `buf_size`. #726
+- Translate `RecursionError` to `StackError` in the fallback `Unpacker.skip()`. #727
+- Raise `OverflowError` when `use_single_float=True` cannot represent a value. #728
+
+
 # 1.2.1
 
 Release Date: 2026-06-19
