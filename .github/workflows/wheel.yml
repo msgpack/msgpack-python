@@ -21,6 +21,9 @@ jobs:
         - os: ubuntu-24.04
           cibw_archs: riscv64
           name_suffix: "-riscv64"
+        - os: ubuntu-24.04-arm
+          cibw_platform: pyodide
+          name_suffix: "-pyodide"
 
     runs-on: ${{ matrix.os }}
     name: Build wheels on ${{ matrix.os }}${{ matrix.name_suffix || '' }}
@@ -50,6 +53,7 @@ jobs:
           CIBW_TEST_COMMAND: "pytest {package}/test"
           CIBW_SKIP: "cp38-* cp39-* cp310-win_arm64"
           CIBW_ARCHS: ${{ matrix.cibw_archs || 'auto' }}
+          CIBW_PLATFORM: ${{ matrix.cibw_platform || 'auto' }}
 
       - name: Build sdist
         if: runner.os == 'Linux' && runner.arch == 'X64'
