@@ -63,6 +63,48 @@ def test_foobar_skip():
         unpacker.unpack()
 
 
+def test_skip_then_unpack_across_incomplete_container():
+    # skip() opens the array's stack frame without ever populating its
+    # object slot (it has nothing to build), so resuming with unpack()
+    # used to reuse that slot as if it held a real list and crash. See
+    # GH #734.
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.skip()
+    unpacker.feed(b"\x00")
+    with raises(ValueError):
+        unpacker.unpack()
+
+
+def test_unpack_then_skip_across_incomplete_container():
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(b"\x00")
+    with raises(ValueError):
+        unpacker.skip()
+
+
+def test_skip_then_skip_across_incomplete_container_still_works():
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.skip()
+    unpacker.feed(b"\x00")
+    assert unpacker.skip() is None
+
+
+def test_unpack_then_unpack_across_incomplete_container_still_works():
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(b"\x00")
+    assert unpacker.unpack() == [0]
+
+
 def test_maxbuffersize():
     with raises(ValueError):
         Unpacker(read_size=5, max_buffer_size=3)
