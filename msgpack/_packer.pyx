@@ -264,6 +264,9 @@ cdef class Packer:
             ret = self._pack_inner(o, 1, nest_limit)
             if ret == -2:
                 o = self._default(o)
+                # The callback may have exported the internal buffer.
+                # Packing on would reallocate it and invalidate the export.
+                self._check_exports()
             else:
                 return ret
         return self._pack_inner(o, 0, nest_limit)
