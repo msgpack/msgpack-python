@@ -173,7 +173,7 @@ def test_frozendict():
     assert unpacked == fd
 
     unpacked = unpackb(packb(fd), use_list=1, object_pairs_hook=builtins.frozendict)
-    assert isinstance(fd, builtins.frozendict)
+    assert isinstance(unpacked, builtins.frozendict)
     assert unpacked == fd
 
     packer = Packer(strict_types=True)
