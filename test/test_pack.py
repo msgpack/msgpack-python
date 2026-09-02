@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import struct
+import sys
 from collections import OrderedDict
 from io import BytesIO
 
@@ -160,6 +161,25 @@ def test_odict():
         return list(seq)
 
     assert unpackb(packb(od), object_pairs_hook=pair_hook, use_list=1) == seq
+
+
+@pytest.mark.skipif(sys.version_info < (3, 15), reason="frozendict requires Python 3.15+")
+def test_frozendict():
+    import builtins
+
+    fd = builtins.frozendict(a=1, b=[1, 2, 3])
+    unpacked = unpackb(packb(fd), use_list=1)
+    assert isinstance(unpacked, dict)
+    assert unpacked == fd
+
+    unpacked = unpackb(packb(fd), use_list=1, object_pairs_hook=builtins.frozendict)
+    assert isinstance(unpacked, builtins.frozendict)
+    assert unpacked == fd
+
+    packer = Packer(strict_types=True)
+    unpacked = unpackb(packer.pack(fd), use_list=1)
+    assert isinstance(unpacked, dict)
+    assert unpacked == fd
 
 
 def test_pairlist():
