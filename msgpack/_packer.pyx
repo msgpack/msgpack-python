@@ -4,6 +4,7 @@ from cpython.datetime cimport (
     PyDateTime_CheckExact, PyDelta_CheckExact,
     datetime_tzinfo, timedelta_days, timedelta_seconds, timedelta_microseconds,
 )
+from cpython.frozendict cimport PyAnyDict_Check, PyAnyDict_CheckExact
 
 cdef ExtType
 cdef Timestamp
@@ -14,11 +15,6 @@ from .ext import ExtType, Timestamp
 cdef extern from "Python.h":
 
     int PyMemoryView_Check(object obj)
-
-cdef extern from "frozendict_compat.h":
-
-    bint PyFrozenDict_Check(object obj)
-    bint PyFrozenDict_CheckExact(object obj)
 
 cdef extern from "pack.h":
     struct msgpack_packer:
@@ -207,8 +203,7 @@ cdef class Packer:
                 rawval = o
             msgpack_pack_raw(&self.pk, L)
             msgpack_pack_raw_body(&self.pk, rawval, L)
-        elif (PyDict_CheckExact(o) or PyFrozenDict_CheckExact(o)) if strict \
-                else (PyDict_Check(o) or PyFrozenDict_Check(o)):
+        elif PyAnyDict_CheckExact(o) if strict else PyAnyDict_Check(o):
             L = len(o)
             if L > ITEM_LIMIT:
                 raise ValueError("dict is too large")

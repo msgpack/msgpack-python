@@ -1,4 +1,4 @@
-cython==3.2.5
+cython==3.3.0
 setuptools==78.1.1
 pytest
 build

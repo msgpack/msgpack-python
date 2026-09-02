@@ -47,6 +47,6 @@ lint.select = [
 
 [dependency-groups]
 dev = [
-    "cython>=3.2.5",
+    "cython>=3.3.0",
     "pytest>=9.0.3",
 ]
