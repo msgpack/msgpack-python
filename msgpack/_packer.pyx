@@ -1,5 +1,3 @@
-import sys
-
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 from cpython.datetime cimport (
@@ -12,20 +10,15 @@ cdef Timestamp
 
 from .ext import ExtType, Timestamp
 
-# frozendict is a builtin type added in Python 3.15 (PEP 814).
-if sys.version_info >= (3, 15):
-    import builtins
-
-    frozendict = builtins.frozendict
-else:
-
-    class frozendict:
-        pass
-
 
 cdef extern from "Python.h":
 
     int PyMemoryView_Check(object obj)
+
+cdef extern from "frozendict_compat.h":
+
+    bint PyFrozenDict_Check(object obj)
+    bint PyFrozenDict_CheckExact(object obj)
 
 cdef extern from "pack.h":
     struct msgpack_packer:
@@ -214,8 +207,8 @@ cdef class Packer:
                 rawval = o
             msgpack_pack_raw(&self.pk, L)
             msgpack_pack_raw_body(&self.pk, rawval, L)
-        elif (PyDict_CheckExact(o) or type(o) is frozendict) if strict \
-                else (PyDict_Check(o) or isinstance(o, frozendict)):
+        elif (PyDict_CheckExact(o) or PyFrozenDict_CheckExact(o)) if strict \
+                else (PyDict_Check(o) or PyFrozenDict_Check(o)):
             L = len(o)
             if L > ITEM_LIMIT:
                 raise ValueError("dict is too large")
