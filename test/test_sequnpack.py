@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import io
 
-from pytest import raises
+from pytest import mark, raises
 
 from msgpack import BufferFull, Unpacker, pack, packb
 from msgpack.exceptions import OutOfData
@@ -146,3 +146,30 @@ def test_unpack_tell():
         m2 = next(unpacker)
         assert m == m2
         assert o == unpacker.tell()
+
+
+@mark.skipif(
+    Unpacker.__module__ == "msgpack.fallback",
+    reason="only the C extension keeps parser state between calls",
+)
+def test_mode_switch_while_incomplete():
+    # skip() does not build the objects that unpack() needs, so the parser
+    # state of one mode is not valid for the other. The unpacker must reject
+    # the change instead of a crash. The original mode still finishes.
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.skip()
+    unpacker.feed(b"\x00")
+    with raises(ValueError):
+        unpacker.unpack()
+    assert unpacker.skip() is None
+
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(b"\x00")
+    with raises(ValueError):
+        unpacker.skip()
+    assert unpacker.unpack() == [0]
