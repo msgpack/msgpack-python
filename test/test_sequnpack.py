@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import io
 
+import pytest
 from pytest import raises
 
 from msgpack import BufferFull, Unpacker, pack, packb
@@ -61,6 +62,87 @@ def test_foobar_skip():
     unpacker.skip()
     with raises(OutOfData):
         unpacker.unpack()
+
+
+@pytest.mark.skipif(
+    Unpacker.__module__ == "msgpack.fallback",
+    reason="only the C extension keeps a stack frame across an incomplete read",
+)
+def test_skip_then_unpack_across_incomplete_container():
+    # skip() opens the array's stack frame without ever populating its
+    # object slot (it has nothing to build), so resuming with unpack()
+    # used to reuse that slot as if it held a real list and crash. See
+    # GH #734.
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.skip()
+    unpacker.feed(b"\x00")
+    with raises(ValueError):
+        unpacker.unpack()
+
+
+@pytest.mark.skipif(
+    Unpacker.__module__ == "msgpack.fallback",
+    reason="only the C extension keeps a stack frame across an incomplete read",
+)
+def test_unpack_then_skip_across_incomplete_container():
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(b"\x00")
+    with raises(ValueError):
+        unpacker.skip()
+
+
+def test_skip_then_skip_across_incomplete_container_still_works():
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.skip()
+    unpacker.feed(b"\x00")
+    assert unpacker.skip() is None
+
+
+def test_unpack_then_unpack_across_incomplete_container_still_works():
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(b"\x00")
+    assert unpacker.unpack() == [0]
+
+
+@pytest.mark.skipif(
+    Unpacker.__module__ != "msgpack.fallback",
+    reason="the C extension is the one that needs to reject this mix, see the tests above",
+)
+def test_fallback_skip_then_unpack_across_incomplete_container_still_works():
+    # The fallback never keeps a stack frame across an OutOfData; an
+    # incomplete read rolls the buffer position back to where the call
+    # started, so the next call just reparses the array header from
+    # scratch regardless of which method it uses. No corruption risk here,
+    # so unlike the C extension it doesn't need to reject the mix.
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.skip()
+    unpacker.feed(b"\x00")
+    assert unpacker.unpack() == [0]
+
+
+@pytest.mark.skipif(
+    Unpacker.__module__ != "msgpack.fallback",
+    reason="the C extension is the one that needs to reject this mix, see the tests above",
+)
+def test_fallback_unpack_then_skip_across_incomplete_container_still_works():
+    unpacker = Unpacker()
+    unpacker.feed(b"\x91")
+    with raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(b"\x00")
+    assert unpacker.skip() is None
 
 
 def test_maxbuffersize():

@@ -44,6 +44,7 @@ cdef extern from "unpack.h":
         msgpack_user user
         PyObject* obj
         Py_ssize_t count
+        unsigned int top
 
     ctypedef int (*execute_fn)(unpack_context* ctx, const char* data,
                                Py_ssize_t len, Py_ssize_t* off) except -1
@@ -320,6 +321,10 @@ cdef class Unpacker:
     cdef Py_ssize_t max_buffer_size
     cdef uint64_t stream_offset
     cdef bint _unpacking
+    # Which of unpack_construct/unpack_skip left an array or map open on
+    # the last call, so a later call can refuse to resume it with the
+    # other one instead of touching stack entries it never populated.
+    cdef execute_fn _resume_execute
 
     def __dealloc__(self):
         unpack_clear(&self.ctx)
@@ -473,6 +478,14 @@ cdef class Unpacker:
         cdef object obj
         cdef Py_ssize_t prev_head
 
+        if (self.ctx.top != 0 and self._resume_execute != NULL
+                and self._resume_execute != execute):
+            raise ValueError(
+                "unpack() and skip() cannot be mixed while an array or "
+                "map is still incomplete; finish it with the same method "
+                "that started it"
+            )
+
         self._unpacking = True
         try:
             while 1:
@@ -486,8 +499,10 @@ cdef class Unpacker:
                 if ret == 1:
                     obj = unpack_data(&self.ctx)
                     unpack_init(&self.ctx)
+                    self._resume_execute = NULL
                     return obj
                 if ret == 0:
+                    self._resume_execute = execute
                     if self.file_like is not None:
                         self.read_from_file()
                         continue
@@ -497,6 +512,7 @@ cdef class Unpacker:
                         raise OutOfData("No more data to unpack.")
 
                 unpack_clear(&self.ctx)
+                self._resume_execute = NULL
                 if ret == -2:
                     raise FormatError
                 elif ret == -3:
