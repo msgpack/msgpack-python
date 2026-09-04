@@ -32,6 +32,7 @@ typedef struct msgpack_packer {
     size_t length;
     size_t buf_size;
     bool use_bin_type;
+    size_t exports;
 } msgpack_packer;
 
 typedef struct Packer Packer;
@@ -43,6 +44,16 @@ static inline int msgpack_pack_write(msgpack_packer* pk, const char *data, size_
     size_t len = pk->length;
 
     if (len + l > bs) {
+        if (pk->exports > 0) {
+            /* A `default` callback (or anything else running mid-pack) holds a
+             * live memoryview onto this buffer via getbuffer(). Growing the
+             * buffer here would realloc it out from under that memoryview,
+             * since PyMem_Realloc is free to move the allocation, leaving the
+             * export pointing at freed memory. */
+            PyErr_SetString(PyExc_BufferError,
+                             "Existing exports of data: cannot resize packer's internal buffer");
+            return -1;
+        }
         bs = (len + l) * 2;
         buf = (char*)PyMem_Realloc(buf, bs);
         if (!buf) {

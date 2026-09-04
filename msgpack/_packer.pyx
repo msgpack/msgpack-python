@@ -22,6 +22,7 @@ cdef extern from "pack.h":
         size_t length
         size_t buf_size
         bint use_bin_type
+        size_t exports
 
     int msgpack_pack_nil(msgpack_packer* pk) except -1
     int msgpack_pack_true(msgpack_packer* pk) except -1
@@ -105,7 +106,6 @@ cdef class Packer:
     cdef object _default
     cdef object _berrors
     cdef const char *unicode_errors
-    cdef size_t exports  # number of exported buffers
     cdef bint strict_types
     cdef bint use_float
     cdef bint autoreset
@@ -117,15 +117,15 @@ cdef class Packer:
             raise MemoryError("Unable to allocate internal buffer.")
         self.pk.buf_size = buf_size
         self.pk.length = 0
-        self.exports = 0
+        self.pk.exports = 0
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
         self.pk.buf = NULL
-        assert self.exports == 0
+        assert self.pk.exports == 0
 
     cdef _check_exports(self):
-        if self.exports > 0:
+        if self.pk.exports > 0:
             raise BufferError("Existing exports of data: Packer cannot be changed")
 
     @cython.critical_section
@@ -364,8 +364,8 @@ cdef class Packer:
     @cython.critical_section
     def __getbuffer__(self, Py_buffer *buffer, int flags):
         PyBuffer_FillInfo(buffer, self, self.pk.buf, self.pk.length, 1, flags)
-        self.exports += 1
+        self.pk.exports += 1
 
     @cython.critical_section
     def __releasebuffer__(self, Py_buffer *buffer):
-        self.exports -= 1
+        self.pk.exports -= 1

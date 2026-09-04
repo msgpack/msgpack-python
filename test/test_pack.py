@@ -203,8 +203,34 @@ def test_get_buffer():
 
 @pytest.mark.skipif(
     Packer.__module__ == "msgpack.fallback",
-    reason="buf_size only allocates in the C extension",
+    reason="the fallback packer's getbuffer() returns a BytesIO view, not a view onto a reallocatable C buffer",
 )
+def test_pack_growth_rejected_while_buffer_exported():
+    # A default() callback that calls getbuffer() mid-pack holds a live
+    # memoryview onto the packer's internal buffer. If the packer then needs
+    # to grow that buffer to fit more data, realloc() is free to move the
+    # allocation, leaving the export pointing at freed memory (a
+    # heap-use-after-free once anything reads through it).
+    exported = []
+
+    class Unsupported:
+        pass
+
+    def default(obj):
+        exported.append(packer.getbuffer())
+        # Comfortably bigger than buf_size, so packing this forces a realloc.
+        return b"x" * 4096
+
+    packer = Packer(default=default, autoreset=False, buf_size=64)
+
+    with pytest.raises(BufferError):
+        packer.pack(Unsupported())
+
+    # The export is still alive and still backed by real memory; releasing it
+    # shouldn't touch anything that was already freed.
+    del exported[:]
+
+
 def test_buf_size_is_converted_once():
     # Asking twice let the allocation and the recorded capacity disagree,
     # so the packer overflowed a buffer smaller than the size it recorded.
