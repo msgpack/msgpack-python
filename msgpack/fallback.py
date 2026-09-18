@@ -837,6 +837,8 @@ class Packer:
             return ret
 
     def pack_array_header(self, n):
+        if n < 0:
+            raise ValueError("array size must be non-negative")
         if n >= 2**32:
             raise ValueError
         self._pack_array_header(n)
@@ -846,6 +848,8 @@ class Packer:
             return ret
 
     def pack_map_header(self, n):
+        if n < 0:
+            raise ValueError("map size must be non-negative")
         if n >= 2**32:
             raise ValueError
         self._pack_map_header(n)

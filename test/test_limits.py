@@ -52,6 +52,16 @@ def test_map_header():
         packer.pack_array_header(2**32)
 
 
+@pytest.mark.parametrize("method", ["pack_array_header", "pack_map_header"])
+@pytest.mark.parametrize("size", [-1, -(2**32)])
+def test_negative_header_size(method, size):
+    packer = Packer(autoreset=False)
+    packer.pack("existing")
+    with pytest.raises(PackValueError, match="size must be non-negative"):
+        getattr(packer, method)(size)
+    assert packer.bytes() == packb("existing")
+
+
 def test_max_str_len():
     d = "x" * 3
     packed = packb(d)
