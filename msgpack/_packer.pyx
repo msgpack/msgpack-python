@@ -300,6 +300,8 @@ cdef class Packer:
     @cython.critical_section
     def pack_array_header(self, long long size):
         self._check_exports()
+        if size < 0:
+            raise ValueError("array size must be non-negative")
         if size > ITEM_LIMIT:
             raise ValueError("array too large")
         msgpack_pack_array(&self.pk, size)
@@ -311,6 +313,8 @@ cdef class Packer:
     @cython.critical_section
     def pack_map_header(self, long long size):
         self._check_exports()
+        if size < 0:
+            raise ValueError("map size must be non-negative")
         if size > ITEM_LIMIT:
             raise ValueError("map too learge")
         msgpack_pack_map(&self.pk, size)
