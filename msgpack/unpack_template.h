@@ -35,6 +35,8 @@ struct unpack_context {
     unsigned int cs;
     unsigned int trail;
     unsigned int top;
+    /* mode that started the object on the stack. See unpack_check_mode(). */
+    bool construct;
     unpack_stack stack[MSGPACK_EMBED_STACK_SIZE];
 };
 
@@ -44,6 +46,7 @@ static inline void unpack_init(unpack_context* ctx)
     ctx->cs = CS_HEADER;
     ctx->trail = 0;
     ctx->top = 0;
+    ctx->construct = true;
     ctx->stack[0].obj = NULL;
 }
 
@@ -386,7 +389,27 @@ _end:
 #undef again_fixed_trail_if_zero
 #undef start_container
 
+/*
+ * skip mode does not build the objects on the stack, so stack[].obj stays
+ * uninitialized. A later construct pass writes an item through that pointer.
+ * The reverse order drops the reference that the construct pass took.
+ * Reject the mode change while an object is still open.
+ */
+static inline int unpack_check_mode(unpack_context *ctx, bool construct)
+{
+    if (ctx->top != 0 && ctx->construct != construct) {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot switch between unpack and skip while an object is incomplete");
+        return -1;
+    }
+    ctx->construct = construct;
+    return 0;
+}
+
 static int unpack_construct(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
+    if (unpack_check_mode(ctx, true) < 0) {
+        return -1;
+    }
     int ret = unpack_execute(1, ctx, data, len, off);
     if (ret == -1) {
         unpack_clear(ctx);
@@ -394,6 +417,9 @@ static int unpack_construct(unpack_context *ctx, const char *data, Py_ssize_t le
     return ret;
 }
 static int unpack_skip(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
+    if (unpack_check_mode(ctx, false) < 0) {
+        return -1;
+    }
     int ret = unpack_execute(0, ctx, data, len, off);
     if (ret == -1) {
         unpack_clear(ctx);
