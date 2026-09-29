@@ -1,3 +1,23 @@
+# 1.2.3
+
+Release Date: 2026-09-29
+
+- Fix memory leaks in the C extension when map key validation or container hooks fail.
+  See [GHSA-j586-36cw-2gc2](https://github.com/msgpack/msgpack-python/security/advisories/GHSA-j586-36cw-2gc2).
+- Fix use-after-free errors when cleaning up an incomplete or failed `Unpacker.skip()`
+  after previously unpacking a nested object in the C extension.
+- Raise `ValueError` in the C extension when switching between unpacking, skipping,
+  header readers, or `read_bytes()` while an object is incomplete. Resume with the
+  same method after feeding more data; `unpack()` and iteration remain interchangeable.
+- Prevent reentrant unpacking, header reads, `read_bytes()`, and reinitialization
+  of the same C `Unpacker` while unpacking is in progress.
+- Reject negative sizes in `Packer.pack_array_header()` and `Packer.pack_map_header()`. #742
+- Support packing Python 3.15 `frozendict` objects. #738
+- Update Cython from 3.2.5 to 3.3.0. #738
+- Build wheels for Pyodide using Emscripten. #732
+- Update cibuildwheel to 4.2.1 and the QEMU setup action to 4.4.0. #741
+
+
 # 1.2.2
 
 Release Date: 2026-08-27
