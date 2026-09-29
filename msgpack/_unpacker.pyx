@@ -40,20 +40,22 @@ cdef extern from "unpack.h":
         Py_ssize_t max_map_len
         Py_ssize_t max_ext_len
 
-    ctypedef struct unpack_context:
-        msgpack_user user
-        PyObject* obj
-        Py_ssize_t count
-
+    ctypedef struct unpack_context
     ctypedef int (*execute_fn)(unpack_context* ctx, const char* data,
                                Py_ssize_t len, Py_ssize_t* off) except -1
+
+    ctypedef struct unpack_context:
+        msgpack_user user
+        execute_fn execute
+
     execute_fn unpack_construct
     execute_fn unpack_skip
     execute_fn read_array_header
     execute_fn read_map_header
 
     void unpack_init(unpack_context* ctx)
-    object unpack_data(unpack_context* ctx)
+    # Transfers the result's owned reference to Cython and clears its slot.
+    object unpack_take_result(unpack_context* ctx)
     void unpack_clear(unpack_context* ctx)
 
 cdef inline init_ctx(unpack_context *ctx,
@@ -191,16 +193,16 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
                  max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len)
         ret = unpack_construct(&ctx, buf, buf_len, &off)
         if ret == 1:
-            obj = unpack_data(&ctx)
+            obj = unpack_take_result(&ctx)
             if off < buf_len:
                 # buf may point into a temporary contiguous copy owned by view,
                 # so the extra data must be copied out before releasing view.
                 raise ExtraData(obj, PyBytes_FromStringAndSize(buf+off, buf_len-off))
             return obj
     finally:
+        unpack_clear(&ctx)
         PyBuffer_Release(&view);
 
-    unpack_clear(&ctx)
     if ret == 0:
         raise ValueError("Unpack failed: incomplete input")
     elif ret == -2:
@@ -213,6 +215,11 @@ def unpackb(object packed, *, object object_hook=None, object list_hook=None,
 
 cdef class Unpacker:
     """Streaming unpacker.
+
+    If an operation needs more data, resume it with the same method after
+    feeding more bytes. ``unpack()`` and iteration may be used interchangeably.
+    Switching between unpacking, skipping, header readers, or ``read_bytes()``
+    while an object is incomplete raises ``ValueError`` in the C extension.
 
     Arguments:
 
@@ -338,6 +345,9 @@ cdef class Unpacker:
                  Py_ssize_t max_map_len=-1,
                  Py_ssize_t max_ext_len=-1):
         cdef const char *cerr=NULL
+
+        if self._unpacking:
+            raise RuntimeError("Unpacker.__init__() cannot be called while unpacking is in progress")
 
         unpack_clear(&self.ctx)
         unpack_init(&self.ctx)
@@ -473,18 +483,29 @@ cdef class Unpacker:
         cdef object obj
         cdef Py_ssize_t prev_head
 
+        if self._unpacking:
+            raise RuntimeError("Unpacker cannot be called recursively while unpacking is in progress")
+        if self.ctx.execute != NULL and self.ctx.execute != execute:
+            raise ValueError("Cannot switch unpacking methods while an object is incomplete")
+
         self._unpacking = True
         try:
             while 1:
                 prev_head = self.buf_head
                 if prev_head < self.buf_tail:
-                    ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
-                    self.stream_offset += self.buf_head - prev_head
+                    self.ctx.execute = execute
+                    try:
+                        ret = execute(&self.ctx, self.buf, self.buf_tail, &self.buf_head)
+                    except:
+                        unpack_clear(&self.ctx)
+                        raise
+                    finally:
+                        self.stream_offset += self.buf_head - prev_head
                 else:
                     ret = 0
 
                 if ret == 1:
-                    obj = unpack_data(&self.ctx)
+                    obj = unpack_take_result(&self.ctx)
                     unpack_init(&self.ctx)
                     return obj
                 if ret == 0:
@@ -510,6 +531,10 @@ cdef class Unpacker:
     def read_bytes(self, Py_ssize_t nbytes):
         """Read a specified number of raw bytes from the stream"""
         cdef Py_ssize_t nread
+        if self._unpacking:
+            raise RuntimeError("Unpacker.read_bytes() cannot be called while unpacking is in progress")
+        if self.ctx.execute != NULL:
+            raise ValueError("Cannot switch unpacking methods while an object is incomplete")
         nread = min(self.buf_tail - self.buf_head, nbytes)
         ret = PyBytes_FromStringAndSize(self.buf + self.buf_head, nread)
         self.buf_head += nread

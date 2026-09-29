@@ -35,11 +35,13 @@ typedef struct unpack_user {
     Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
 } unpack_user;
 
-typedef PyObject* msgpack_unpack_object;
+typedef PyObject* msgpack_unpack_object; //TODO: remove typedef and use PyObject* directly
 struct unpack_context;
 typedef struct unpack_context unpack_context;
 typedef int (*execute_fn)(unpack_context *ctx, const char* data, Py_ssize_t len, Py_ssize_t* off);
 
+/* Constructors receive a NULL output slot and store an owned reference on
+ * success. On failure the slot remains NULL. */
 static inline int unpack_callback_uint16(unpack_user* u, uint16_t d, msgpack_unpack_object* o)
 {
     PyObject *p = PyLong_FromLong((long)d);
@@ -137,6 +139,7 @@ static inline int unpack_callback_array(unpack_user* u, unsigned int n, msgpack_
     return 0;
 }
 
+/* Consumes o on both success and failure; borrows the container. */
 static inline int unpack_callback_array_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object o)
 {
     if (u->use_list)
@@ -146,14 +149,16 @@ static inline int unpack_callback_array_item(unpack_user* u, unsigned int curren
     return 0;
 }
 
+/* Replaces the owned container reference with the hook result, or NULL on
+ * failure. The original reference is consumed in either case. */
 static inline int unpack_callback_array_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->list_hook) {
         PyObject *new_c = PyObject_CallFunctionObjArgs(u->list_hook, *c, NULL);
-        if (!new_c)
-            return -1;
         Py_DECREF(*c);
         *c = new_c;
+        if (!new_c)
+            return -1;
     }
     return 0;
 }
@@ -177,10 +182,13 @@ static inline int unpack_callback_map(unpack_user* u, unsigned int n, msgpack_un
     return 0;
 }
 
+/* Consumes k and v on both success and failure; borrows the container. */
 static inline int unpack_callback_map_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object k, msgpack_unpack_object v)
 {
     if (u->strict_map_key && !PyUnicode_CheckExact(k) && !PyBytes_CheckExact(k)) {
         PyErr_Format(PyExc_ValueError, "%.100s is not allowed for map key when strict_map_key=True", Py_TYPE(k)->tp_name);
+        Py_DECREF(k);
+        Py_DECREF(v);
         return -1;
     }
     if (PyUnicode_CheckExact(k)) {
@@ -188,30 +196,28 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
     }
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);
-        if (!item)
-            return -1;
         Py_DECREF(k);
         Py_DECREF(v);
+        if (!item)
+            return -1;
         PyList_SET_ITEM(*c, current, item);
         return 0;
     }
-    else if (PyDict_SetItem(*c, k, v) == 0) {
-        Py_DECREF(k);
-        Py_DECREF(v);
-        return 0;
-    }
-    return -1;
+    int ret = PyDict_SetItem(*c, k, v);
+    Py_DECREF(k);
+    Py_DECREF(v);
+    return ret;
 }
 
+/* Same ownership contract as unpack_callback_array_end. */
 static inline int unpack_callback_map_end(unpack_user* u, msgpack_unpack_object* c)
 {
     if (u->object_hook) {
         PyObject *new_c = PyObject_CallFunctionObjArgs(u->object_hook, *c, NULL);
-        if (!new_c)
-            return -1;
-
         Py_DECREF(*c);
         *c = new_c;
+        if (!new_c)
+            return -1;
     }
     return 0;
 }

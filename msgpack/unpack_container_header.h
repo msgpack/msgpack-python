@@ -46,9 +46,8 @@ static inline int unpack_container_header(unpack_context* ctx, const char* data,
         return -1;
     }
 
-    if (unpack_callback_uint32(&ctx->user, size, &ctx->stack[0].obj) < 0)
+    if (unpack_callback_uint32(&ctx->user, size, &ctx->result) < 0)
         return -1;
 
     return 1;
 }
-

@@ -23,6 +23,7 @@
 #endif
 
 typedef struct unpack_stack {
+    /* Each non-NULL pointer owns a reference. Moving it clears the source. */
     PyObject* obj;
     Py_ssize_t size;
     Py_ssize_t count;
@@ -35,32 +36,40 @@ struct unpack_context {
     unsigned int cs;
     unsigned int trail;
     unsigned int top;
+    /* Completed result and the operation to resume after incomplete input. */
+    PyObject* result;
+    execute_fn execute;
     unpack_stack stack[MSGPACK_EMBED_STACK_SIZE];
 };
 
+static inline PyObject* unpack_take_ref(PyObject** slot)
+{
+    PyObject* obj = *slot;
+    *slot = NULL;
+    return obj;
+}
 
 static inline void unpack_init(unpack_context* ctx)
 {
     ctx->cs = CS_HEADER;
     ctx->trail = 0;
     ctx->top = 0;
-    ctx->stack[0].obj = NULL;
+    ctx->result = NULL;
+    ctx->execute = NULL;
 }
 
-static inline PyObject* unpack_data(unpack_context* ctx)
+static inline PyObject* unpack_take_result(unpack_context* ctx)
 {
-    return (ctx)->stack[0].obj;
+    return unpack_take_ref(&ctx->result);
 }
 
 static inline void unpack_clear(unpack_context *ctx)
 {
     for (unsigned int i = 0; i < ctx->top; i++) {
-        /* map_key holds a live reference only while waiting for the value */
-        if (ctx->stack[i].ct == CT_MAP_VALUE) {
-            Py_CLEAR(ctx->stack[i].map_key);
-        }
+        Py_CLEAR(ctx->stack[i].map_key);
         Py_CLEAR(ctx->stack[i].obj);
     }
+    Py_CLEAR(ctx->result);
     unpack_init(ctx);
 }
 
@@ -78,22 +87,20 @@ static inline int unpack_execute(bool construct, unpack_context* ctx, const char
     unpack_stack* stack = ctx->stack;
     unpack_user* user = &ctx->user;
 
+    /* The pending value owns a reference until moved to a frame or callback. */
     PyObject* obj = NULL;
     unpack_stack* c = NULL;
 
     int ret;
 
-#define construct_cb(name) \
-    construct && unpack_callback ## name
-
 #define push_simple_value(func) \
-    if(construct_cb(func)(user, &obj) < 0) { goto _failed; } \
+    if(construct && unpack_callback##func(user, &obj) < 0) { goto _failed; } \
     goto _push
 #define push_fixed_value(func, arg) \
-    if(construct_cb(func)(user, arg, &obj) < 0) { goto _failed; } \
+    if(construct && unpack_callback##func(user, arg, &obj) < 0) { goto _failed; } \
     goto _push
 #define push_variable_value(func, base, pos, len) \
-    if(construct_cb(func)(user, \
+    if(construct && unpack_callback##func(user, \
         (const char*)base, (const char*)pos, len, &obj) < 0) { goto _failed; } \
     goto _push
 
@@ -109,10 +116,12 @@ static inline int unpack_execute(bool construct, unpack_context* ctx, const char
 
 #define start_container(func, count_, ct_) \
     if(top >= MSGPACK_EMBED_STACK_SIZE) { ret = -3; goto _end; } \
-    if(construct_cb(func)(user, count_, &stack[top].obj) < 0) { goto _failed; } \
-    if((count_) == 0) { obj = stack[top].obj; \
-        if (construct_cb(func##_end)(user, &obj) < 0) { goto _failed; } \
+    if(construct && unpack_callback##func(user, count_, &obj) < 0) { goto _failed; } \
+    if((count_) == 0) { \
+        if (construct && unpack_callback##func##_end(user, &obj) < 0) { goto _failed; } \
         goto _push; } \
+    stack[top].obj = unpack_take_ref(&obj); \
+    stack[top].map_key = NULL; \
     stack[top].ct = ct_; \
     stack[top].size  = count_; \
     stack[top].count = 0; \
@@ -308,26 +317,32 @@ _push:
     c = &stack[top-1];
     switch(c->ct) {
     case CT_ARRAY_ITEM:
-        if(construct_cb(_array_item)(user, c->count, &c->obj, obj) < 0) { goto _failed; }
+        if (construct) {
+            if (unpack_callback_array_item(user, c->count, &c->obj,
+                                          unpack_take_ref(&obj)) < 0) { goto _failed; }
+        }
         if(++c->count == c->size) {
-            obj = c->obj;
-            if (construct_cb(_array_end)(user, &obj) < 0) { goto _failed; }
+            obj = unpack_take_ref(&c->obj);
             --top;
+            if (construct && unpack_callback_array_end(user, &obj) < 0) { goto _failed; }
             /*printf("stack pop %d\n", top);*/
             goto _push;
         }
         goto _header_again;
     case CT_MAP_KEY:
-        c->map_key = obj;
+        c->map_key = unpack_take_ref(&obj);
         c->ct = CT_MAP_VALUE;
         goto _header_again;
     case CT_MAP_VALUE:
-        if(construct_cb(_map_item)(user, c->count, &c->obj, c->map_key, obj) < 0) { goto _failed; }
-        c->map_key = NULL;
+        if (construct) {
+            if (unpack_callback_map_item(user, c->count, &c->obj,
+                                        unpack_take_ref(&c->map_key),
+                                        unpack_take_ref(&obj)) < 0) { goto _failed; }
+        }
         if(++c->count == c->size) {
-            obj = c->obj;
-            if (construct_cb(_map_end)(user, &obj) < 0) { goto _failed; }
+            obj = unpack_take_ref(&c->obj);
             --top;
+            if (construct && unpack_callback_map_end(user, &obj) < 0) { goto _failed; }
             /*printf("stack pop %d\n", top);*/
             goto _push;
         }
@@ -340,6 +355,7 @@ _push:
     }
 
 _header_again:
+        assert(obj == NULL);
         cs = CS_HEADER;
         ++p;
     } while(p != pe);
@@ -349,7 +365,7 @@ _header_again:
 _finish:
     if (!construct)
         unpack_callback_nil(user, &obj);
-    stack[0].obj = obj;
+    ctx->result = unpack_take_ref(&obj);
     ++p;
     ret = 1;
     /*printf("-- finish --\n"); */
@@ -361,17 +377,18 @@ _failed:
     goto _end;
 
 _out:
+    assert(obj == NULL);
     ret = 0;
     goto _end;
 
 _end:
+    Py_XDECREF(obj);
     ctx->cs = cs;
     ctx->trail = trail;
     ctx->top = top;
     *off = p - (const unsigned char*)data;
 
     return ret;
-#undef construct_cb
 }
 
 #undef NEXT_CS
@@ -387,18 +404,10 @@ _end:
 #undef start_container
 
 static int unpack_construct(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
-    int ret = unpack_execute(1, ctx, data, len, off);
-    if (ret == -1) {
-        unpack_clear(ctx);
-    }
-    return ret;
+    return unpack_execute(1, ctx, data, len, off);
 }
 static int unpack_skip(unpack_context *ctx, const char *data, Py_ssize_t len, Py_ssize_t *off) {
-    int ret = unpack_execute(0, ctx, data, len, off);
-    if (ret == -1) {
-        unpack_clear(ctx);
-    }
-    return ret;
+    return unpack_execute(0, ctx, data, len, off);
 }
 
 #define unpack_container_header read_array_header
