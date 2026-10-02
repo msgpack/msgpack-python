@@ -529,15 +529,15 @@ class Unpacker:
                     self._unpack(EX_SKIP)
                 return
             if self._object_pairs_hook is not None:
-
-                def _gen():
-                    for _ in range(n):
-                        key = self._unpack(EX_CONSTRUCT)
-                        if self._strict_map_key and type(key) not in (str, bytes):
-                            raise ValueError("%s is not allowed for map key" % str(type(key)))
-                        yield key, self._unpack(EX_CONSTRUCT)
-
-                ret = self._object_pairs_hook(_gen())
+                # Pass a list, as the C extension does, so the whole map is
+                # consumed even if the hook does not iterate it.
+                pairs = []
+                for _ in range(n):
+                    key = self._unpack(EX_CONSTRUCT)
+                    if self._strict_map_key and type(key) not in (str, bytes):
+                        raise ValueError("%s is not allowed for map key" % str(type(key)))
+                    pairs.append((key, self._unpack(EX_CONSTRUCT)))
+                ret = self._object_pairs_hook(pairs)
             else:
                 ret = {}
                 for _ in range(n):
