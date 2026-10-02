@@ -41,6 +41,18 @@ def test_decode_pairs_hook():
     assert unpacked[1] == prod_sum
 
 
+def test_decode_pairs_hook_receives_list():
+    def reject_duplicate_keys(pairs):
+        keys = [k for k, _ in pairs]
+        assert len(keys) == len(set(keys))
+        return dict(pairs)
+
+    packed = packb([{"a": 1, "b": 2}, 3])
+    assert unpackb(packed, object_pairs_hook=reject_duplicate_keys) == [{"a": 1, "b": 2}, 3]
+    assert unpackb(packed, object_pairs_hook=lambda pairs: pairs[0]) == [("a", 1), 3]
+    assert unpackb(packed, object_pairs_hook=lambda pairs: None) == [None, 3]
+
+
 def test_only_one_obj_hook():
     with raises(TypeError):
         unpackb(b"", object_hook=lambda x: x, object_pairs_hook=lambda x: x)
