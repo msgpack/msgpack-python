@@ -49,7 +49,7 @@ else:
 
 
 from .exceptions import BufferFull, ExtraData, FormatError, OutOfData, StackError
-from .ext import ExtType, Timestamp
+from .ext import Bypass, ExtType, Timestamp
 
 EX_SKIP = 0
 EX_CONSTRUCT = 1
@@ -793,6 +793,9 @@ class Packer:
                     self._buffer.write(struct.pack(">BI", 0xC9, L))
                 self._buffer.write(struct.pack("b", code))
                 self._buffer.write(data)
+                return
+            if check(obj, Bypass):
+                self._buffer.write(obj.data)
                 return
             if check(obj, list_types):
                 n = len(obj)
