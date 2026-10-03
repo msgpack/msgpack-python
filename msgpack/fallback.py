@@ -830,7 +830,11 @@ class Packer:
             return ret
 
     def pack_map_pairs(self, pairs):
-        self._pack_map_pairs(len(pairs), pairs)
+        try:
+            self._pack_map_pairs(len(pairs), pairs)
+        except:
+            self._buffer = BytesIO()
+            raise
         if self._autoreset:
             ret = self._buffer.getvalue()
             self._buffer = BytesIO()
