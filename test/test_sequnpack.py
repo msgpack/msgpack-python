@@ -112,6 +112,29 @@ def test_readbytes():
     assert next(u) == 1
 
 
+def test_read_bytes_returns_bytes():
+    # Finding 4 of #683: the fallback used to return a bytearray slice.
+    unpacker = Unpacker()
+    unpacker.feed(b"foobar")
+    assert unpacker.unpack() == ord(b"f")
+    got = unpacker.read_bytes(3)
+    assert got == b"oob"
+    assert type(got) is bytes
+    assert {got: 1}[b"oob"] == 1
+    assert unpacker.unpack() == ord(b"a")
+
+    short = Unpacker(io.BytesIO(b"ab")).read_bytes(5)
+    assert short == b"ab"
+    assert type(short) is bytes
+
+    zero = Unpacker()
+    zero.feed(b"z")
+    assert zero.read_bytes(0) == b""
+    got = zero.read_bytes(1)
+    assert got == b"z"
+    assert type(got) is bytes
+
+
 def test_issue124():
     unpacker = Unpacker()
     unpacker.feed(b"\xa1?\xa1!")
