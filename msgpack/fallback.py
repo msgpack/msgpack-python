@@ -501,10 +501,13 @@ class Unpacker:
 
         if execute == EX_READ_ARRAY_HEADER:
             if typ != TYPE_ARRAY:
+                # Leave the object unread, as the C extension does.
+                self._buff_i = self._buf_checkpoint
                 raise ValueError("Expected array")
             return n
         if execute == EX_READ_MAP_HEADER:
             if typ != TYPE_MAP:
+                self._buff_i = self._buf_checkpoint
                 raise ValueError("Expected map")
             return n
         # TODO should we eliminate the recursion?
