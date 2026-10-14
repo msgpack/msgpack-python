@@ -356,7 +356,8 @@ class Unpacker:
     def read_bytes(self, n):
         ret = self._read(n, raise_outofdata=False)
         self._consume()
-        return ret
+        # The C extension returns bytes. A bytearray slice cannot be a dict key.
+        return bytes(ret)
 
     def _read(self, n, raise_outofdata=True):
         # (int) -> bytearray
