@@ -521,10 +521,11 @@ class Unpacker:
             ret = newlist_hint(n)
             for i in range(n):
                 ret.append(self._unpack(EX_CONSTRUCT))
+            if not self._use_list:
+                ret = tuple(ret)
             if self._list_hook is not None:
                 ret = self._list_hook(ret)
-            # TODO is the interaction between `list_hook` and `use_list` ok?
-            return ret if self._use_list else tuple(ret)
+            return ret
         if typ == TYPE_MAP:
             if execute == EX_SKIP:
                 for i in range(n):
