@@ -1,5 +1,5 @@
-## Security contact information
+## Reporting a Vulnerability
 
-To report a security vulnerability, please use the
-[Tidelift security contact](https://tidelift.com/security).
-Tidelift will coordinate the fix and disclosure.
+If you discover a security vulnerability, please report it privately using [GitHub's vulnerability reporting feature](https://github.com/msgpack/msgpack-python/security/advisories/new).
+
+Please do not disclose security vulnerabilities through public GitHub issues.
