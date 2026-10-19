@@ -375,8 +375,10 @@ class Unpacker:
             return
 
         if self._feeding:
-            self._buff_i = self._buf_checkpoint
-            raise OutOfData
+            if raise_outofdata:
+                self._buff_i = self._buf_checkpoint
+                raise OutOfData
+            return
 
         # Strip buffer before checkpoint before reading file.
         if self._buf_checkpoint > 0:
