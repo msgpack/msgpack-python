@@ -99,6 +99,24 @@ def test_unpacker_tell_read_bytes():
         assert unpacker.read_bytes(n) == raw
 
 
+@mark.parametrize("from_file", [False, True])
+@mark.parametrize("nbytes", [-1, -(2**31)])
+def test_unpacker_read_bytes_negative(from_file, nbytes):
+    packed = packb([1, 2])
+    unpacker = Unpacker(BytesIO(packed)) if from_file else Unpacker()
+    if not from_file:
+        unpacker.feed(packed)
+    assert unpacker.read_array_header() == 2
+
+    with raises(ValueError, match="non-negative"):
+        unpacker.read_bytes(nbytes)
+
+    assert unpacker.tell() == 1
+    assert unpacker.read_bytes(0) == b""
+    assert unpacker.read_bytes(1) == b"\x01"
+    assert unpacker.unpack() == 2
+
+
 @mark.skipif(
     Unpacker.__module__ == "msgpack.fallback",
     reason="specific to C extension reinit leak",

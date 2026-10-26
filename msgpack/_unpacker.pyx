@@ -535,6 +535,8 @@ cdef class Unpacker:
             raise RuntimeError("Unpacker.read_bytes() cannot be called while unpacking is in progress")
         if self.ctx.execute != NULL:
             raise ValueError("Cannot switch unpacking methods while an object is incomplete")
+        if nbytes < 0:
+            raise ValueError("nbytes must be non-negative")
         nread = min(self.buf_tail - self.buf_head, nbytes)
         ret = PyBytes_FromStringAndSize(self.buf + self.buf_head, nread)
         self.buf_head += nread
