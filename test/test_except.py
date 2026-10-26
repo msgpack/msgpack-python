@@ -4,7 +4,7 @@ import datetime
 import gc
 import tracemalloc
 
-from pytest import raises
+from pytest import mark, raises
 
 from msgpack import ExtType, FormatError, OutOfData, StackError, Unpacker, packb, unpackb
 
@@ -103,6 +103,7 @@ def test_invalidvalue():
         unpacker.skip()
 
 
+@mark.thread_unsafe(reason="tracemalloc changes process-wide state and measures all threads")
 def test_no_memory_leak_on_nested_invalid_tag() -> None:
     """Regression test: unpacking nested arrays containing an invalid tag must not leak objects."""
 
