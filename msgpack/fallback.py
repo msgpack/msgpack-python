@@ -518,7 +518,7 @@ class Unpacker:
                     # TODO check whether we need to call `list_hook`
                     self._unpack(EX_SKIP)
                 return
-            ret = newlist_hint(n)
+            ret = newlist_hint(min(n, 10000))
             for i in range(n):
                 ret.append(self._unpack(EX_CONSTRUCT))
             if self._list_hook is not None:

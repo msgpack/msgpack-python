@@ -17,6 +17,7 @@
  */
 
 #define MSGPACK_EMBED_STACK_SIZE  (1024)
+#define MSGPACK_MAX_PREALLOC  (10000)
 #include "unpack_define.h"
 
 typedef struct unpack_user {
@@ -131,7 +132,9 @@ static inline int unpack_callback_array(unpack_user* u, unsigned int n, msgpack_
         PyErr_Format(PyExc_ValueError, "%u exceeds max_array_len(%zd)", n, u->max_array_len);
         return -1;
     }
-    PyObject *p = u->use_list ? PyList_New(n) : PyTuple_New(n);
+    /* Large tuples are built as lists and converted when complete. */
+    PyObject *p = n > MSGPACK_MAX_PREALLOC ? PyList_New(MSGPACK_MAX_PREALLOC) :
+        (u->use_list ? PyList_New(n) : PyTuple_New(n));
 
     if (!p)
         return -1;
@@ -139,13 +142,24 @@ static inline int unpack_callback_array(unpack_user* u, unsigned int n, msgpack_
     return 0;
 }
 
+/* Consumes o on both success and failure; borrows the list. */
+static inline int unpack_list_item(PyObject *list, unsigned int current, PyObject *o)
+{
+    if (current < MSGPACK_MAX_PREALLOC) {
+        PyList_SET_ITEM(list, current, o);
+        return 0;
+    }
+    int ret = PyList_Append(list, o);
+    Py_DECREF(o);
+    return ret;
+}
+
 /* Consumes o on both success and failure; borrows the container. */
 static inline int unpack_callback_array_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object o)
 {
-    if (u->use_list)
-        PyList_SET_ITEM(*c, current, o);
-    else
-        PyTuple_SET_ITEM(*c, current, o);
+    if (PyList_CheckExact(*c))
+        return unpack_list_item(*c, current, o);
+    PyTuple_SET_ITEM(*c, current, o);
     return 0;
 }
 
@@ -153,6 +167,13 @@ static inline int unpack_callback_array_item(unpack_user* u, unsigned int curren
  * failure. The original reference is consumed in either case. */
 static inline int unpack_callback_array_end(unpack_user* u, msgpack_unpack_object* c)
 {
+    if (!u->use_list && PyList_CheckExact(*c)) {
+        PyObject *tuple = PyList_AsTuple(*c);
+        Py_DECREF(*c);
+        *c = tuple;
+        if (!tuple)
+            return -1;
+    }
     if (u->list_hook) {
         PyObject *new_c = PyObject_CallFunctionObjArgs(u->list_hook, *c, NULL);
         Py_DECREF(*c);
@@ -171,7 +192,7 @@ static inline int unpack_callback_map(unpack_user* u, unsigned int n, msgpack_un
     }
     PyObject *p;
     if (u->has_pairs_hook) {
-        p = PyList_New(n); // Or use tuple?
+        p = PyList_New(n > MSGPACK_MAX_PREALLOC ? MSGPACK_MAX_PREALLOC : n);
     }
     else {
         p = PyDict_New();
@@ -200,8 +221,7 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
         Py_DECREF(v);
         if (!item)
             return -1;
-        PyList_SET_ITEM(*c, current, item);
-        return 0;
+        return unpack_list_item(*c, current, item);
     }
     int ret = PyDict_SetItem(*c, k, v);
     Py_DECREF(k);

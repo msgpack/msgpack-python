@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 import sysconfig
+import tracemalloc
 
 import pytest
 
 from msgpack import (
     ExtType,
+    OutOfData,
     Packer,
     PackOverflowError,
     PackValueError,
@@ -116,6 +118,62 @@ def test_max_map_len():
     with pytest.raises(UnpackValueError):
         unpacker.feed(packed)
         unpacker.unpack()
+
+
+@pytest.mark.parametrize("size", [9999, 10000, 10001, 20001])
+@pytest.mark.parametrize("use_list", [False, True])
+def test_array_preallocation_boundary(size, use_list):
+    value = list(range(size))
+    expected = value if use_list else tuple(value)
+    packed = packb(value)
+    assert unpackb(packed, use_list=use_list, list_hook=lambda obj: obj) == expected
+
+    unpacker = Unpacker(use_list=use_list)
+    # Suspend after crossing the preallocation boundary.
+    unpacker.feed(packed[:-1])
+    with pytest.raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(packed[-1:])
+    assert unpacker.unpack() == expected
+
+
+@pytest.mark.parametrize("size", [9999, 10000, 10001, 20001])
+def test_pairs_preallocation_boundary(size):
+    value = {str(i): i for i in range(size)}
+    expected = list(value.items())
+    packed = packb(value)
+    assert unpackb(packed, object_pairs_hook=list) == expected
+
+    unpacker = Unpacker(object_pairs_hook=list)
+    unpacker.feed(packed[:-1])
+    with pytest.raises(OutOfData):
+        unpacker.unpack()
+    unpacker.feed(packed[-1:])
+    assert unpacker.unpack() == expected
+
+
+@pytest.mark.parametrize("kind", ["list", "tuple", "pairs"])
+def test_nested_headers_preallocation(kind):
+    packer = Packer()
+    header = (
+        packer.pack_map_header(100_000) if kind == "pairs" else packer.pack_array_header(100_000)
+    )
+    unpacker = Unpacker(
+        use_list=kind != "tuple", object_pairs_hook=list if kind == "pairs" else None
+    )
+    # Map headers nest in key position, so no completed pairs are needed.
+    unpacker.feed(header * 16)
+    already_tracing = tracemalloc.is_tracing()
+    tracemalloc.start()
+    try:
+        before = tracemalloc.get_traced_memory()[0]
+        with pytest.raises(OutOfData):
+            unpacker.unpack()
+        # Full preallocation would retain over 12 MB in the C unpacker.
+        assert tracemalloc.get_traced_memory()[0] - before < 4 * 1024 * 1024
+    finally:
+        if not already_tracing:
+            tracemalloc.stop()
 
 
 def test_max_ext_len():
