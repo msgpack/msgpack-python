@@ -1,7 +1,7 @@
 from cpython cimport *
 from cpython.bytearray cimport PyByteArray_Check, PyByteArray_CheckExact
 from cpython.datetime cimport (
-    PyDateTime_CheckExact, PyDelta_CheckExact,
+    PyDateTime_Check, PyDateTime_CheckExact, PyDelta_Check,
     datetime_tzinfo, timedelta_days, timedelta_seconds, timedelta_microseconds,
 )
 from cpython.frozendict cimport PyAnyDict_Check, PyAnyDict_CheckExact
@@ -241,16 +241,20 @@ cdef class Packer:
                 msgpack_pack_raw_body(&self.pk, <char*>view.buf, L)
             finally:
                 PyBuffer_Release(&view);
-        elif self.datetime and PyDateTime_CheckExact(o) and datetime_tzinfo(o) is not None:
+        elif (
+            self.datetime
+            and (PyDateTime_CheckExact(o) if strict else PyDateTime_Check(o))
+            and datetime_tzinfo(o) is not None
+        ):
             delta = o - epoch
-            if not PyDelta_CheckExact(delta):
-                raise ValueError("failed to calculate delta")
+            if not PyDelta_Check(delta):
+                raise TypeError("failed to calculate delta")
             llval = timedelta_days(delta) * <long long>(24*60*60) + timedelta_seconds(delta)
             ulval = timedelta_microseconds(delta) * 1000
             msgpack_pack_timestamp(&self.pk, llval, ulval)
         elif will_default:
             return -2
-        elif self.datetime and PyDateTime_CheckExact(o):
+        elif self.datetime and (PyDateTime_CheckExact(o) if strict else PyDateTime_Check(o)):
             # this should be later than will_default
             PyErr_Format(ValueError, b"can not serialize '%.200s' object where tzinfo=None", Py_TYPE(o).tp_name)
         else:
