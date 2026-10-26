@@ -1,3 +1,22 @@
+# 1.2.4
+
+Release Date: 2026-10-27
+
+- Limit container preallocation to 10000 items to prevent excessive memory
+  allocation from deeply nested, large array or map headers. Larger containers
+  grow as their contents are decoded; `max_array_len` and `max_map_len` still
+  limit their total size.
+  See [GHSA-j8c6-9vc5-hj6x](https://github.com/msgpack/msgpack-python/security/advisories/GHSA-j8c6-9vc5-hj6x).
+- Pass a list of pairs to `object_pairs_hook` in the pure Python unpacker,
+  ensuring that the entire map is consumed even if the hook does not iterate
+  over its argument. #744
+- Leave the next object unread when `read_array_header()` or `read_map_header()`
+  raises `ValueError` for a mismatched type in the pure Python unpacker. #748
+- Return `bytes` from `Unpacker.read_bytes()` in the pure Python implementation,
+  matching the C extension. #747
+- Update GitHub Actions dependencies, including cibuildwheel to 4.3.1. #749
+
+
 # 1.2.3
 
 Release Date: 2026-09-29
