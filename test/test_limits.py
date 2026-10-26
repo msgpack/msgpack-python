@@ -153,6 +153,7 @@ def test_pairs_preallocation_boundary(size):
 
 
 @pytest.mark.parametrize("kind", ["list", "tuple", "pairs"])
+@pytest.mark.thread_unsafe(reason="tracemalloc changes process-wide state and measures all threads")
 def test_nested_headers_preallocation(kind):
     packer = Packer()
     header = (
