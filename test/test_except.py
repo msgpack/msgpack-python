@@ -148,6 +148,14 @@ def test_strict_map_key():
         unpackb(packed, raw=False, strict_map_key=True)
 
 
+def test_strict_map_key_error_message():
+    # The pure-Python fallback should report the same message as the C
+    # extension when a map key has a disallowed type.
+    packed = packb({42: 1}, use_bin_type=True)
+    with raises(ValueError, match="int is not allowed for map key when strict_map_key=True"):
+        unpackb(packed, raw=False, strict_map_key=True)
+
+
 def test_strict_map_key_with_object_pairs_hook():
     # strict_map_key should be enforced even when object_pairs_hook is set
     invalid = {42: "value"}
