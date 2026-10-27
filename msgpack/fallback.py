@@ -354,6 +354,8 @@ class Unpacker:
         return self._buffer[self._buff_i :]
 
     def read_bytes(self, n):
+        if n < 0:
+            raise ValueError("nbytes must be non-negative")
         ret = self._read(n, raise_outofdata=False)
         self._consume()
         # The C extension returns bytes. A bytearray slice cannot be a dict key.
