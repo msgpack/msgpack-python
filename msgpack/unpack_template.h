@@ -232,10 +232,15 @@ static inline int unpack_execute(bool construct, unpack_context* ctx, const char
                 again_fixed_trail_if_zero(ACS_EXT_VALUE,
                                           _msgpack_load16(uint16_t,n)+1,
                                           _ext_zero);
-            case CS_EXT_32:
-                again_fixed_trail_if_zero(ACS_EXT_VALUE,
-                                          _msgpack_load32(uint32_t,n)+1,
-                                          _ext_zero);
+            case CS_EXT_32: {
+                    uint32_t size = _msgpack_load32(uint32_t,n);
+                    // trail includes the typecode, so size+1 must not wrap around.
+                    if (size == UINT32_MAX) {
+                        PyErr_Format(PyExc_ValueError, "%u exceeds max ext length", size);
+                        goto _failed;
+                    }
+                    again_fixed_trail_if_zero(ACS_EXT_VALUE, size+1, _ext_zero);
+                }
             case CS_FLOAT: {
                     double f;
 #if PY_VERSION_HEX >= 0x030B00A7
