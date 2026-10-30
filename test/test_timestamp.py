@@ -225,3 +225,70 @@ def test_too_large_timestamp():
     # When timestamp64 is too large, conversion to datetime fails due to int64 -> int32 conversion.
     # https://github.com/msgpack/msgpack-python/issues/696
     print(msgpack.unpackb(b"\xd7\xff" + b"\x00" * 8, timestamp=3))
+
+
+class DatetimeSubclass(datetime.datetime):
+    pass
+
+
+class TimedeltaSubclass(datetime.timedelta):
+    pass
+
+
+class DatetimeSubclassTimedeltaSubclass(datetime.datetime):
+    # Subtraction returns a timedelta subclass instead of datetime.timedelta.
+    def __sub__(self, other):
+        delta = super().__sub__(other)
+        if type(delta) is datetime.timedelta:
+            return TimedeltaSubclass(delta.days, delta.seconds, delta.microseconds)
+        return delta
+
+
+class DatetimeSubclassNotTimedelta(datetime.datetime):
+    # Subtraction does not return a timedelta.
+    def __sub__(self, other):
+        return 0
+
+
+@pytest.mark.parametrize("cls", [DatetimeSubclass, DatetimeSubclassTimedeltaSubclass])
+def test_pack_datetime_subclass(cls):
+    # Without strict_types, an aware datetime subclass packs like datetime.
+    utc = datetime.timezone.utc
+    dt = datetime.datetime(2024, 4, 16, 8, 43, 9, 420317, tzinfo=utc)
+    subdt = cls(2024, 4, 16, 8, 43, 9, 420317, tzinfo=utc)
+    called = []
+    packed = msgpack.packb(subdt, datetime=True, default=called.append)
+    assert packed == msgpack.packb(dt, datetime=True)
+    assert called == []
+    assert msgpack.unpackb(packed, timestamp=3) == dt
+
+
+def test_pack_naive_datetime_subclass():
+    dt = DatetimeSubclass(1970, 1, 1, 0, 0, 42, 14)
+    with pytest.raises(ValueError, match="where tzinfo=None"):
+        msgpack.packb(dt, datetime=True)
+
+
+@pytest.mark.parametrize(
+    "options",
+    [{"datetime": True, "strict_types": True}, {"datetime": False}],
+)
+def test_pack_datetime_subclass_unconverted(options):
+    # strict_types=True and datetime=False leave a subclass to default.
+    utc = datetime.timezone.utc
+    subdt = DatetimeSubclass(2024, 4, 16, 8, 43, 9, 420317, tzinfo=utc)
+    with pytest.raises(TypeError):
+        msgpack.packb(subdt, **options)
+    called = []
+    assert msgpack.packb(subdt, default=called.append, **options) == msgpack.packb(None)
+    assert called == [subdt]
+
+
+@pytest.mark.skipif(
+    msgpack.Packer.__module__ == "msgpack.fallback",
+    reason="subtraction result check is implemented in C extension only",
+)
+def test_pack_datetime_subclass_subtraction_not_timedelta():
+    subdt = DatetimeSubclassNotTimedelta(2024, 4, 16, tzinfo=datetime.timezone.utc)
+    with pytest.raises(TypeError):
+        msgpack.packb(subdt, datetime=True)
