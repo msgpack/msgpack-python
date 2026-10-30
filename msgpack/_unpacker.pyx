@@ -71,7 +71,7 @@ cdef inline init_ctx(unpack_context *ctx,
     ctx.user.use_list = use_list
     ctx.user.raw = raw
     ctx.user.strict_map_key = strict_map_key
-    ctx.user.object_hook = ctx.user.list_hook = <PyObject*>NULL
+    ctx.user.object_hook = ctx.user.list_hook = ctx.user.ext_hook = <PyObject*>NULL
     ctx.user.max_str_len = max_str_len
     ctx.user.max_bin_len = max_bin_len
     ctx.user.max_array_len = max_array_len
@@ -99,10 +99,9 @@ cdef inline init_ctx(unpack_context *ctx,
             raise TypeError("list_hook must be a callable.")
         ctx.user.list_hook = <PyObject*>list_hook
 
-    if ext_hook is not None:
-        if not PyCallable_Check(ext_hook):
-            raise TypeError("ext_hook must be a callable.")
-        ctx.user.ext_hook = <PyObject*>ext_hook
+    if not PyCallable_Check(ext_hook):
+        raise TypeError("ext_hook must be a callable.")
+    ctx.user.ext_hook = <PyObject*>ext_hook
 
     if timestamp < 0 or 3 < timestamp:
         raise ValueError("timestamp must be 0..3")

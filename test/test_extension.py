@@ -1,7 +1,35 @@
 import array
 
+import pytest
+
 import msgpack
 from msgpack import ExtType
+
+
+@pytest.mark.parametrize("ext_hook", [None, 0, "hook", []])
+def test_unpackb_invalid_ext_hook(ext_hook):
+    with pytest.raises(TypeError, match="ext_hook.*callable"):
+        msgpack.unpackb(b"\xc0", ext_hook=ext_hook)
+
+
+@pytest.mark.parametrize("ext_hook", [None, 0, "hook", []])
+def test_unpacker_invalid_ext_hook(ext_hook):
+    with pytest.raises(TypeError, match="ext_hook.*callable"):
+        msgpack.Unpacker(ext_hook=ext_hook)
+
+
+@pytest.mark.parametrize("ext_hook", [None, 0, "hook", []])
+def test_unpacker_reinit_invalid_ext_hook(ext_hook):
+    unpacker = msgpack.Unpacker(ext_hook=lambda code, data: (code, data))
+    unpacker.feed(b"\xd4\x42A")
+    assert unpacker.unpack() == (0x42, b"A")
+
+    with pytest.raises(TypeError, match="ext_hook.*callable"):
+        unpacker.__init__(ext_hook=ext_hook)
+
+    unpacker.__init__()
+    unpacker.feed(b"\xd4\x42A")
+    assert unpacker.unpack() == ExtType(0x42, b"A")
 
 
 def test_pack_ext_type():
