@@ -191,6 +191,15 @@ def test_max_ext_len():
         unpacker.unpack()
 
 
+@pytest.mark.parametrize("method", ["unpack", "skip"])
+def test_ext32_max_length(method):
+    # ext32 with length 0xffffffff followed by bytes that look like another object.
+    unpacker = Unpacker()
+    unpacker.feed(b"\xc9\xff\xff\xff\xff" + packb({"a": 1}))
+    with pytest.raises(UnpackValueError):
+        getattr(unpacker, method)()
+
+
 # PyPy fails following tests because of constant folding?
 # https://bugs.pypy.org/issue1721
 # @pytest.mark.skipif(True, reason="Requires very large memory.")
