@@ -47,7 +47,7 @@ jobs:
           platforms: ${{ matrix.cibw_archs }}
 
       - name: Build
-        uses: pypa/cibuildwheel@v4.3.4
+        uses: pypa/cibuildwheel@v4.3.5
         env:
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "pytest {package}/test"

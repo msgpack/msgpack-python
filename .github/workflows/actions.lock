@@ -21,7 +21,7 @@ workflows:
         - 'actions/setup-python@v7.1.0'
         - 'actions/upload-artifact@v7.0.2'
         - 'docker/setup-qemu-action@v4.4.0'
-        - 'pypa/cibuildwheel@v4.3.4'
+        - 'pypa/cibuildwheel@v4.3.5'
         - 'pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086'
 dependencies:
     'actions/cache@v6.1.0':
@@ -64,9 +64,9 @@ dependencies:
         commit: 'sha1-99012661954931238ded8c8b007157a8430204e1'
         owner_id: 5429470
         repo_id: 288487894
-    'pypa/cibuildwheel@v4.3.4':
-        ref: 'v4.3.4'
-        commit: 'sha1-b9e566a2b284570af229f6c2a33673410d0389a3'
+    'pypa/cibuildwheel@v4.3.5':
+        ref: 'v4.3.5'
+        commit: 'sha1-f9b966cfadf4109556cadc5bb39ddb72d0ce664e'
         owner_id: 647025
         repo_id: 85508223
         uses:
