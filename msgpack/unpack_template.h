@@ -58,6 +58,13 @@ static inline void unpack_init(unpack_context* ctx)
     ctx->execute = NULL;
 }
 
+/* Must run before any unpack_clear() on a context whose memory is uninitialized. */
+static inline void unpack_init_key_cache(unpack_context* ctx)
+{
+    ctx->user.map_keys_seen = 0;
+    ctx->user.key_cache_ready = false;
+}
+
 static inline PyObject* unpack_take_result(unpack_context* ctx)
 {
     return unpack_take_ref(&ctx->result);
@@ -70,6 +77,7 @@ static inline void unpack_clear(unpack_context *ctx)
         Py_CLEAR(ctx->stack[i].obj);
     }
     Py_CLEAR(ctx->result);
+    unpack_key_cache_clear(&ctx->user);
     unpack_init(ctx);
 }
 
@@ -293,6 +301,9 @@ static inline int unpack_execute(bool construct, unpack_context* ctx, const char
                 again_fixed_trail_if_zero(ACS_RAW_VALUE, _msgpack_load32(uint32_t,n), _raw_zero);
             case ACS_RAW_VALUE:
             _raw_zero:
+                if (top > 0 && stack[top-1].ct == CT_MAP_KEY) {
+                    push_variable_value(_map_key_raw, data, n, trail);
+                }
                 push_variable_value(_raw, data, n, trail);
 
             case ACS_EXT_VALUE:

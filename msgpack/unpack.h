@@ -18,6 +18,11 @@
 
 #define MSGPACK_EMBED_STACK_SIZE  (1024)
 #define MSGPACK_MAX_PREALLOC  (10000)
+/* Direct-mapped cache of decoded, interned ASCII map keys. It is enabled only
+ * after MSGPACK_KEY_CACHE_THRESHOLD keys, so small messages skip its setup. */
+#define MSGPACK_KEY_CACHE_SIZE  (256)  /* must be a power of two */
+#define MSGPACK_KEY_CACHE_MAX_LEN  (64)
+#define MSGPACK_KEY_CACHE_THRESHOLD  (32)
 #include "unpack_define.h"
 
 typedef struct unpack_user {
@@ -34,7 +39,21 @@ typedef struct unpack_user {
     PyObject *utc;
     const char *unicode_errors;
     Py_ssize_t max_str_len, max_bin_len, max_array_len, max_map_len, max_ext_len;
+    unsigned int map_keys_seen;
+    bool key_cache_ready;
+    PyObject *key_cache[MSGPACK_KEY_CACHE_SIZE];  /* valid only if key_cache_ready */
 } unpack_user;
+
+static inline void unpack_key_cache_clear(unpack_user* u)
+{
+    if (u->key_cache_ready) {
+        for (unsigned int i = 0; i < MSGPACK_KEY_CACHE_SIZE; i++) {
+            Py_CLEAR(u->key_cache[i]);
+        }
+        u->key_cache_ready = false;
+    }
+    u->map_keys_seen = 0;
+}
 
 typedef PyObject* msgpack_unpack_object; //TODO: remove typedef and use PyObject* directly
 struct unpack_context;
@@ -203,6 +222,26 @@ static inline int unpack_callback_map(unpack_user* u, unsigned int n, msgpack_un
     return 0;
 }
 
+static inline PyObject** unpack_key_cache_slot(unpack_user* u, const char* p, Py_ssize_t l)
+{
+    uint32_t hash = 2166136261u;  /* FNV-1a */
+    for (Py_ssize_t i = 0; i < l; i++) {
+        hash = (hash ^ (unsigned char)p[i]) * 16777619u;
+    }
+    return &u->key_cache[hash & (MSGPACK_KEY_CACHE_SIZE - 1)];
+}
+
+/* Only ASCII keys are stored, so a cached key's data equals its raw bytes. */
+static inline void unpack_key_cache_store(unpack_user* u, PyObject* key)
+{
+    Py_ssize_t l = PyUnicode_GET_LENGTH(key);
+    if (!u->key_cache_ready || !PyUnicode_IS_ASCII(key) || l > MSGPACK_KEY_CACHE_MAX_LEN)
+        return;
+    PyObject** slot = unpack_key_cache_slot(u, (const char*)PyUnicode_DATA(key), l);
+    Py_INCREF(key);
+    Py_XSETREF(*slot, key);
+}
+
 /* Consumes k and v on both success and failure; borrows the container. */
 static inline int unpack_callback_map_item(unpack_user* u, unsigned int current, msgpack_unpack_object* c, msgpack_unpack_object k, msgpack_unpack_object v)
 {
@@ -212,8 +251,10 @@ static inline int unpack_callback_map_item(unpack_user* u, unsigned int current,
         Py_DECREF(v);
         return -1;
     }
-    if (PyUnicode_CheckExact(k)) {
+    if (PyUnicode_CheckExact(k) && !PyUnicode_CHECK_INTERNED(k)) {
         PyUnicode_InternInPlace(&k);
+        /* Cache only keys of complete pairs, as interned strings may be immortal. */
+        unpack_key_cache_store(u, k);
     }
     if (u->has_pairs_hook) {
         msgpack_unpack_object item = PyTuple_Pack(2, k, v);
@@ -260,6 +301,31 @@ static inline int unpack_callback_raw(unpack_user* u, const char* b, const char*
         return -1;
     *o = py;
     return 0;
+}
+
+/* Map keys repeat across objects of the same shape, so reuse the interned
+ * string instead of decoding and interning the same bytes again. */
+static inline int unpack_callback_map_key_raw(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)
+{
+    if (u->raw || l > MSGPACK_KEY_CACHE_MAX_LEN || l > u->max_str_len) {
+        return unpack_callback_raw(u, b, p, l, o);
+    }
+    if (!u->key_cache_ready) {
+        if (++u->map_keys_seen < MSGPACK_KEY_CACHE_THRESHOLD) {
+            return unpack_callback_raw(u, b, p, l, o);
+        }
+        memset(u->key_cache, 0, sizeof(u->key_cache));
+        u->key_cache_ready = true;
+    }
+
+    PyObject* cached = *unpack_key_cache_slot(u, p, l);
+    if (cached && PyUnicode_GET_LENGTH(cached) == (Py_ssize_t)l &&
+            memcmp(PyUnicode_DATA(cached), p, l) == 0) {
+        Py_INCREF(cached);
+        *o = cached;
+        return 0;
+    }
+    return unpack_callback_raw(u, b, p, l, o);
 }
 
 static inline int unpack_callback_bin(unpack_user* u, const char* b, const char* p, unsigned int l, msgpack_unpack_object* o)

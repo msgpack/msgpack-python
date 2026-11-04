@@ -54,6 +54,7 @@ cdef extern from "unpack.h":
     execute_fn read_map_header
 
     void unpack_init(unpack_context* ctx)
+    void unpack_init_key_cache(unpack_context* ctx)
     # Transfers the result's owned reference to Cython and clears its slot.
     object unpack_take_result(unpack_context* ctx)
     void unpack_clear(unpack_context* ctx)
@@ -68,6 +69,7 @@ cdef inline init_ctx(unpack_context *ctx,
                      Py_ssize_t max_array_len, Py_ssize_t max_map_len,
                      Py_ssize_t max_ext_len):
     unpack_init(ctx)
+    unpack_init_key_cache(ctx)
     ctx.user.use_list = use_list
     ctx.user.raw = raw
     ctx.user.strict_map_key = strict_map_key

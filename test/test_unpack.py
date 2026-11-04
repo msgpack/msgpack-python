@@ -1,5 +1,6 @@
 import gc
 import sys
+import uuid
 import weakref
 from io import BytesIO
 
@@ -185,3 +186,84 @@ def test_unpack_raises_extra_data_on_stream_with_trailing_bytes():
         unpack(stream)
     assert exc_info.value.unpacked == 100
     assert exc_info.value.extra == packb(200)
+
+
+# Enough maps with the same keys to exercise repeated-key handling.
+REPEATED_KEY_MAPS = [{"id": i, "state": "open", "ключ": i, "x" * 70: i} for i in range(100)]
+
+
+def test_unpackb_repeated_map_keys_are_equal_and_interned():
+    result = unpackb(packb(REPEATED_KEY_MAPS))
+    assert result == REPEATED_KEY_MAPS
+    for obj in result:
+        for key in obj:
+            assert key is sys.intern(key)
+
+
+def test_unpacker_repeated_map_keys_across_objects():
+    up = Unpacker()
+    up.feed(b"".join(packb(obj) for obj in REPEATED_KEY_MAPS))
+    result = list(up)
+    assert result == REPEATED_KEY_MAPS
+    assert all(key is sys.intern(key) for obj in result for key in obj)
+
+
+def test_unpackb_repeated_map_keys_with_raw():
+    result = unpackb(packb(REPEATED_KEY_MAPS), raw=True)
+    assert [list(obj) for obj in result] == [[k.encode() for k in obj] for obj in REPEATED_KEY_MAPS]
+
+
+def test_unpackb_many_distinct_and_empty_map_keys():
+    keys = [""] + [f"k{i}" for i in range(600)]
+    maps = [{key: j for key in keys} for j in range(3)]
+    result = unpackb(packb(maps))
+    assert result == maps
+    assert all(list(obj) == keys for obj in result)
+
+
+# 100 maps with the key "ab", then one map whose key is `last_key_bytes`.
+def _warm_maps_then_key(last_key_bytes):
+    warm = b"".join(bytes([0x81, 0xA2]) + b"ab" + bytes([i]) for i in range(100))
+    last = bytes([0x81, 0xA0 | len(last_key_bytes)]) + last_key_bytes + b"\x00"
+    return bytes([0xDC, 0x00, 101]) + warm + last
+
+
+def test_unpackb_repeated_map_keys_respect_max_str_len():
+    packed = _warm_maps_then_key(b"abcd")
+    with raises(ValueError, match="exceeds max_str_len"):
+        unpackb(packed, max_str_len=3)
+    assert unpackb(packed, max_str_len=4)[-1] == {"abcd": 0}
+
+
+def test_unpackb_repeated_map_keys_then_invalid_utf8():
+    packed = _warm_maps_then_key(b"a\xff")
+    with raises(UnicodeDecodeError):
+        unpackb(packed)
+    replaced_key = b"a\xff".decode("utf-8", "replace")
+    assert unpackb(packed, unicode_errors="replace")[-1] == {replaced_key: 0}
+
+
+@mark.skipif(
+    Unpacker.__module__ == "msgpack.fallback",
+    reason="the fallback interns a key before reading its value",
+)
+def test_unpackb_does_not_intern_key_of_incomplete_pair():
+    # Interned strings may be immortal, so a key whose value never arrives
+    # must not be interned. The key is unique per call, as tests run in
+    # parallel threads and repeat under pytest-run-parallel.
+    suffix = uuid.uuid4().hex[:28]  # "nc-" + 28 chars fits a fixstr
+    packed = _warm_maps_then_key(f"nc-{suffix}".encode())[:-1]  # drop the last value
+    with raises(ValueError, match="incomplete"):
+        unpackb(packed)
+    fresh = "".join(["nc-", suffix])
+    assert sys.intern(fresh) is fresh
+
+
+def test_unpacker_repeated_map_keys_after_error():
+    up = Unpacker()
+    up.feed(_warm_maps_then_key(b"a\xff"))
+    with raises(UnicodeDecodeError):
+        up.unpack()
+    up.__init__()
+    up.feed(packb(REPEATED_KEY_MAPS))
+    assert up.unpack() == REPEATED_KEY_MAPS
