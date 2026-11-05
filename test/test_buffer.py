@@ -1,6 +1,6 @@
-from pytest import raises
+from pytest import mark, raises
 
-from msgpack import Packer, packb, unpackb
+from msgpack import BufferFull, Packer, Unpacker, packb, unpackb
 
 
 def test_unpack_buffer():
@@ -47,3 +47,44 @@ def test_packer_getbuffer():
         buffer.release()
         packer.pack(42)
         assert bytes(packer) == b"\x92*\xa5hello*"
+
+
+@mark.parametrize("shape", [(2, 3), (3, 2), (1, 6)])
+def test_unpack_multidimensional_buffer(shape):
+    packed = packb(b"abcd")
+    view = memoryview(packed).cast("B", shape)
+    assert unpackb(view) == b"abcd"
+
+    unpacker = Unpacker(max_buffer_size=len(packed))
+    unpacker.feed(view)
+    assert unpacker.unpack() == b"abcd"
+
+
+def test_feed_multidimensional_buffer_limit():
+    view = memoryview(packb(b"abcd")).cast("B", (2, 3))
+    unpacker = Unpacker(max_buffer_size=5)
+    unpacker.feed(packb(42))
+    with raises(BufferFull):
+        unpacker.feed(view)
+    assert unpacker.unpack() == 42
+    unpacker.feed(packb(43))
+    assert unpacker.unpack() == 43
+
+
+def test_unpack_scalar_buffer():
+    view = memoryview(packb(42)).cast("B", ())
+    assert unpackb(view) == 42
+    unpacker = Unpacker()
+    unpacker.feed(view)
+    assert unpacker.unpack() == 42
+
+
+def test_unpack_strided_multidimensional_buffer():
+    packed = packb(b"abcd")
+    padded = packed[:3] + b"xxx" + packed[3:] + b"xxx"
+    view = memoryview(padded).cast("B", (4, 3))[::2]
+    assert not view.contiguous
+    assert unpackb(view) == b"abcd"
+    unpacker = Unpacker(max_buffer_size=len(packed))
+    unpacker.feed(view)
+    assert unpacker.unpack() == b"abcd"

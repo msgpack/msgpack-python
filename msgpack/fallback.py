@@ -77,7 +77,9 @@ def _get_data_from_buffer(obj):
     view = memoryview(obj)
     if view.itemsize != 1:
         raise ValueError("cannot unpack from multi-byte object")
-    return view
+    if not view.c_contiguous:
+        return memoryview(view.tobytes())
+    return view.cast("B")
 
 
 def unpackb(packed, **kwargs):
@@ -92,6 +94,7 @@ def unpackb(packed, **kwargs):
 
     See :class:`Unpacker` for options.
     """
+    packed = _get_data_from_buffer(packed)
     unpacker = Unpacker(None, max_buffer_size=len(packed), **kwargs)
     unpacker.feed(packed)
     try:
@@ -339,7 +342,7 @@ class Unpacker:
             self._buf_checkpoint = 0
 
         # Use extend here: INPLACE_ADD += doesn't reliably typecast memoryview in jython
-        self._buffer.extend(view if view.contiguous else view.tobytes())
+        self._buffer.extend(view)
         view.release()
 
     def _consume(self):
