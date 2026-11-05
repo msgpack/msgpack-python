@@ -47,3 +47,25 @@ def test_packer_getbuffer():
         buffer.release()
         packer.pack(42)
         assert bytes(packer) == b"\x92*\xa5hello*"
+
+
+def test_packer_getbuffer_in_default():
+    # The default callback can export the internal buffer.
+    # The packer must refuse to pack on, because packing on reallocates
+    # the buffer and leaves the export pointing at freed memory.
+    exported = []
+
+    class Unsupported:
+        pass
+
+    def default(obj):
+        exported.append(packer.getbuffer())
+        return b"A" * (2 * 1024 * 1024)
+
+    packer = Packer(default=default, autoreset=False)
+    with raises(BufferError):
+        packer.pack([Unsupported()])
+
+    assert len(exported) == 1
+    assert bytes(exported[0]) == b"\x91"
+    exported[0].release()
