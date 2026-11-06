@@ -113,3 +113,40 @@ def test_overriding_hooks():
     testout = msgpack.packb(obj, default=default)
 
     assert refout == testout
+
+
+@pytest.mark.parametrize("autoreset", [False, True])
+@pytest.mark.parametrize(
+    "typecode, error",
+    [
+        (-129, ValueError),
+        (-128, ValueError),
+        (-1, ValueError),
+        (128, ValueError),
+        (256, ValueError),
+        (2**100, ValueError),
+        (1.5, TypeError),
+        (None, TypeError),
+        ("1", TypeError),
+    ],
+)
+def test_pack_ext_type_invalid_code(typecode, error, autoreset):
+    packer = msgpack.Packer(autoreset=autoreset)
+    packer.pack(42)
+    before = packer.bytes()
+    with pytest.raises(error):
+        packer.pack_ext_type(typecode, b"A")
+    assert packer.bytes() == before
+
+    packed = packer.pack_ext_type(0, b"A")
+    if not autoreset:
+        packed = packer.bytes()
+        assert packed[:1] == msgpack.packb(42)
+        packed = packed[1:]
+    assert msgpack.unpackb(packed) == ExtType(0, b"A")
+
+
+@pytest.mark.parametrize("typecode", [0, 127])
+def test_pack_ext_type_code_boundary(typecode):
+    packed = msgpack.Packer().pack_ext_type(typecode, b"A")
+    assert msgpack.unpackb(packed) == ExtType(typecode, b"A")

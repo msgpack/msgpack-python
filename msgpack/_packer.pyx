@@ -288,6 +288,10 @@ cdef class Packer:
     @cython.critical_section
     def pack_ext_type(self, typecode, data):
         self._check_exports()
+        if not isinstance(typecode, int):
+            raise TypeError("typecode must have int type.")
+        if not 0 <= typecode <= 127:
+            raise ValueError("typecode should be 0-127")
         if len(data) > ITEM_LIMIT:
             raise ValueError("ext data too large")
         msgpack_pack_ext(&self.pk, typecode, len(data))
