@@ -190,6 +190,37 @@ def test_pairlist():
     assert pairlist == unpacked
 
 
+@pytest.mark.parametrize("autoreset", [True, False])
+@pytest.mark.parametrize("method", ["pack", "pack_map_pairs"])
+def test_packer_resets_after_default_error(autoreset, method):
+    class Invoice:
+        def __init__(self, ready):
+            self.ready = ready
+
+    def default(invoice):
+        if not invoice.ready:
+            raise ValueError("invoice not ready")
+        return {"amount": 15}
+
+    packer = Packer(default=default, autoreset=autoreset)
+    packer.pack({"previous": 1})
+    pack = getattr(packer, method)
+    failed = [("id", 1), ("invoice", Invoice(False))]
+    with pytest.raises(ValueError, match="invoice not ready"):
+        pack(dict(failed) if method == "pack" else failed)
+    assert packer.bytes() == b""
+
+    valid = [("invoice", Invoice(True))]
+    packed = pack(dict(valid) if method == "pack" else valid)
+    if autoreset:
+        assert unpackb(packed) == {"invoice": {"amount": 15}}
+    else:
+        packer.pack({"next": 2})
+        unpacker = Unpacker()
+        unpacker.feed(packer.bytes())
+        assert list(unpacker) == [{"invoice": {"amount": 15}}, {"next": 2}]
+
+
 def test_get_buffer():
     packer = Packer(autoreset=0, use_bin_type=True)
     packer.pack([1, 2])
