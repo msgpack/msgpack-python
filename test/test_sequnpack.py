@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import io
 
-from pytest import raises
+from pytest import mark, raises
 
 from msgpack import BufferFull, Unpacker, pack, packb
 from msgpack.exceptions import OutOfData
@@ -169,3 +169,18 @@ def test_unpack_tell():
         m2 = next(unpacker)
         assert m == m2
         assert o == unpacker.tell()
+
+
+@mark.parametrize("data", [b"", b"ab"])
+def test_readbytes_short_feed(data):
+    unpacker = Unpacker()
+    unpacker.feed(packb(42) + data)
+    assert unpacker.unpack() == 42
+    assert unpacker.read_bytes(5) == data
+    assert unpacker.tell() == 1 + len(data)
+    assert unpacker.read_bytes(5) == b""
+    assert unpacker.tell() == 1 + len(data)
+
+    unpacker.feed(packb("next"))
+    assert unpacker.unpack() == "next"
+    assert unpacker.tell() == 1 + len(data) + len(packb("next"))
