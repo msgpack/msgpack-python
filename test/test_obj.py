@@ -2,7 +2,7 @@
 
 from pytest import raises
 
-from msgpack import packb, unpackb
+from msgpack import ExtType, packb, unpackb
 
 
 def _decode_complex(obj):
@@ -92,3 +92,19 @@ def test_an_exception_in_objecthook2():
     with raises(DecodeError):
         packed = packb({1: [{"__complex__": True, "real": 1, "imag": 2}]})
         unpackb(packed, list_hook=bad_complex_decoder, use_list=1, strict_map_key=False)
+
+
+def test_str_subclass_map_key_from_ext_hook():
+    class Key(str):
+        pass
+
+    key = Key("name")
+    packed = packb({ExtType(1, b"name"): 42})
+    options = {"ext_hook": lambda code, data: key}
+
+    result = unpackb(packed, strict_map_key=False, **options)
+    assert result == {key: 42}
+    assert next(iter(result)) is key
+
+    with raises(ValueError):
+        unpackb(packed, strict_map_key=True, **options)
