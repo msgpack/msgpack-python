@@ -169,3 +169,22 @@ def test_unpack_tell():
         m2 = next(unpacker)
         assert m == m2
         assert o == unpacker.tell()
+
+
+def test_unpack_tell_incomplete_object():
+    # tell() is where the next object starts, even when only part of it has arrived.
+    first = packb([1, 2, 3])
+    second = packb(["x" * 40, "y" * 40])
+    packed = first + second
+    for cut in (len(first) + 1, len(first) + 3, len(first) + 45):
+        unpacker = Unpacker()
+        unpacker.feed(packed[:cut])
+        assert list(unpacker) == [[1, 2, 3]]
+        assert unpacker.tell() == len(first)
+        unpacker.feed(packed[cut:])
+        assert list(unpacker) == [["x" * 40, "y" * 40]]
+        assert unpacker.tell() == len(packed)
+
+        unpacker = Unpacker(io.BytesIO(packed[:cut]), read_size=16)
+        assert list(unpacker) == [[1, 2, 3]]
+        assert unpacker.tell() == len(first)
