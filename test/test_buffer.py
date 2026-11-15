@@ -1,4 +1,4 @@
-from pytest import raises
+from pytest import mark, raises
 
 from msgpack import Packer, packb, unpackb
 
@@ -47,3 +47,29 @@ def test_packer_getbuffer():
         buffer.release()
         packer.pack(42)
         assert bytes(packer) == b"\x92*\xa5hello*"
+
+
+@mark.skipif(
+    Packer.__module__ == "msgpack.fallback",
+    reason="reentrant guard is implemented in C extension only",
+)
+def test_packer_reentrant_default():
+    def default(o):
+        # touch the SAME packer, then return enough data to force a realloc
+        o()
+        return b"x" * (1 << 20)
+
+    def export():
+        memoryview(packer)
+
+    def pack():
+        packer.pack(1)
+
+    packer = Packer(default=default, buf_size=1024)
+    with raises(BufferError):
+        packer.pack([b"A" * 512, export])
+    with raises(BufferError):
+        packer.pack_map_pairs([(1, export)])
+    with raises(RuntimeError):
+        packer.pack([b"A" * 512, pack])
+    assert packer.pack([1, 2]) == b"\x92\x01\x02"
