@@ -360,7 +360,7 @@ cdef class Unpacker:
         self.ext_hook = ext_hook
 
         self.file_like = file_like
-        if file_like:
+        if file_like is not None:
             self.file_like_read = file_like.read
             if not PyCallable_Check(self.file_like_read):
                 raise TypeError("`file_like.read` must be a callable.")
