@@ -106,6 +106,7 @@ cdef class Packer:
     cdef object _berrors
     cdef const char *unicode_errors
     cdef size_t exports  # number of exported buffers
+    cdef size_t packing  # nesting depth of pack calls that can run Python code
     cdef bint strict_types
     cdef bint use_float
     cdef bint autoreset
@@ -118,6 +119,7 @@ cdef class Packer:
         self.pk.buf_size = buf_size
         self.pk.length = 0
         self.exports = 0
+        self.packing = 0
 
     def __dealloc__(self):
         PyMem_Free(self.pk.buf)
@@ -273,11 +275,14 @@ cdef class Packer:
     def pack(self, object obj):
         cdef int ret
         self._check_exports()
+        self.packing += 1
         try:
             ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
         except:
             self.pk.length = 0
             raise
+        finally:
+            self.packing -= 1
         if ret:  # should not happen.
             raise RuntimeError("internal error")
         if self.autoreset:
@@ -288,10 +293,14 @@ cdef class Packer:
     @cython.critical_section
     def pack_ext_type(self, typecode, data):
         self._check_exports()
-        if len(data) > ITEM_LIMIT:
-            raise ValueError("ext data too large")
-        msgpack_pack_ext(&self.pk, typecode, len(data))
-        msgpack_pack_raw_body(&self.pk, data, len(data))
+        self.packing += 1
+        try:
+            if len(data) > ITEM_LIMIT:
+                raise ValueError("ext data too large")
+            msgpack_pack_ext(&self.pk, typecode, len(data))
+            msgpack_pack_raw_body(&self.pk, data, len(data))
+        finally:
+            self.packing -= 1
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
@@ -332,13 +341,17 @@ cdef class Packer:
         (`len(pairs)` and `for k, v in pairs:` should be supported.)
         """
         self._check_exports()
-        size = len(pairs)
-        if size > ITEM_LIMIT:
-            raise ValueError("map too large")
-        msgpack_pack_map(&self.pk, size)
-        for k, v in pairs:
-            self._pack(k)
-            self._pack(v)
+        self.packing += 1
+        try:
+            size = len(pairs)
+            if size > ITEM_LIMIT:
+                raise ValueError("map too large")
+            msgpack_pack_map(&self.pk, size)
+            for k, v in pairs:
+                self._pack(k)
+                self._pack(v)
+        finally:
+            self.packing -= 1
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
@@ -367,6 +380,9 @@ cdef class Packer:
 
     @cython.critical_section
     def __getbuffer__(self, Py_buffer *buffer, int flags):
+        # Packing may reallocate pk.buf, which would leave the export dangling.
+        if self.packing:
+            raise BufferError("Packer cannot export its buffer while packing")
         PyBuffer_FillInfo(buffer, self, self.pk.buf, self.pk.length, 1, flags)
         self.exports += 1
 

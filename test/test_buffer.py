@@ -47,3 +47,17 @@ def test_packer_getbuffer():
         buffer.release()
         packer.pack(42)
         assert bytes(packer) == b"\x92*\xa5hello*"
+
+
+def test_packer_getbuffer_while_packing():
+    views = []
+
+    def default(obj):
+        views.append(packer.getbuffer())
+        return b"x" * 1024  # large enough to grow the internal buffer
+
+    packer = Packer(autoreset=False, buf_size=16, default=default)
+    with raises(BufferError):
+        packer.pack([object()])
+    with raises(BufferError):
+        packer.pack_map_pairs([(object(), 1)])
