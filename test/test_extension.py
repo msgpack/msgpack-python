@@ -57,6 +57,29 @@ def test_pack_ext_type_autoreset():
     assert packer.bytes() == b""
 
 
+@pytest.mark.skipif(
+    msgpack.Packer.__module__ == "msgpack.fallback",
+    reason="out-of-bounds read is specific to the C extension",
+)
+def test_pack_ext_type_len_override():
+    # A bytes subclass whose __len__ over-reports its size must not make the
+    # packer copy more than the real buffer.
+    class BadLen(bytes):
+        def __len__(self):
+            return 4096
+
+    data = BadLen(b"AB")  # real length 2
+    assert bytes.__len__(data) == 2
+
+    packed = msgpack.packb(ExtType(0x42, data))
+    assert packed == b"\xd5\x42AB"  # fixext 2, sized by the real buffer
+    assert msgpack.unpackb(packed) == ExtType(0x42, b"AB")
+
+    packer = msgpack.Packer(autoreset=False)
+    packer.pack_ext_type(0x42, data)
+    assert packer.bytes() == b"\xd5\x42AB"
+
+
 def test_unpack_ext_type():
     def check(b, expected):
         assert msgpack.unpackb(b) == expected

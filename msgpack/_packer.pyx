@@ -157,6 +157,7 @@ cdef class Packer:
         cdef const char* rawval
         cdef Py_ssize_t L
         cdef Py_buffer view
+        cdef object odata
         cdef bint strict = self.strict_types
 
         if o is None:
@@ -213,8 +214,12 @@ cdef class Packer:
                 self._pack(v, nest_limit)
         elif type(o) is ExtType if strict else isinstance(o, ExtType):
             # This should be before Tuple because ExtType is namedtuple.
-            rawval = o.data
-            L = len(o.data)
+            # Size the body from the bytes object itself. len() can be
+            # overridden on a bytes subclass so it disagrees with rawval,
+            # which would make msgpack_pack_raw_body read past the buffer.
+            odata = o.data
+            rawval = odata
+            L = Py_SIZE(odata)
             if L > ITEM_LIMIT:
                 raise ValueError("EXT data is too large")
             msgpack_pack_ext(&self.pk, <long>o.code, L)
@@ -287,11 +292,18 @@ cdef class Packer:
 
     @cython.critical_section
     def pack_ext_type(self, typecode, data):
+        cdef const char *rawval
+        cdef Py_ssize_t L
         self._check_exports()
-        if len(data) > ITEM_LIMIT:
+        # Take the body length from the bytes object, not len(): a bytes
+        # subclass can override __len__ so it no longer matches rawval and
+        # msgpack_pack_raw_body reads past the buffer.
+        rawval = data
+        L = Py_SIZE(data)
+        if L > ITEM_LIMIT:
             raise ValueError("ext data too large")
-        msgpack_pack_ext(&self.pk, typecode, len(data))
-        msgpack_pack_raw_body(&self.pk, data, len(data))
+        msgpack_pack_ext(&self.pk, typecode, L)
+        msgpack_pack_raw_body(&self.pk, rawval, L)
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
