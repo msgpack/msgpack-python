@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
+from io import BytesIO
+
 from pytest import raises
 
-from msgpack import packb, unpackb
+from msgpack import Unpacker, packb, unpackb
 
 
 def _decode_complex(obj):
@@ -72,6 +74,29 @@ def test_array_hook():
     packed = packb([1, 2, 3])
     unpacked = unpackb(packed, list_hook=_arr_to_str, use_list=1)
     assert unpacked == "123"
+
+
+def test_array_hook_with_use_list_false():
+    seen = []
+
+    def hook(items):
+        seen.append(items)
+        return {"items": items}
+
+    packed = packb([1, 2])
+    expected = {"items": (1, 2)}
+    assert unpackb(packed, use_list=False, list_hook=hook) == expected
+
+    stream = packed + packb(3)
+    unpackers = [
+        Unpacker(use_list=False, list_hook=hook),
+        Unpacker(BytesIO(stream), use_list=False, list_hook=hook),
+    ]
+    unpackers[0].feed(stream)
+    for unpacker in unpackers:
+        assert unpacker.unpack() == expected
+        assert unpacker.unpack() == 3
+    assert seen == [(1, 2)] * 3
 
 
 class DecodeError(Exception):
