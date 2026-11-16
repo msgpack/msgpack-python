@@ -87,6 +87,21 @@ def test_maxbuffersize_file():
         print(unpacker.unpack())
 
 
+def test_falsy_file_like():
+    # A file-like object may define __bool__ or __len__ and be falsy
+    # (e.g. a file wrapper without a name). Only `.read()` is required.
+    class FalsyBytesIO(io.BytesIO):
+        def __bool__(self):
+            return False
+
+    stream = FalsyBytesIO(packb([1, 2]) + packb({"a": 3}))
+    assert list(Unpacker(stream)) == [[1, 2], {"a": 3}]
+
+    unpacker = Unpacker(FalsyBytesIO(packb(1) + b"xy"))
+    assert unpacker.unpack() == 1
+    assert unpacker.read_bytes(2) == b"xy"
+
+
 def test_readbytes():
     unpacker = Unpacker(read_size=3)
     unpacker.feed(b"foobar")
