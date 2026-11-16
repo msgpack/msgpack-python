@@ -325,6 +325,8 @@ cdef class Unpacker:
     cdef object unicode_errors
     cdef Py_ssize_t max_buffer_size
     cdef uint64_t stream_offset
+    # stream_offset at the start of an incomplete object
+    cdef uint64_t object_offset
     cdef bint _unpacking
 
     def __dealloc__(self):
@@ -486,6 +488,8 @@ cdef class Unpacker:
             raise RuntimeError("Unpacker cannot be called recursively while unpacking is in progress")
         if self.ctx.execute != NULL and self.ctx.execute != execute:
             raise ValueError("Cannot switch unpacking methods while an object is incomplete")
+        if self.ctx.execute == NULL:
+            self.object_offset = self.stream_offset
 
         self._unpacking = True
         try:
@@ -585,6 +589,9 @@ cdef class Unpacker:
         number of bytes that were read from the input, also the starting
         position of the next object.
         """
+        if self.ctx.execute != NULL:
+            # Part of the next object has been decoded, but it still starts here.
+            return self.object_offset
         return self.stream_offset
 
     def __iter__(self):
