@@ -332,13 +332,17 @@ cdef class Packer:
         (`len(pairs)` and `for k, v in pairs:` should be supported.)
         """
         self._check_exports()
-        size = len(pairs)
-        if size > ITEM_LIMIT:
-            raise ValueError("map too large")
-        msgpack_pack_map(&self.pk, size)
-        for k, v in pairs:
-            self._pack(k)
-            self._pack(v)
+        try:
+            size = len(pairs)
+            if size > ITEM_LIMIT:
+                raise ValueError("map too large")
+            msgpack_pack_map(&self.pk, size)
+            for k, v in pairs:
+                self._pack(k)
+                self._pack(v)
+        except:
+            self.pk.length = 0
+            raise
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
