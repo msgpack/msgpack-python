@@ -143,10 +143,11 @@ cdef class Packer:
                 raise TypeError("default must be a callable.")
         self._default = default
 
+        # Clear the borrowed pointer before replacing its owner so a failed
+        # conversion below cannot leave it pointing at a freed object.
+        self.unicode_errors = NULL
         self._berrors = unicode_errors
-        if unicode_errors is None:
-            self.unicode_errors = NULL
-        else:
+        if unicode_errors is not None:
             self.unicode_errors = self._berrors
 
     # returns -2 when default should(o) be called

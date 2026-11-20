@@ -185,3 +185,17 @@ def test_unpack_raises_extra_data_on_stream_with_trailing_bytes():
         unpack(stream)
     assert exc_info.value.unpacked == 100
     assert exc_info.value.extra == packb(200)
+
+
+@mark.skipif(
+    Unpacker.__module__ == "msgpack.fallback",
+    reason="specific to C extension reinit",
+)
+def test_unpacker_failed_reinit_drops_old_hooks():
+    unpacker = Unpacker(object_hook=lambda d: "hook")
+    # unicode_errors is converted after the old object_hook was released.
+    with raises(TypeError):
+        unpacker.__init__(unicode_errors=1)
+    gc.collect()
+    unpacker.feed(b"\x80")
+    assert unpacker.unpack() == {}
