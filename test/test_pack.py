@@ -220,3 +220,17 @@ def test_buf_size_is_converted_once():
     buf_size = Counting()
     Packer(buf_size=buf_size)
     assert buf_size.count == 1
+
+
+@pytest.mark.skipif(
+    Packer.__module__ == "msgpack.fallback",
+    reason="unicode_errors is converted to char* only in the C extension",
+)
+def test_failed_reinit_drops_old_unicode_errors():
+    packer = Packer(unicode_errors="".join(["surrogate", "escape"]))
+    # The old error handler name is released before the new one fails to convert.
+    with pytest.raises(TypeError):
+        packer.__init__(unicode_errors=1)
+    assert packer.pack("abc") == packb("abc")
+    with pytest.raises(UnicodeEncodeError):
+        packer.pack("abc\udcff")

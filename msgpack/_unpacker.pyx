@@ -353,6 +353,11 @@ cdef class Unpacker:
         if self.buf != NULL:
             PyMem_Free(self.buf)
             self.buf = NULL
+        self.buf_size = self.buf_head = self.buf_tail = 0
+        # ctx.user borrows the objects below. Drop those pointers before the
+        # attributes are replaced so a failed __init__ cannot leave them dangling.
+        self.ctx.user.object_hook = self.ctx.user.list_hook = self.ctx.user.ext_hook = <PyObject*>NULL
+        self.ctx.user.unicode_errors = NULL
 
         self.object_hook = object_hook
         self.object_pairs_hook = object_pairs_hook
