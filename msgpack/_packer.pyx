@@ -297,6 +297,7 @@ cdef class Packer:
     @cython.critical_section
     def pack_ext_type(self, typecode, data):
         self._check_exports()
+        self._check_packing()
         if len(data) > ITEM_LIMIT:
             raise ValueError("ext data too large")
         msgpack_pack_ext(&self.pk, typecode, len(data))
@@ -309,6 +310,7 @@ cdef class Packer:
     @cython.critical_section
     def pack_array_header(self, long long size):
         self._check_exports()
+        self._check_packing()
         if size < 0:
             raise ValueError("array size must be non-negative")
         if size > ITEM_LIMIT:
@@ -322,6 +324,7 @@ cdef class Packer:
     @cython.critical_section
     def pack_map_header(self, long long size):
         self._check_exports()
+        self._check_packing()
         if size < 0:
             raise ValueError("map size must be non-negative")
         if size > ITEM_LIMIT:
