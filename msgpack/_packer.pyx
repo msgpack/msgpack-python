@@ -110,6 +110,7 @@ cdef class Packer:
     cdef bint use_float
     cdef bint autoreset
     cdef bint datetime
+    cdef bint _packing
 
     def __cinit__(self, size_t buf_size=256*1024, **_kwargs):
         self.pk.buf = <char*> PyMem_Malloc(buf_size)
@@ -127,6 +128,10 @@ cdef class Packer:
     cdef _check_exports(self):
         if self.exports > 0:
             raise BufferError("Existing exports of data: Packer cannot be changed")
+
+    cdef _check_packing(self):
+        if self._packing:
+            raise RuntimeError("Packer cannot be called recursively while packing is in progress")
 
     @cython.critical_section
     def __init__(self, *, default=None,
@@ -273,11 +278,15 @@ cdef class Packer:
     def pack(self, object obj):
         cdef int ret
         self._check_exports()
+        self._check_packing()
+        self._packing = True
         try:
             ret = self._pack(obj, DEFAULT_RECURSE_LIMIT)
         except:
             self.pk.length = 0
             raise
+        finally:
+            self._packing = False
         if ret:  # should not happen.
             raise RuntimeError("internal error")
         if self.autoreset:
@@ -288,6 +297,7 @@ cdef class Packer:
     @cython.critical_section
     def pack_ext_type(self, typecode, data):
         self._check_exports()
+        self._check_packing()
         if len(data) > ITEM_LIMIT:
             raise ValueError("ext data too large")
         msgpack_pack_ext(&self.pk, typecode, len(data))
@@ -300,6 +310,7 @@ cdef class Packer:
     @cython.critical_section
     def pack_array_header(self, long long size):
         self._check_exports()
+        self._check_packing()
         if size < 0:
             raise ValueError("array size must be non-negative")
         if size > ITEM_LIMIT:
@@ -313,6 +324,7 @@ cdef class Packer:
     @cython.critical_section
     def pack_map_header(self, long long size):
         self._check_exports()
+        self._check_packing()
         if size < 0:
             raise ValueError("map size must be non-negative")
         if size > ITEM_LIMIT:
@@ -332,13 +344,18 @@ cdef class Packer:
         (`len(pairs)` and `for k, v in pairs:` should be supported.)
         """
         self._check_exports()
-        size = len(pairs)
-        if size > ITEM_LIMIT:
-            raise ValueError("map too large")
-        msgpack_pack_map(&self.pk, size)
-        for k, v in pairs:
-            self._pack(k)
-            self._pack(v)
+        self._check_packing()
+        self._packing = True
+        try:
+            size = len(pairs)
+            if size > ITEM_LIMIT:
+                raise ValueError("map too large")
+            msgpack_pack_map(&self.pk, size)
+            for k, v in pairs:
+                self._pack(k)
+                self._pack(v)
+        finally:
+            self._packing = False
         if self.autoreset:
             buf = PyBytes_FromStringAndSize(self.pk.buf, self.pk.length)
             self.pk.length = 0
@@ -367,6 +384,8 @@ cdef class Packer:
 
     @cython.critical_section
     def __getbuffer__(self, Py_buffer *buffer, int flags):
+        if self._packing:
+            raise BufferError("Packer buffer cannot be exported while packing is in progress")
         PyBuffer_FillInfo(buffer, self, self.pk.buf, self.pk.length, 1, flags)
         self.exports += 1
 
