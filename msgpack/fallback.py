@@ -541,7 +541,10 @@ class Unpacker:
                 for _ in range(n):
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (str, bytes):
-                        raise ValueError("%s is not allowed for map key" % str(type(key)))
+                        raise ValueError(
+                            "%s is not allowed for map key when strict_map_key=True"
+                            % type(key).__name__
+                        )
                     pairs.append((key, self._unpack(EX_CONSTRUCT)))
                 ret = self._object_pairs_hook(pairs)
             else:
@@ -549,7 +552,10 @@ class Unpacker:
                 for _ in range(n):
                     key = self._unpack(EX_CONSTRUCT)
                     if self._strict_map_key and type(key) not in (str, bytes):
-                        raise ValueError("%s is not allowed for map key" % str(type(key)))
+                        raise ValueError(
+                            "%s is not allowed for map key when strict_map_key=True"
+                            % type(key).__name__
+                        )
                     if isinstance(key, str):
                         key = sys.intern(key)
                     ret[key] = self._unpack(EX_CONSTRUCT)
